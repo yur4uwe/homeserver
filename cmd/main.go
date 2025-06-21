@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"homeserver/pkg/handlers"
+	"homeserver/pkg/middleware"
 	"homeserver/pkg/setup"
 
 	"github.com/joho/godotenv"
@@ -24,17 +26,16 @@ func main() {
 		log.Fatalf("Environment setup error: %v", err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-		log.Println("No PORT environment variable set, defaulting to 8080")
+	if err := setup.CheckStoragePath(); err != nil {
+		log.Fatalf("Storage path setup error: %v", err)
 	}
 
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello, World!"))
-	})
+	port := os.Getenv("PORT")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handlers.Hello)
+
+	handler := middleware.MiddlewareWrapper(mux)
 
 	server := &http.Server{
 		Handler: handler,

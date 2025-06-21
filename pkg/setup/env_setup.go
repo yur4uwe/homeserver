@@ -6,12 +6,14 @@ import (
 )
 
 const (
-	EnvPort  = "PORT"
-	EnvDbURL = "DB_URL"
+	EnvPort     = "PORT"
+	EnvDbURL    = "DB_URL"
+	StoragePath = "STORAGE_PATH"
 )
 
 var requiredVars = []string{
 	EnvPort,
+	StoragePath,
 }
 
 func CheckVariables() error {
@@ -29,5 +31,25 @@ func CheckVariables() error {
 
 	fmt.Println("All required environment variables are set.")
 
+	return nil
+}
+
+func CheckStoragePath() error {
+	storagePath := os.Getenv(StoragePath)
+	if storagePath == "" {
+		return fmt.Errorf("storage path is not set in environment variables")
+	}
+
+	info, err := os.Stat(storagePath)
+
+	if os.IsNotExist(err) {
+		return fmt.Errorf("storage path does not exist: %s", storagePath)
+	}
+
+	if !info.IsDir() {
+		return fmt.Errorf("storage path is not a directory: %s", storagePath)
+	}
+
+	fmt.Println("Storage path exists:", storagePath)
 	return nil
 }
