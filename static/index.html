@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/static/modules/htmx.min.js"></script>
+    <link rel="stylesheet" href="/static/styles/globals.css">
+    <title>Document</title>
+</head>
+
+<body>
+    <header>
+        <h1>Welcome</h1>
+    </header>
+    <main id="main-content">
+        <button hx-target="#main-content" hx-get="/login" hx-push-url="true">Login?</button>
+
+        <input id="search" name="q" type="text" hx-target="#results" hx-get="/api/v1/search"
+            hx-trigger="keyup changed delay:500ms" placeholder="Search..." hx-include="#filter">
+        <div id="results">
+            <p>Search results will appear here.</p>
+        </div>
+    </main>
+    <footer></footer>
+</body>
+
+</html>

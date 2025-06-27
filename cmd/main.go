@@ -30,9 +30,14 @@ func main() {
 		log.Fatalf("Storage path setup error: %v", err)
 	}
 
+	fs := http.FileServer(http.Dir("../static"))
+
 	port := os.Getenv("PORT")
 
 	mux := http.NewServeMux()
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.HandleFunc("/api/v1/search", handlers.Search)
+	mux.HandleFunc("/login", handlers.Login)
 	mux.HandleFunc("/", handlers.Hello)
 
 	handler := middleware.MiddlewareWrapper(mux)
