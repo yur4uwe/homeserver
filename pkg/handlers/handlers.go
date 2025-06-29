@@ -7,6 +7,11 @@ import (
 )
 
 func Hello(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
 	err := middleware.AddLog(r, "[Handler] Home page accessed")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"homeserver/pkg/globals"
 	"homeserver/pkg/handlers"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/setup"
@@ -29,6 +30,8 @@ func main() {
 	if err := setup.CheckStoragePath(); err != nil {
 		log.Fatalf("Storage path setup error: %v", err)
 	}
+
+	globals.FillPages()
 
 	fs := http.FileServer(http.Dir("../static"))
 

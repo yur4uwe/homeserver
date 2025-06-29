@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"fmt"
+	"homeserver/pkg/globals"
 	"net/http"
 )
 
@@ -10,24 +12,49 @@ type contextKey string
 const ReqContKey contextKey = "add_req_context"
 
 type AdditionalRequestContext struct {
-	LogHistory []string
+	LogHistory    []string
+	ToRestorePage bool
 }
 
-func Logger(next http.Handler) http.Handler {
+func contextConstructor() *AdditionalRequestContext {
+	return &AdditionalRequestContext{
+		LogHistory:    []string{},
+		ToRestorePage: false,
+	}
+}
+
+func ToRestorePage(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reqCont := &AdditionalRequestContext{
-			LogHistory: []string{"[Initial] Request received: " + r.Method + " " + r.URL.String()},
+		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
+		if !ok {
+			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			return
 		}
 
+		fmt.Println("Page request:", r.URL.Path)
+		if r.Header.Get("HX-Request") != "true" && r.URL.Path != "/" && globals.IsPage(r.URL.Path) {
+			reqCont.ToRestorePage = true
+			err := AddLog(r, "[Middleware] ToRestorePage set to true")
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func WithAdditionalRequestContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqCont := contextConstructor()
 		ctx := context.WithValue(r.Context(), ReqContKey, reqCont)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
-
-		UnloadLogs(r)
 	})
 }
 
 func MiddlewareWrapper(handler http.Handler) http.Handler {
-	return Logger(handler)
+	return WithAdditionalRequestContext(Logger(ToRestorePage(Interceptor(handler))))
 }
