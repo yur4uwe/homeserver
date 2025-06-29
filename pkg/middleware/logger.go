@@ -30,6 +30,14 @@ func UnloadLogs(r *http.Request) {
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
+		if !ok {
+			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.LogHistory = append(reqCont.LogHistory, fmt.Sprintf("[Logger] Request to %s %s", r.Method, r.URL.Path))
+
 		next.ServeHTTP(w, r)
 		UnloadLogs(r)
 	})

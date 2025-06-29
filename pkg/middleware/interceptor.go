@@ -37,19 +37,29 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		if !reqCont.ToRestorePage {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		interceptor := InterceptorConstructor(w)
 
 		next.ServeHTTP(interceptor, r)
 
-		modifiedContent, err := globals.MergePage(interceptor.body.String())
+		var modifiedContent []byte
+		var err error
+
+		if reqCont.ToRestorePage {
+			modifiedContent, err = globals.MergePage(interceptor.body.String())
+			if err != nil {
+				http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		err = AddLog(r, "Response code: "+strconv.Itoa(interceptor.statusCode))
 		if err != nil {
-			http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
+		}
+
+		if len(modifiedContent) == 0 {
+			modifiedContent = interceptor.body.Bytes()
 		}
 
 		w.Header().Set("Content-Length", strconv.Itoa(len(modifiedContent)))
