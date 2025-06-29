@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"homeserver/pkg/globals"
 	"net/http"
 	"strconv"
 )
@@ -22,7 +23,6 @@ func InterceptorConstructor(w http.ResponseWriter) *responseInterceptor {
 
 func (ri *responseInterceptor) WriteHeader(code int) {
 	ri.statusCode = code
-	// Delay writing header until after handler finishes
 }
 
 func (ri *responseInterceptor) Write(b []byte) (int, error) {
@@ -38,17 +38,19 @@ func Interceptor(next http.Handler) http.Handler {
 		}
 
 		if !reqCont.ToRestorePage {
-			// If the request is to restore a page, we skip the interceptor
 			next.ServeHTTP(w, r)
 			return
 		}
-		// Create a response interceptor
+
 		interceptor := InterceptorConstructor(w)
 
-		// Call the next handler with the interceptor
 		next.ServeHTTP(interceptor, r)
 
-		modifiedContent := []byte(interceptor.body.String() + "\n<!-- Intercepted Response -->")
+		modifiedContent, err := globals.MergePage(interceptor.body.String())
+		if err != nil {
+			http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Length", strconv.Itoa(len(modifiedContent)))
 		w.WriteHeader(interceptor.statusCode)

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"homeserver/pkg/globals"
 	"net/http"
 )
@@ -31,8 +30,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("Page request:", r.URL.Path)
-		if r.Header.Get("HX-Request") != "true" && r.URL.Path != "/" && globals.IsPage(r.URL.Path) {
+		if r.Header.Get("HX-Request") != "true" && globals.IsPage(r.URL.Path) {
 			reqCont.ToRestorePage = true
 			err := AddLog(r, "[Middleware] ToRestorePage set to true")
 			if err != nil {

@@ -19,7 +19,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, "../static/index.html")
+	http.ServeFile(w, r, "../static/fragments/welcome.html")
 }
 
 func Search(w http.ResponseWriter, r *http.Request) {
