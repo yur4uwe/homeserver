@@ -1,0 +1,12 @@
+<div class="register-container">
+    <h2>Register</h2>
+    <form class="register-form" hx-post="/api/v1/register" hx-target="#main-content" hx-push-url="true">
+        <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
+            <img src="/static/assets/arrow-left.svg" alt="back" style="width: 20px; height: 20px;">
+            <p>Back To Welcome</p>
+        </a>
+        <form-field type="email" legend="field form" name="user" id="form-field-1" placeholder="some text"></form-field>
+        <a class="link" hx-get="/login" hx-target="#main-content" hx-push-url="true">Login</a>
+        <button class="button register-button" type="submit">Register</button>
+    </form>
+</div>

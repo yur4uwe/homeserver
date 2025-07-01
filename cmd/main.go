@@ -39,9 +39,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/api/v1/search", handlers.Search)
-	mux.HandleFunc("/login", handlers.Login)
-	mux.HandleFunc("/", handlers.Hello)
+	mux.HandleFunc("/api/v1/login", handlers.Login)
+	mux.HandleFunc("/api/v1/register", handlers.Register)
+	mux.HandleFunc("/", handlers.PageServer)
 
 	handler := middleware.MiddlewareWrapper(mux)
 

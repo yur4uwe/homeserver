@@ -1,1 +1,21 @@
-<h2>Login</h2>
+<div class="login-container">
+    <h2>Login</h2>
+    <form class="login-form" hx-post="/api/v1/login" hx-target="#main-content" hx-push-url="true">
+        <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
+            <img src="/static/assets/arrow-left.svg" alt="back" style="width: 20px; height: 20px;">
+            <p>
+                Back To Welcome
+            </p>
+        </a>
+        <fieldset>
+            <legend>Username</legend>
+            <input type="text" id="username" name="username" placeholder="Your username" required>
+        </fieldset>
+        <fieldset>
+            <legend>Password</legend>
+            <input type="password" id="password" name="password" placeholder="Your password" required>
+        </fieldset>
+        <a class="link" hx-get="/register" hx-target="#main-content" hx-push-url="true">Register</a>
+        <button class="button" type="submit">Login</button>
+    </form>
+</div>

@@ -1,0 +1,25 @@
+:root {
+    --primary-text: #1b1b1b;
+    --secondary-text: #565656;
+    --text-color: #333333;
+    --background-color: #ffffff;
+}
+
+.button {
+    padding: 10px 20px;
+    background-color: #cecece;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.link {
+    color: var(--secondary-text);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+body {
+    color: var(--primary-text);
+    font-family: 'D-DIN', sans-serif;
+}

@@ -1,0 +1,35 @@
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form>fieldset,
+.login-form>a {
+    margin-bottom: 10px;
+}
+
+.back-arrow {
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.back-arrow>p {
+    line-height: 150%;
+    margin: 0;
+    color: #565656;
+}

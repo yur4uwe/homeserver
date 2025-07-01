@@ -12,6 +12,7 @@ func FillPages() {
 	Pages = []string{
 		"/",
 		"/login",
+		"/register",
 	}
 }
 

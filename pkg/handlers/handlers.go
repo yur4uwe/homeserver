@@ -2,57 +2,55 @@ package handlers
 
 import (
 	"fmt"
+	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"net/http"
 )
 
-func Hello(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+func PageServer(w http.ResponseWriter, r *http.Request) {
+	err := middleware.AddLog(r, "[Handler] Page server accessed for page: "+r.URL.Path)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !globals.IsPage(r.URL.Path) {
 		http.NotFound(w, r)
 		return
 	}
 
-	err := middleware.AddLog(r, "[Handler] Home page accessed")
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	file_to_serve := "../static/fragments/"
+	if r.URL.Path == "/" {
+		file_to_serve += "welcome"
+	} else {
+		file_to_serve += r.URL.Path[1:]
 	}
+	file_to_serve += ".html"
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, "../static/fragments/welcome.html")
-}
-
-func Search(w http.ResponseWriter, r *http.Request) {
-	err := middleware.AddLog(r, "[Handler] Search endpoint accessed")
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	query := r.URL.Query().Get("q")
-	if query == "" {
-		http.Error(w, "Query parameter 'q' is required", http.StatusBadRequest)
-		return
-	}
-
-	results := `
-		<p>Result 1</p>
-		<p>Result 2</p>
-		<p>Result 3</p>
-	`
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(fmt.Appendf(nil, "%s", results))
+	http.ServeFile(w, r, file_to_serve)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	err := middleware.AddLog(r, "[Handler] Login page accessed")
+	err := middleware.AddLog(r, "[Handler] Login endpoint accessed")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
+	fmt.Println("'user' form value", r.FormValue("user"))
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	http.ServeFile(w, r, "../static/fragments/login.html")
+}
+
+func Register(w http.ResponseWriter, r *http.Request) {
+	err := middleware.AddLog(r, "[Handler] Register endpoint accessed")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("'user' form value", r.FormValue("user"))
+
 }
