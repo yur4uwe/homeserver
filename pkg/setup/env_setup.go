@@ -14,6 +14,7 @@ const (
 var requiredVars = []string{
 	EnvPort,
 	StoragePath,
+	EnvDbURL,
 }
 
 func CheckVariables() error {
