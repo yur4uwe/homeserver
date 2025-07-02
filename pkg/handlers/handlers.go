@@ -51,6 +51,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("'user' form value", r.FormValue("user"))
-
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte(`Error registering user`))
 }

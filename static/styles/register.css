@@ -16,7 +16,13 @@
     max-width: 400px;
 }
 
-.register-form>fieldset,
+.register-form>form-field,
 .register-form>a {
+    margin-bottom: 10px;
+}
+
+#error-resp {
+    color: rgb(255, 79, 79);
+    font-size: 1.2em;
     margin-bottom: 10px;
 }

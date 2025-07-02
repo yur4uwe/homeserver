@@ -1,11 +1,18 @@
 <div class="register-container">
     <h2>Register</h2>
-    <form class="register-form" hx-post="/api/v1/register" hx-target="#main-content" hx-push-url="true">
+    <form class="register-form" hx-post="/api/v1/register" hx-target="#main-content" hx-target-error="#error-resp">
         <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
             <img src="/static/assets/arrow-left.svg" alt="back" style="width: 20px; height: 20px;">
             <p>Back To Welcome</p>
         </a>
-        <form-field type="email" legend="field form" name="user" id="form-field-1" placeholder="some text"></form-field>
+
+        <form-field legend="Username" name="username" placeholder="Your Username" required></form-field>
+        <form-field type="password" legend="Password" name="password" placeholder="Your Password" required></form-field>
+        <form-field type="password" legend="Confirm Password" name="confirm-password" placeholder="Confirm Password"
+            required></form-field>
+
+        <div id="error-resp"></div>
+
         <a class="link" hx-get="/login" hx-target="#main-content" hx-push-url="true">Login</a>
         <button class="button register-button" type="submit">Register</button>
     </form>
