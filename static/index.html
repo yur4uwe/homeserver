@@ -14,18 +14,17 @@
     <link rel="stylesheet" href="/static/styles/register.css">
     <link rel="stylesheet" href="/static/components/form-field.css">
     <script src="/static/components/form-field.js"></script>
-    <script src="/static/modules/auth-planter.js"></script>
     <title>Document</title>
 </head>
 
 <body hx-ext="response-targets">
-    <header>
+    <header id="header">
         <h1><a class="hidden-link" hx-target="#main-content" hx-get="/" hx-push-url="true">Storage</a></h1>
     </header>
     <main id="main-content">
         <slot></slot>
     </main>
-    <footer></footer>
+    <footer id="footer"></footer>
 </body>
 
 </html>

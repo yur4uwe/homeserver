@@ -56,3 +56,12 @@ func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm
 	}
 	return userID, nil
 }
+
+func (db *Database) CheckToken(ctx context.Context, token string) (int, error) {
+	var userID int
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1`, token).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("error checking token: %v", err)
+	}
+	return userID, nil
+}

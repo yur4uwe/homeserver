@@ -52,7 +52,7 @@ func main() {
 	mux.HandleFunc("/api/v1/register", handlers.RegisterHandler(connection))
 	mux.HandleFunc("/", handlers.PageServer)
 
-	handler := middleware.MiddlewareWrapper(mux)
+	handler := middleware.MiddlewareWrapper(mux, connection)
 
 	server := &http.Server{
 		Handler: handler,

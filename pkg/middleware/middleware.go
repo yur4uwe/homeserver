@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"net/http"
 )
@@ -13,14 +14,14 @@ const ReqContKey contextKey = "add_req_context"
 type AdditionalRequestContext struct {
 	LogHistory    []string
 	ToRestorePage bool
-	IsLoggedIn    bool
+	AuthToken     string
 }
 
 func contextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
 		LogHistory:    []string{},
 		ToRestorePage: false,
-		IsLoggedIn:    false,
+		AuthToken:     "",
 	}
 }
 
@@ -55,6 +56,6 @@ func WithAdditionalRequestContext(next http.Handler) http.Handler {
 	})
 }
 
-func MiddlewareWrapper(handler http.Handler) http.Handler {
-	return WithAdditionalRequestContext(Logger(AuthMiddleware(ToRestorePage(Interceptor(handler)))))
+func MiddlewareWrapper(handler http.Handler, connection *db.Database) http.Handler {
+	return WithAdditionalRequestContext(Logger(AuthMiddleware(connection)(ToRestorePage(Interceptor(handler)))))
 }
