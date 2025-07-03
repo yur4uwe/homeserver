@@ -65,3 +65,11 @@ func (db *Database) CheckToken(ctx context.Context, token string) (int, error) {
 	}
 	return userID, nil
 }
+
+func (db *Database) CreateToken(ctx context.Context, userID int, token string) error {
+	_, err := db.pool.Exec(ctx, `UPDATE users SET auth_token = $1 WHERE id = $2`, token, userID)
+	if err != nil {
+		return fmt.Errorf("error creating token: %v", err)
+	}
+	return nil
+}

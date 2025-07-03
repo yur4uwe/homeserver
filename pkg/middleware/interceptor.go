@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"golang.org/x/net/html"
 )
 
 type responseInterceptor struct {
@@ -43,11 +45,17 @@ func Interceptor(next http.Handler) http.Handler {
 
 		next.ServeHTTP(interceptor, r)
 
-		var modifiedContent []byte
-		var err error
+		body_node, err := parser.ParseString(interceptor.body.String())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse response body: %v\n", err.Error())
+			http.Error(w, "Failed to parse response body", http.StatusInternalServerError)
+			return
+		}
+
+		var modifiedContent *html.Node = nil
 
 		if reqCont.ToRestorePage {
-			modifiedContent, err = parser.MergePage(interceptor.body.String())
+			modifiedContent, err = parser.MergePage(body_node)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to merge page content: %v\n", err.Error())
 				http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
@@ -55,19 +63,22 @@ func Interceptor(next http.Handler) http.Handler {
 			}
 		}
 
-		err = AddLog(r, "Response code: "+strconv.Itoa(interceptor.statusCode))
+		reqCont.LogHistory = append(reqCont.LogHistory, "Response code: "+strconv.Itoa(interceptor.statusCode))
+
+		if modifiedContent == nil {
+			modifiedContent = body_node
+		}
+
+		bytesContent, err := parser.HTMLToByte(modifiedContent)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			fmt.Fprintf(os.Stderr, "Failed to convert HTML to byte: %v\n", err.Error())
+			http.Error(w, "Failed to convert HTML to byte", http.StatusInternalServerError)
 			return
 		}
 
-		if len(modifiedContent) == 0 {
-			modifiedContent = interceptor.body.Bytes()
-		}
-
-		w.Header().Set("Content-Length", strconv.Itoa(len(modifiedContent)))
+		w.Header().Set("Content-Length", strconv.Itoa(len(bytesContent)))
 		w.WriteHeader(interceptor.statusCode)
-		if _, err := w.Write(modifiedContent); err != nil {
+		if _, err := w.Write(bytesContent); err != nil {
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}
