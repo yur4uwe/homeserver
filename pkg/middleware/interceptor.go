@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"homeserver/pkg/globals"
+	"homeserver/pkg/parser"
 	"net/http"
 	"strconv"
 )
@@ -45,7 +45,7 @@ func Interceptor(next http.Handler) http.Handler {
 		var err error
 
 		if reqCont.ToRestorePage {
-			modifiedContent, err = globals.MergePage(interceptor.body.String())
+			modifiedContent, err = parser.MergePage(interceptor.body.String())
 			if err != nil {
 				http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
 				return

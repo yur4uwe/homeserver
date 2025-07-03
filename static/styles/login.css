@@ -33,3 +33,9 @@
     margin: 0;
     color: #565656;
 }
+
+#error-resp {
+    color: rgb(255, 79, 79);
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
