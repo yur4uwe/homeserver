@@ -18,3 +18,7 @@ func IsPage(path string) bool {
 	}
 	return false
 }
+
+func IsProtectedPath(path string) bool {
+	return false
+}

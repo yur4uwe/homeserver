@@ -3,7 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"homeserver/pkg/auth"
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
@@ -49,7 +51,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 
 		fmt.Println("Login form received:", form)
 
-		id, err := connection.QueryUserOnLogin(r.Context(), form)
+		userId, err := connection.QueryUserOnLogin(r.Context(), form)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				http.Error(w, "Unauthorized: Invalid credentials", http.StatusUnauthorized)
@@ -59,7 +61,15 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println("User ID:", id)
+		newToken := auth.NewToken(userId)
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "authTokenHS",
+			Value:    newToken,
+			Path:     "/",
+			Expires:  time.Now().Add(24 * time.Hour), // Set cookie to expire in 24 hours
+			HttpOnly: true,
+		})
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		http.ServeFile(w, r, "../static/fragments/login.html")

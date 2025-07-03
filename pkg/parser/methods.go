@@ -5,7 +5,7 @@ import (
 )
 
 func getNodeById(node *html.Node, id string) *html.Node {
-	if node.Type == html.ElementNode && node.Data == "div" {
+	if node.Type == html.ElementNode {
 		for _, attr := range node.Attr {
 			if attr.Key == "id" && attr.Val == id {
 				return node

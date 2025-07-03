@@ -13,12 +13,14 @@ const ReqContKey contextKey = "add_req_context"
 type AdditionalRequestContext struct {
 	LogHistory    []string
 	ToRestorePage bool
+	IsLoggedIn    bool
 }
 
 func contextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
 		LogHistory:    []string{},
 		ToRestorePage: false,
+		IsLoggedIn:    false,
 	}
 }
 
@@ -54,5 +56,5 @@ func WithAdditionalRequestContext(next http.Handler) http.Handler {
 }
 
 func MiddlewareWrapper(handler http.Handler) http.Handler {
-	return WithAdditionalRequestContext(Logger(ToRestorePage(Interceptor(handler))))
+	return WithAdditionalRequestContext(Logger(AuthMiddleware(ToRestorePage(Interceptor(handler)))))
 }
