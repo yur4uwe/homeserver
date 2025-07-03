@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/handlers"
 	"homeserver/pkg/middleware"
@@ -31,27 +32,35 @@ func main() {
 		log.Fatalf("Storage path setup error: %v", err)
 	}
 
+	connection, err := db.NewDatabase()
+	if err != nil {
+		log.Fatalf("Database connection error: %v", err)
+	}
+	defer connection.Close()
+
+	if err := setup.CheckDatabaseTables(connection); err != nil {
+		log.Fatalf("Database table setup error: %v", err)
+	}
+
 	globals.FillPages()
 
 	fs := http.FileServer(http.Dir("../static"))
 
-	port := os.Getenv("PORT")
-
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/api/v1/login", handlers.Login)
-	mux.HandleFunc("/api/v1/register", handlers.Register)
+	mux.HandleFunc("/api/v1/login", handlers.LoginHandler(connection))
+	mux.HandleFunc("/api/v1/register", handlers.RegisterHandler(connection))
 	mux.HandleFunc("/", handlers.PageServer)
 
 	handler := middleware.MiddlewareWrapper(mux)
 
 	server := &http.Server{
 		Handler: handler,
-		Addr:    ":" + port,
+		Addr:    ":" + os.Getenv("PORT"),
 	}
 
 	go func() {
-		log.Printf("Starting HTTP server on port %s", port)
+		log.Printf("Starting HTTP server on port %s", os.Getenv("PORT"))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}

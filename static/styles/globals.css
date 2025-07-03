@@ -20,6 +20,7 @@
 }
 
 body {
+    height: 100vh;
     color: var(--primary-text);
     font-family: 'D-DIN', sans-serif;
 }

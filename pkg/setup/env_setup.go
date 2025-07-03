@@ -1,20 +1,31 @@
 package setup
 
 import (
+	"context"
 	"fmt"
+	"homeserver/pkg/db"
 	"os"
+	"strings"
 )
 
 const (
-	EnvPort     = "PORT"
-	EnvDbURL    = "DB_URL"
-	StoragePath = "STORAGE_PATH"
+	EnvPort        = "PORT"
+	EnvDbURL       = "DB_URL"
+	EnvStoragePath = "STORAGE_PATH"
+)
+
+const (
+	DBUsersTable = "users"
 )
 
 var requiredVars = []string{
 	EnvPort,
-	StoragePath,
 	EnvDbURL,
+	EnvStoragePath,
+}
+
+var required_db_tables = []string{
+	DBUsersTable,
 }
 
 func CheckVariables() error {
@@ -36,7 +47,7 @@ func CheckVariables() error {
 }
 
 func CheckStoragePath() error {
-	storagePath := os.Getenv(StoragePath)
+	storagePath := os.Getenv(EnvStoragePath)
 	if storagePath == "" {
 		return fmt.Errorf("storage path is not set in environment variables")
 	}
@@ -52,5 +63,24 @@ func CheckStoragePath() error {
 	}
 
 	fmt.Println("Storage path exists:", storagePath)
+	return nil
+}
+
+func CheckDatabaseTables(connection *db.Database) error {
+	ctx := context.Background()
+
+	missing_tables := make([]string, 0, len(required_db_tables))
+	for _, table := range required_db_tables {
+		exists, err := connection.TableExists(ctx, table)
+		if err != nil || !exists {
+			missing_tables = append(missing_tables, table)
+		}
+	}
+
+	if len(missing_tables) > 0 {
+		return fmt.Errorf("missing required database tables: %s", strings.Join(missing_tables, ", "))
+	}
+
+	fmt.Println("All required database tables exist.")
 	return nil
 }

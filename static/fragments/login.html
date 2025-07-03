@@ -7,14 +7,11 @@
                 Back To Welcome
             </p>
         </a>
-        <fieldset>
-            <legend>Username</legend>
-            <input type="text" id="username" name="username" placeholder="Your username" required>
-        </fieldset>
-        <fieldset>
-            <legend>Password</legend>
-            <input type="password" id="password" name="password" placeholder="Your password" required>
-        </fieldset>
+
+        <form-field legend="Username or Email" name="identificator" placeholder="Your Username or Email"
+            required></form-field>
+        <form-field type="password" legend="Password" name="password" placeholder="Your Password" required></form-field>
+
         <a class="link" hx-get="/register" hx-target="#main-content" hx-push-url="true">Register</a>
         <button class="button" type="submit">Login</button>
     </form>
