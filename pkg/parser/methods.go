@@ -20,3 +20,20 @@ func getNodeById(node *html.Node, id string) *html.Node {
 	}
 	return nil
 }
+
+func getNodeByClassName(node *html.Node, className string) *html.Node {
+	if node.Type == html.ElementNode {
+		for _, attr := range node.Attr {
+			if attr.Key == "class" && attr.Val == className {
+				return node
+			}
+		}
+	}
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if found := getNodeByClassName(child, className); found != nil {
+			return found
+		}
+	}
+	return nil
+}

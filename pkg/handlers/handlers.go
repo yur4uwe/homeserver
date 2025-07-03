@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/parser"
 )
 
 func PageServer(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +49,6 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println("Login form received:", form)
-
 		userId, err := connection.QueryUserOnLogin(r.Context(), form)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
@@ -67,12 +65,11 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			Name:     "authTokenHS",
 			Value:    newToken,
 			Path:     "/",
-			Expires:  time.Now().Add(24 * time.Hour), // Set cookie to expire in 24 hours
+			Expires:  time.Now().Add(24 * time.Hour),
 			HttpOnly: true,
 		})
 
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		http.ServeFile(w, r, "../static/fragments/login.html")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -84,9 +81,37 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println("'user' form value", r.FormValue("user"))
+		form, err := globals.RegisterFormFromRequest(r)
+		if err != nil {
+			http.Error(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if form.Password != form.Confirm {
+			http.Error(w, "Bad Request: Passwords do not match", http.StatusBadRequest)
+			return
+		}
+
+		_, err = connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
+		if err != nil {
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		alert := `
+			<div class="alert alert-success" role="alert">
+				<strong>Success!</strong> You have registered successfully. Now log in
+			</div>
+		`
+
+		response, err := parser.InsertNodeIntoPage("../static/fragments/welcome.html", alert, "")
+		if err != nil {
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		http.ServeFile(w, r, "../static/fragments/register.html")
+		w.WriteHeader(http.StatusOK)
+		w.Write(response)
 	}
 }

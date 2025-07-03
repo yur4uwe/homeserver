@@ -1,6 +1,7 @@
 package globals
 
 var Pages []string
+var ProtectedPages []string
 
 func FillPages() {
 	Pages = []string{
@@ -8,6 +9,8 @@ func FillPages() {
 		"/login",
 		"/register",
 	}
+
+	ProtectedPages = []string{}
 }
 
 func IsPage(path string) bool {
@@ -20,5 +23,10 @@ func IsPage(path string) bool {
 }
 
 func IsProtectedPath(path string) bool {
+	for _, page := range ProtectedPages {
+		if page == path {
+			return true
+		}
+	}
 	return false
 }

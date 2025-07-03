@@ -13,15 +13,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		authToken := r.Header.Get("Authorization")
-		if authToken != "" {
+		authToken, err := r.Cookie("authTokenHS")
+		if err == nil && authToken != nil {
 			reqCont.IsLoggedIn = true
 		}
 
 		if globals.IsProtectedPath(r.URL.Path) && !reqCont.IsLoggedIn {
-			http.Error(w, "Unauthorized: You must be logged in to access this resource", http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+
+		reqCont.LogHistory = append(reqCont.LogHistory, "[AuthMiddleware] Request to "+r.URL.Path+" with token: "+authToken.Value)
 
 		next.ServeHTTP(w, r)
 	})

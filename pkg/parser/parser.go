@@ -9,32 +9,54 @@ import (
 )
 
 func MergePage(newPageContent string) ([]byte, error) {
-	file, err := os.Open("../static/index.html")
+	return InsertNodeIntoPage("../static/index.html", newPageContent, "main-content")
+}
+
+func InsertNodeIntoPage(file_name string, node_string string, selector string) ([]byte, error) {
+	file, err := os.Open(file_name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open file %s: %w", file_name, err)
 	}
+	defer file.Close()
 
 	htmlFile, err := html.Parse(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
 
-	content_node := getNodeById(htmlFile, "main-content")
-	if content_node == nil {
-		return nil, fmt.Errorf("content node with id 'main-content' not found")
+	var selectorNode *html.Node
+	if selector == "" {
+		selectorNode = htmlFile
+	} else {
+		selectorNode = getNodeById(htmlFile, selector)
+		if selectorNode == nil {
+			return nil, fmt.Errorf("node with selector '%s' not found", selector)
+		}
 	}
 
-	new_content, err := html.Parse(strings.NewReader(newPageContent))
+	node, err := ParseString(node_string)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse new page content: %w", err)
+		return nil, fmt.Errorf("failed to parse node: %w", err)
 	}
 
-	content_node.AppendChild(new_content)
+	selectorNode.AppendChild(node)
 
+	return HTMLToByte(htmlFile)
+}
+
+func HTMLToByte(node *html.Node) ([]byte, error) {
 	var buf strings.Builder
-	if err := html.Render(&buf, htmlFile); err != nil {
+	if err := html.Render(&buf, node); err != nil {
 		return nil, fmt.Errorf("failed to render HTML: %w", err)
 	}
 
 	return []byte(buf.String()), nil
+}
+
+func ParseString(htmlString string) (*html.Node, error) {
+	doc, err := html.Parse(strings.NewReader(htmlString))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTML string: %w", err)
+	}
+	return doc, nil
 }

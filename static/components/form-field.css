@@ -7,7 +7,7 @@ form-field fieldset {
 form-field fieldset input {
     width: 100%;
     border: none;
-    font-size: 1.2em;
+    font-size: 1em;
 }
 
 form-field fieldset input:focus {

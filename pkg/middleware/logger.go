@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func AddLog(r *http.Request, entry string) error {
@@ -23,9 +24,13 @@ func UnloadLogs(r *http.Request) {
 		return
 	}
 
-	for _, entry := range finalCont.LogHistory {
-		log.Println(entry)
+	logs := "\n" + strings.Join(finalCont.LogHistory, "\n")
+	if len(logs) == 0 {
+		log.Println("No logs to unload.")
+		return
 	}
+	log.Println(logs)
+
 }
 
 func Logger(next http.Handler) http.Handler {

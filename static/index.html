@@ -20,7 +20,7 @@
 
 <body hx-ext="response-targets">
     <header>
-        <h1><a class="hidden-link" href="/">Storage</a></h1>
+        <h1><a class="hidden-link" hx-target="#main-content" hx-get="/" hx-push-url="true">Storage</a></h1>
     </header>
     <main id="main-content">
         <slot></slot>

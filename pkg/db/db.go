@@ -27,6 +27,7 @@ func NewDatabase() (*Database, error) {
 
 func (db *Database) Close() {
 	db.pool.Close()
+	fmt.Println("Database connection closed.")
 }
 
 func (db *Database) TableExists(ctx context.Context, tableName string) (bool, error) {
@@ -38,9 +39,9 @@ func (db *Database) TableExists(ctx context.Context, tableName string) (bool, er
 	return exists, nil
 }
 
-func (db *Database) CreateUser(ctx context.Context, username, password string) (int, error) {
+func (db *Database) CreateUser(ctx context.Context, username, email, password string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id`, username, password).Scan(&userID)
+	err := db.pool.QueryRow(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id`, username, email, password).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
