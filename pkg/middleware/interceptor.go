@@ -6,7 +6,6 @@ import (
 	"homeserver/pkg/parser"
 	"net/http"
 	"os"
-	"strconv"
 
 	"golang.org/x/net/html"
 )
@@ -37,13 +36,21 @@ func Interceptor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
-			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			fmt.Fprintf(os.Stderr, "Missing request context in interceptor middleware\n")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
 		interceptor := InterceptorConstructor(w)
 
 		next.ServeHTTP(interceptor, r)
+
+		if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+			if _, err := w.Write(interceptor.body.Bytes()); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
+			}
+			return
+		}
 
 		body_node, err := parser.ParseString(interceptor.body.String())
 		if err != nil {
@@ -63,22 +70,12 @@ func Interceptor(next http.Handler) http.Handler {
 			}
 		}
 
-		reqCont.LogHistory = append(reqCont.LogHistory, "Response code: "+strconv.Itoa(interceptor.statusCode))
-
 		if modifiedContent == nil {
 			modifiedContent = body_node
 		}
 
-		bytesContent, err := parser.HTMLToByte(modifiedContent)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to convert HTML to byte: %v\n", err.Error())
-			http.Error(w, "Failed to convert HTML to byte", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Length", strconv.Itoa(len(bytesContent)))
-		w.WriteHeader(interceptor.statusCode)
-		if _, err := w.Write(bytesContent); err != nil {
+		if err := html.Render(w, modifiedContent); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
@@ -10,6 +12,7 @@ import (
 func PageServer(w http.ResponseWriter, r *http.Request) {
 	err := middleware.AddLog(r, "[Handler] Page server accessed for page: "+r.URL.Path)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to log request: %v\n", err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -27,6 +30,18 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 	}
 	file_to_serve += ".html"
 
+	content, err := os.ReadFile(file_to_serve)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read file %s: %v\n", file_to_serve, err.Error())
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, file_to_serve)
+	_, err = w.Write(content)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write reponse: %v\n", err.Error())
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
