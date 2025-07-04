@@ -22,7 +22,7 @@ func InsertNodeIntoPage(file_node, node_to_insert *html.Node, selector string) (
 	if selector == "" {
 		selectorNode = file_node
 	} else {
-		selectorNode = getNodeById(file_node, selector)
+		selectorNode = GetNodeById(file_node, selector)
 		if selectorNode == nil {
 			return nil, fmt.Errorf("node with selector '%s' not found", selector)
 		}

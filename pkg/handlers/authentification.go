@@ -30,6 +30,40 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
+		if form.Identificator == "" {
+			w.Header().Set("HX-Retarget", "#id-fieldset-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+
+			new_fieldset := `
+			<div id="id-fieldset-wrapper">
+			<fieldset id="identificator-fieldset" class="field-error">	
+				<legend>Username or Email</legend>
+				<input type="text" name="identificator" placeholder="Your Username or Email">
+			</fieldset>
+			<div class="field-error-message">Identificator is required</div>
+			</div>`
+
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
+		if form.Password == "" {
+			w.Header().Set("HX-Retarget", "#pwd-fieldset-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+
+			new_fieldset := `
+			<div id="pwd-fieldset-wrapper">
+			<fieldset id="password-fieldset" class="field-error">
+				<legend>Password</legend>
+				<input type="password" name="password" placeholder="Your Password">
+			</fieldset>
+			<div class="field-error-message">Password is required</div>
+			</div>`
+
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
 		userId, err := connection.QueryUserOnLogin(r.Context(), form)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
@@ -65,11 +99,14 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 
 func RegisterHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := middleware.AddLog(r, "[Handler] Register endpoint accessed")
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Missing request context in RegisterHandler\n")
+			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
+
+		reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Register endpoint accessed")
 
 		form, err := globals.RegisterFormFromRequest(r)
 		if err != nil {
@@ -84,15 +121,15 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		_, err = connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// _, err = connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
+		// if err != nil {
+		// 	fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
+		// 	http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
 		alert, err := parser.ParseString(`
-			<div class="alert alert-success" role="alert">
+			<div class="alert alert-success" hx-get="/nothing" hx-trigger="load delay:3s" hx-swap="delete">
 				<strong>Success!</strong> You have registered successfully. Now log in
 			</div>
 		`)
@@ -102,10 +139,29 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		// w.Header().Set("HX-Trigger", "alert:show")
-		w.Header().Set("Location", "/")
+		index, err := parser.ParseFile("../static/index.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse index HTML file: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		welcomeNode, err := parser.ParseFile("../static/fragments/welcome.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse welcome HTML file: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		parser.InsertNodeIntoPage(index, welcomeNode, "main-content")
+		parser.InsertNodeIntoPage(index, alert, "modal-content")
+
+		reqCont.FullPageRender = true
+
+		w.Header().Set("HX-Push-Url", "/")
+		w.Header().Set("HX-Retarget", "body")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusSeeOther)
-		html.Render(w, alert)
+		w.WriteHeader(http.StatusOK)
+		html.Render(w, index)
 	}
 }

@@ -14,6 +14,11 @@ func ParseString(htmlString string) (*html.Node, error) {
 		return nil, fmt.Errorf("received <nil> string, cannot parse HTML")
 	}
 
+	htmlString = strings.TrimSpace(htmlString)
+	if htmlString == "" {
+		return nil, fmt.Errorf("received empty string, cannot parse HTML")
+	}
+
 	context := &html.Node{
 		Type:      html.ElementNode,
 		Data:      "div",

@@ -24,3 +24,23 @@ body {
     color: var(--primary-text);
     font-family: 'D-DIN', sans-serif;
 }
+
+fieldset {
+    color: var(--secondary-text);
+    border: 1px solid #cecece;
+    border-radius: 5px;
+}
+
+fieldset input {
+    width: 100%;
+    border: none;
+    font-size: 1em;
+}
+
+fieldset input:focus {
+    outline: none;
+}
+
+input::placeholder {
+    font-size: 0.8em;
+}

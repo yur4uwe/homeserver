@@ -18,15 +18,7 @@ func LoginFormFromRequest(r *http.Request) (LoginForm, error) {
 	}
 
 	form.Identificator = r.FormValue("identificator")
-	if form.Identificator == "" {
-		return form, fmt.Errorf("identificator is required")
-	}
-
 	form.Password = r.FormValue("password")
-	if form.Password == "" {
-		return form, fmt.Errorf("password is required")
-	}
-
 	return form, nil
 }
 

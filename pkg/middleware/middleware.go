@@ -12,16 +12,18 @@ type contextKey string
 const ReqContKey contextKey = "add_req_context"
 
 type AdditionalRequestContext struct {
-	LogHistory    []string
-	ToRestorePage bool
-	AuthToken     string
+	LogHistory     []string
+	ToRestorePage  bool
+	FullPageRender bool
+	AuthToken      string
 }
 
 func contextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
-		LogHistory:    []string{},
-		ToRestorePage: false,
-		AuthToken:     "",
+		LogHistory:     []string{},
+		ToRestorePage:  false,
+		FullPageRender: false,
+		AuthToken:      "",
 	}
 }
 

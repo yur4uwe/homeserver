@@ -52,6 +52,11 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
+		if reqCont.FullPageRender {
+			w.Write(interceptor.body.Bytes())
+			return
+		}
+
 		body_node, err := parser.ParseString(interceptor.body.String())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse response body: %v\n", err.Error())

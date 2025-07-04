@@ -50,6 +50,7 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.HandleFunc("/api/v1/login", handlers.LoginHandler(connection))
 	mux.HandleFunc("/api/v1/register", handlers.RegisterHandler(connection))
+	mux.HandleFunc("/nothing", handlers.NothingHandler)
 	mux.HandleFunc("/", handlers.PageServer)
 
 	handler := middleware.MiddlewareWrapper(mux, connection)

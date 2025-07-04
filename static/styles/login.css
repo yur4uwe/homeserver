@@ -16,8 +16,7 @@
     max-width: 400px;
 }
 
-.login-form>fieldset,
-.login-form>a {
+.login-form>* {
     margin-bottom: 10px;
 }
 
@@ -38,4 +37,15 @@
     color: rgb(255, 79, 79);
     font-size: 1em;
     margin-bottom: 10px;
+}
+
+.field-error {
+    border: 1px solid #a80000;
+    color: #a80000;
+}
+
+.field-error-message {
+    color: #a80000;
+    font-size: 0.9em;
+    margin-top: 5px;
 }

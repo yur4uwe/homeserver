@@ -45,3 +45,7 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func NothingHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(""))
+}
