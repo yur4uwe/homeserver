@@ -10,6 +10,10 @@ import (
 )
 
 func ParseString(htmlString string) (*html.Node, error) {
+	if htmlString == "<nil>" {
+		return nil, fmt.Errorf("received <nil> string, cannot parse HTML")
+	}
+
 	context := &html.Node{
 		Type:      html.ElementNode,
 		Data:      "div",
