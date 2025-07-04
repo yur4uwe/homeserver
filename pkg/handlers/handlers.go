@@ -10,12 +10,14 @@ import (
 )
 
 func PageServer(w http.ResponseWriter, r *http.Request) {
-	err := middleware.AddLog(r, "[Handler] Page server accessed for page: "+r.URL.Path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to log request: %v\n", err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Missing request context in PageServer handler\n")
+		http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
+
+	reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Page server accessed for page: "+r.URL.Path)
 
 	if !globals.IsPage(r.URL.Path) {
 		http.NotFound(w, r)
@@ -25,6 +27,9 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 	file_to_serve := "../static/fragments/"
 	if r.URL.Path == "/" {
 		file_to_serve += "welcome"
+		if reqCont.AuthToken != "" {
+			file_to_serve += "_logged_in"
+		}
 	} else {
 		file_to_serve += r.URL.Path[1:]
 	}
