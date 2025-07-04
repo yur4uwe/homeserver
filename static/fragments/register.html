@@ -1,16 +1,38 @@
 <div class="register-container">
     <h2>Register</h2>
-    <form class="register-form" hx-post="/api/v1/register" hx-target="#modal-content" hx-target-error="#error-resp">
+    <form class="register-form" hx-post="/api/v1/register" hx-target="#main-content" hx-target-error="#error-resp">
         <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
             <img src="/static/assets/arrow-left.svg" alt="back" style="width: 20px; height: 20px;">
             <p>Back To Welcome</p>
         </a>
 
-        <form-field legend="Username" name="username" placeholder="Your Username" required></form-field>
-        <form-field type="email" legend="Email" name="email" placeholder="Your Email" required></form-field>
-        <form-field type="password" legend="Password" name="password" placeholder="Your Password" required></form-field>
-        <form-field type="password" legend="Confirm Password" name="confirm-password" placeholder="Confirm Password"
-            required></form-field>
+        <div id="username-wrapper">
+            <fieldset>
+                <legend>Username</legend>
+                <input type="text" name="username" placeholder="Your Username">
+            </fieldset>
+        </div>
+
+        <div id="email-wrapper">
+            <fieldset>
+                <legend>Email</legend>
+                <input type="email" name="email" placeholder="Your Email">
+            </fieldset>
+        </div>
+
+        <div id="password-wrapper">
+            <fieldset>
+                <legend>Password</legend>
+                <input type="password" name="password" placeholder="Your Password">
+            </fieldset>
+        </div>
+
+        <div id="confirm-password-wrapper">
+            <fieldset>
+                <legend>Confirm Password</legend>
+                <input type="password" name="confirm-password" placeholder="Confirm Password">
+            </fieldset>
+        </div>
 
         <div id="error-resp"></div>
 

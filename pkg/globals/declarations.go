@@ -3,7 +3,6 @@ package globals
 import (
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type LoginForm struct {
@@ -35,13 +34,8 @@ func RegisterFormFromRequest(r *http.Request) (RegisterForm, error) {
 		return form, fmt.Errorf("failed to parse form: %w", err)
 	}
 
-	register_required_fields := []string{"username", "email", "password", "confirm-password"}
-	missing_fields := []string{}
-	for _, field := range register_required_fields {
-		if r.FormValue(field) == "" {
-			missing_fields = append(missing_fields, field)
-		}
-
+	register_fields := []string{"username", "email", "password", "confirm-password"}
+	for _, field := range register_fields {
 		switch field {
 		case "username":
 			form.Username = r.FormValue(field)
@@ -52,14 +46,6 @@ func RegisterFormFromRequest(r *http.Request) (RegisterForm, error) {
 		case "confirm-password":
 			form.Confirm = r.FormValue(field)
 		}
-	}
-
-	if len(missing_fields) > 0 {
-		return form, fmt.Errorf("missing required fields: %s", strings.Join(missing_fields, ", "))
-	}
-
-	if form.Password != form.Confirm {
-		return form, fmt.Errorf("passwords do not match")
 	}
 
 	return form, nil

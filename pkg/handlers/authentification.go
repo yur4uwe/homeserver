@@ -31,34 +31,20 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 		}
 
 		if form.Identificator == "" {
-			w.Header().Set("HX-Retarget", "#id-fieldset-wrapper")
+			w.Header().Set("HX-Retarget", "#identificator-wrapper")
 			w.Header().Set("HX-Reswap", "outerHTML")
 
-			new_fieldset := `
-			<div id="id-fieldset-wrapper">
-			<fieldset id="identificator-fieldset" class="field-error">	
-				<legend>Username or Email</legend>
-				<input type="text" name="identificator" placeholder="Your Username or Email">
-			</fieldset>
-			<div class="field-error-message">Identificator is required</div>
-			</div>`
+			new_fieldset := fieldset("identificator", "Identificator is required", "field-error", "", "text", "Username or Email", "login")
 
 			w.Write([]byte(new_fieldset))
 			return
 		}
 
 		if form.Password == "" {
-			w.Header().Set("HX-Retarget", "#pwd-fieldset-wrapper")
+			w.Header().Set("HX-Retarget", "#password-wrapper")
 			w.Header().Set("HX-Reswap", "outerHTML")
 
-			new_fieldset := `
-			<div id="pwd-fieldset-wrapper">
-			<fieldset id="password-fieldset" class="field-error">
-				<legend>Password</legend>
-				<input type="password" name="password" placeholder="Your Password">
-			</fieldset>
-			<div class="field-error-message">Password is required</div>
-			</div>`
+			new_fieldset := fieldset("password", "Password is required", "field-error", "", "password", "Password", "login")
 
 			w.Write([]byte(new_fieldset))
 			return
@@ -68,7 +54,11 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
-				http.Error(w, "Unauthorized: Invalid credentials", http.StatusUnauthorized)
+
+				w.Header().Set("HX-Retarget", "#error-resp")
+				w.Header().Set("HX-Reswap", "innerHTML")
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte("Unauthorized: Invalid credentials"))
 				return
 			}
 			fmt.Fprintf(os.Stderr, "Failed to query user on login: %v\n", err.Error())
@@ -93,7 +83,9 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			HttpOnly: true,
 		})
 
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		w.Header().Set("HX-Push-Url", "/")
+		w.WriteHeader(http.StatusSeeOther)
+		w.Write([]byte(""))
 	}
 }
 
@@ -115,15 +107,50 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
+		if form.Username == "" {
+			w.Header().Set("HX-Retarget", "#username-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+
+			new_fieldset := fieldset("username", "Username is required", "field-error", form.Username, "text", "Username", "register")
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
+		if form.Email == "" {
+			w.Header().Set("HX-Retarget", "#email-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+			new_fieldset := fieldset("email", "Email is required", "field-error", form.Email, "email", "Your Email", "register")
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
+		if form.Password == "" {
+			w.Header().Set("HX-Retarget", "#password-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+			new_fieldset := fieldset("password", "Password is required", "field-error", form.Password, "password", "Password", "register")
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
+		if form.Confirm == "" {
+			w.Header().Set("HX-Retarget", "#confirm-password-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+			new_fieldset := fieldset("confirm-password", "Confirm Password is required", "field-error", form.Confirm, "password", "Confirm Password", "register")
+			w.Write([]byte(new_fieldset))
+			return
+		}
+
 		if form.Password != form.Confirm {
-			fmt.Fprintf(os.Stderr, "Passwords do not match: %s != %s\n", form.Password, form.Confirm)
-			http.Error(w, "Bad Request: Passwords do not match", http.StatusBadRequest)
+			w.Header().Set("HX-Retarget", "#confirm-password-wrapper")
+			w.Header().Set("HX-Reswap", "outerHTML")
+			new_fieldset := fieldset("confirm-password", "Passwords do not match", "field-error", form.Confirm, "password", "Confirm Password", "register")
+			w.Write([]byte(new_fieldset))
 			return
 		}
 
 		// _, err = connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
 		// if err != nil {
-		// 	fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
+		// 	fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error()), "login"
 		// 	http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 		// 	return
 		// }

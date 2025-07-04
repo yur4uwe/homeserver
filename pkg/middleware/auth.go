@@ -30,7 +30,7 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 				return
 			}
 
-			reqCont.LogHistory = append(reqCont.LogHistory, "[AuthMiddleware] Request to "+r.URL.Path+" with token: "+authToken.Value)
+			reqCont.LogHistory = append(reqCont.LogHistory, "[AuthMiddleware] Request to "+r.URL.Path+" with token: "+reqCont.AuthToken)
 
 			next.ServeHTTP(w, r)
 		})

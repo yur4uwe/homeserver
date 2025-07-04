@@ -11,15 +11,19 @@
         <div id="id-fieldset-wrapper">
             <fieldset>
                 <legend>Username or Email</legend>
-                <input type="text" name="identificator" placeholder="Your Username or Email">
+                <input type="text" name="identificator" hx-post="/api/v1/login/validate?field=identificator"
+                    hx-trigger="keyup changed delay:500ms" placeholder="Your Username or Email">
             </fieldset>
         </div>
         <div id="pwd-fieldset-wrapper">
             <fieldset>
                 <legend>Password</legend>
-                <input type="password" name="password" placeholder="Your Password">
+                <input type="password" name="password" hx-post="/api/v1/login/validate?field=password"
+                    hx-trigger="keyup changed delay:500ms" placeholder="Your Password">
             </fieldset>
         </div>
+
+        <div id="error-resp"></div>
 
         <a class="link" hx-get="/register" hx-target="#main-content" hx-push-url="true">Register</a>
         <button class="button" type="submit">Login</button>

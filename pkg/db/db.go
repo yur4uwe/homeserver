@@ -73,3 +73,30 @@ func (db *Database) CreateToken(ctx context.Context, userID int, token string) e
 	}
 	return nil
 }
+
+func (db *Database) QueryUsername(ctx context.Context, username string) (int, error) {
+	var userID int
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE username = $1`, username).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("error querying username: %v", err)
+	}
+	return userID, nil
+}
+
+func (db *Database) QueryEmail(ctx context.Context, email string) (int, error) {
+	var userID int
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("error querying email: %v", err)
+	}
+	return userID, nil
+}
+
+func (db *Database) QueryPassword(ctx context.Context, password string) (int, error) {
+	var userID int
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE password = $1`, password).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("error querying password: %v", err)
+	}
+	return userID, nil
+}
