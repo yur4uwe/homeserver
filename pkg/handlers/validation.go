@@ -1,21 +1,48 @@
 package handlers
 
-import (
-	"fmt"
-	"homeserver/pkg/db"
-	"net/http"
-	"strings"
+import "homeserver/pkg/globals"
+
+const (
+	IdentificatorField   = "identificator"
+	PasswordField        = "password"
+	UsernameField        = "username"
+	EmailField           = "email"
+	ConfirmPasswordField = "confirm-password"
 )
 
-func fieldset(fieldId, message, class, value, inputType, placeholder, field_designation string) string {
+const (
+	IdentificatorPlaceholder   = "Username or Email"
+	PasswordPlaceholder        = "Password"
+	UsernamePlaceholder        = "Username"
+	EmailPlaceholder           = "Your Email"
+	ConfirmPasswordPlaceholder = "Confirm Password"
+	LoginFieldDesignation      = "login"
+	RegisterFieldDesignation   = "register"
+	IdentificatorError         = "Identificator is required"
+	PasswordError              = "Password is required"
+	UsernameError              = "Username is required"
+	EmailError                 = "Email is required"
+	ConfirmPasswordError       = "Confirm Password is required"
+	PasswordMismatchError      = "Passwords do not match"
+)
+
+const (
+	Login    = "login"
+	Register = "register"
+)
+
+func fieldset(fieldId, message, value, inputType, placeholder string, isError bool) string {
+	class := ""
+	if isError {
+		class = "field-error"
+	}
+
 	return `
 	<div id="` + fieldId + `-wrapper">
 		<fieldset class="` + class + `">
 			<legend>` + placeholder + `</legend>
 			<input 
 				type="` + inputType + `" 
-				hx-post="/api/v1/` + field_designation + `/check?field=` + fieldId + `" 
-				hx-trigger="keyup changed delay:500ms" 
 				name="` + fieldId + `" 
 				placeholder="Your ` + placeholder + `" 
 				value="` + value + `"
@@ -25,72 +52,31 @@ func fieldset(fieldId, message, class, value, inputType, placeholder, field_desi
 	</div>`
 }
 
-func LoginValidationHandler(connection *db.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fieldId := r.URL.Query().Get("field")
-		fmt.Println("LoginValidationHandler called for field:", fieldId)
-		value := r.FormValue(fieldId)
-		var fieldsetHTML string
-
-		switch fieldId {
-		case "identificator":
-			fieldsetHTML = fieldset("identificator", "", "", value, "text", "Username or Email", "login")
-			if value == "" {
-				fieldsetHTML = fieldset("identificator", "Identificator is required", "field-error", value, "text", "Username or Email", "login")
-			}
-		case "password":
-			fieldsetHTML = fieldset("password", "", "", value, "password", "Password", "login")
-			if value == "" {
-				fieldsetHTML = fieldset("password", "Password is required", "field-error", value, "password", "Password", "login")
-			}
-		default:
-			http.Error(w, "Bad Request: Invalid field", http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("HX-Retarget", "#"+fieldId+"-wrapper")
-		w.Header().Set("HX-Reswap", "outerHTML")
-		w.Write([]byte(fieldsetHTML))
+func LoginValidation(form globals.LoginForm) (bool, string, string) {
+	if form.Identificator == "" {
+		return false, IdentificatorField, fieldset(IdentificatorField, IdentificatorError, form.Identificator, "text", IdentificatorField, true)
 	}
+	if form.Password == "" {
+		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "text", PasswordField, true)
+	}
+	return true, "", ""
 }
 
-func RegisterValidationHandler(connection *db.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fieldId := strings.TrimSpace(r.URL.Query().Get("field"))
-		fmt.Println("RegisterValidationHandler called for field:", fieldId)
-		value := r.FormValue(fieldId)
-		var fieldsetHTML string
-
-		switch fieldId {
-		case "username":
-			fieldsetHTML = fieldset("username", "", "", value, "text", "Username", "register")
-			if value == "" {
-				fieldsetHTML = fieldset("username", "Username is required", "field-error", value, "text", "Username", "register")
-			}
-		case "email":
-			fieldsetHTML = fieldset("email", "", "", value, "email", "Your Email", "register")
-			if value == "" {
-				fieldsetHTML = fieldset("email", "Email is required", "field-error", value, "email", "Your Email", "register")
-			}
-		case "password":
-			fieldsetHTML = fieldset("password", "", "", value, "password", "Password", "register")
-			if value == "" {
-				fieldsetHTML = fieldset("password", "Password is required", "field-error", value, "password", "Password", "register")
-			}
-		case "confirm-password":
-			fieldsetHTML = fieldset("confirm-password", "", "", value, "password", "Confirm Password", "register")
-			if value == "" {
-				fieldsetHTML = fieldset("confirm-password", "Confirm Password is required", "field-error", value, "password", "Confirm Password", "register")
-			} else if r.FormValue("password") != value {
-				fieldsetHTML = fieldset("confirm-password", "Passwords do not match", "field-error", value, "password", "Confirm Password", "register")
-			}
-		default:
-			http.Error(w, "Bad Request: Invalid field", http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("HX-Retarget", "#"+fieldId+"-wrapper")
-		w.Header().Set("HX-Reswap", "outerHTML")
-		w.Write([]byte(fieldsetHTML))
+func RegisterValidation(form globals.RegisterForm) (bool, string, string) {
+	if form.Username == "" {
+		return false, UsernameField, fieldset(UsernameField, UsernameError, form.Username, "text", UsernamePlaceholder, true)
 	}
+	if form.Email == "" {
+		return false, EmailField, fieldset(EmailField, EmailError, form.Email, "email", EmailPlaceholder, true)
+	}
+	if form.Password == "" {
+		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "password", PasswordPlaceholder, true)
+	}
+	if form.Confirm == "" {
+		return false, ConfirmPasswordField, fieldset(ConfirmPasswordField, ConfirmPasswordError, form.Confirm, "password", ConfirmPasswordPlaceholder, true)
+	}
+	if form.Password != form.Confirm {
+		return false, ConfirmPasswordField, fieldset(ConfirmPasswordField, PasswordMismatchError, form.Confirm, "password", ConfirmPasswordPlaceholder, true)
+	}
+	return true, "", ""
 }

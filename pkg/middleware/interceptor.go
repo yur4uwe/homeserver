@@ -53,6 +53,8 @@ func Interceptor(next http.Handler) http.Handler {
 		}
 
 		if reqCont.FullPageRender {
+			w.Header().Set("HX-Retarget", "body")
+			w.Header().Set("HX-Reswap", "innerHTML")
 			w.Write(interceptor.body.Bytes())
 			return
 		}

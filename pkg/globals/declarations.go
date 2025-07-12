@@ -1,7 +1,6 @@
 package globals
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -10,15 +9,12 @@ type LoginForm struct {
 	Password      string `json:"password"`
 }
 
-func LoginFormFromRequest(r *http.Request) (LoginForm, error) {
+func LoginFormFromRequest(r *http.Request) LoginForm {
 	var form LoginForm
-	if err := r.ParseForm(); err != nil {
-		return form, fmt.Errorf("failed to parse form: %w", err)
-	}
 
 	form.Identificator = r.FormValue("identificator")
 	form.Password = r.FormValue("password")
-	return form, nil
+	return form
 }
 
 type RegisterForm struct {
@@ -28,11 +24,8 @@ type RegisterForm struct {
 	Confirm  string `json:"confirm"`
 }
 
-func RegisterFormFromRequest(r *http.Request) (RegisterForm, error) {
+func RegisterFormFromRequest(r *http.Request) RegisterForm {
 	var form RegisterForm
-	if err := r.ParseForm(); err != nil {
-		return form, fmt.Errorf("failed to parse form: %w", err)
-	}
 
 	register_fields := []string{"username", "email", "password", "confirm-password"}
 	for _, field := range register_fields {
@@ -48,5 +41,5 @@ func RegisterFormFromRequest(r *http.Request) (RegisterForm, error) {
 		}
 	}
 
-	return form, nil
+	return form
 }

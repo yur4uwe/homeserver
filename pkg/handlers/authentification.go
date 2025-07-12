@@ -23,30 +23,19 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		form, err := globals.LoginFormFromRequest(r)
-		if err != nil {
+		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse login form: %v\n", err.Error())
 			http.Error(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if form.Identificator == "" {
-			w.Header().Set("HX-Retarget", "#identificator-wrapper")
+		form := globals.LoginFormFromRequest(r)
+
+		valid, target, fieldsetHTML := LoginValidation(form)
+		if !valid {
+			w.Header().Set("HX-Retarget", "#"+target+"-wrapper")
 			w.Header().Set("HX-Reswap", "outerHTML")
-
-			new_fieldset := fieldset("identificator", "Identificator is required", "field-error", "", "text", "Username or Email", "login")
-
-			w.Write([]byte(new_fieldset))
-			return
-		}
-
-		if form.Password == "" {
-			w.Header().Set("HX-Retarget", "#password-wrapper")
-			w.Header().Set("HX-Reswap", "outerHTML")
-
-			new_fieldset := fieldset("password", "Password is required", "field-error", "", "password", "Password", "login")
-
-			w.Write([]byte(new_fieldset))
+			w.Write([]byte(fieldsetHTML))
 			return
 		}
 
@@ -98,53 +87,21 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Register endpoint accessed")
-
-		form, err := globals.RegisterFormFromRequest(r)
-		if err != nil {
+		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse registration form: %v\n", err.Error())
 			http.Error(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if form.Username == "" {
-			w.Header().Set("HX-Retarget", "#username-wrapper")
-			w.Header().Set("HX-Reswap", "outerHTML")
+		reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Register endpoint accessed")
 
-			new_fieldset := fieldset("username", "Username is required", "field-error", form.Username, "text", "Username", "register")
-			w.Write([]byte(new_fieldset))
-			return
-		}
+		form := globals.RegisterFormFromRequest(r)
 
-		if form.Email == "" {
-			w.Header().Set("HX-Retarget", "#email-wrapper")
+		valid, target, fieldsetHTML := RegisterValidation(form)
+		if !valid {
+			w.Header().Set("HX-Retarget", "#"+target+"-wrapper")
 			w.Header().Set("HX-Reswap", "outerHTML")
-			new_fieldset := fieldset("email", "Email is required", "field-error", form.Email, "email", "Your Email", "register")
-			w.Write([]byte(new_fieldset))
-			return
-		}
-
-		if form.Password == "" {
-			w.Header().Set("HX-Retarget", "#password-wrapper")
-			w.Header().Set("HX-Reswap", "outerHTML")
-			new_fieldset := fieldset("password", "Password is required", "field-error", form.Password, "password", "Password", "register")
-			w.Write([]byte(new_fieldset))
-			return
-		}
-
-		if form.Confirm == "" {
-			w.Header().Set("HX-Retarget", "#confirm-password-wrapper")
-			w.Header().Set("HX-Reswap", "outerHTML")
-			new_fieldset := fieldset("confirm-password", "Confirm Password is required", "field-error", form.Confirm, "password", "Confirm Password", "register")
-			w.Write([]byte(new_fieldset))
-			return
-		}
-
-		if form.Password != form.Confirm {
-			w.Header().Set("HX-Retarget", "#confirm-password-wrapper")
-			w.Header().Set("HX-Reswap", "outerHTML")
-			new_fieldset := fieldset("confirm-password", "Passwords do not match", "field-error", form.Confirm, "password", "Confirm Password", "register")
-			w.Write([]byte(new_fieldset))
+			w.Write([]byte(fieldsetHTML))
 			return
 		}
 
@@ -186,7 +143,6 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 		reqCont.FullPageRender = true
 
 		w.Header().Set("HX-Push-Url", "/")
-		w.Header().Set("HX-Retarget", "body")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		html.Render(w, index)
