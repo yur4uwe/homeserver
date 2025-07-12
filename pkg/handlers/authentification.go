@@ -11,17 +11,18 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
-
-	"golang.org/x/net/html"
 )
 
 func LoginHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := middleware.AddLog(r, "[Handler] Login endpoint accessed")
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Missing request context in LoginHandler\n")
+			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
+
+		reqCont.LogHistory.AddLog("[Handler] Login endpoint accessed")
 
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse login form: %v\n", err.Error())
@@ -72,9 +73,32 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			HttpOnly: true,
 		})
 
+		index, err := parser.ParseFile("../static/index.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse index HTML file: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		body := parser.GetNodeByTagName(index, "body")
+		if body == nil {
+			fmt.Fprintf(os.Stderr, "Failed to find body tag in index HTML\n")
+			http.Error(w, "Internal Server Error: Body tag not found", http.StatusInternalServerError)
+			return
+		}
+
+		welcomeNode, err := parser.ParseFile("../static/fragments/welcome_logged_in.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse welcome HTML file: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		parser.InsertNodeIntoPage(body, welcomeNode, "main-content")
+
 		w.Header().Set("HX-Push-Url", "/")
-		w.WriteHeader(http.StatusSeeOther)
-		w.Write([]byte(""))
+		w.WriteHeader(http.StatusOK)
+
 	}
 }
 
@@ -93,7 +117,7 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Register endpoint accessed")
+		reqCont.LogHistory.AddLog("[Handler] Register endpoint accessed")
 
 		form := globals.RegisterFormFromRequest(r)
 
@@ -130,6 +154,13 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
+		body := parser.GetNodeByTagName(index, "body")
+		if body == nil {
+			fmt.Fprintf(os.Stderr, "Failed to find body tag in index HTML\n")
+			http.Error(w, "Internal Server Error: Body tag not found", http.StatusInternalServerError)
+			return
+		}
+
 		welcomeNode, err := parser.ParseFile("../static/fragments/welcome.html")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse welcome HTML file: %v\n", err.Error())
@@ -137,14 +168,12 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		parser.InsertNodeIntoPage(index, welcomeNode, "main-content")
-		parser.InsertNodeIntoPage(index, alert, "modal-content")
+		parser.InsertNodeIntoPage(body, welcomeNode, "main-content")
+		parser.InsertNodeIntoPage(body, alert, "modal-content")
 
-		reqCont.FullPageRender = true
+		reqCont.FullPageRender = body
 
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		html.Render(w, index)
 	}
 }

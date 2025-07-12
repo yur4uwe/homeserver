@@ -8,9 +8,16 @@ func FillPages() {
 		"/",
 		"/login",
 		"/register",
+		"/settings",
+		"/upload",
+		"/files",
 	}
 
-	ProtectedPages = []string{}
+	ProtectedPages = []string{
+		"/settings",
+		"/upload",
+		"/files",
+	}
 }
 
 func IsPage(path string) bool {

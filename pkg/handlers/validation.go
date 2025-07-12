@@ -54,10 +54,10 @@ func fieldset(fieldId, message, value, inputType, placeholder string, isError bo
 
 func LoginValidation(form globals.LoginForm) (bool, string, string) {
 	if form.Identificator == "" {
-		return false, IdentificatorField, fieldset(IdentificatorField, IdentificatorError, form.Identificator, "text", IdentificatorField, true)
+		return false, IdentificatorField, fieldset(IdentificatorField, IdentificatorError, form.Identificator, "text", IdentificatorPlaceholder, true)
 	}
 	if form.Password == "" {
-		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "text", PasswordField, true)
+		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "password", PasswordPlaceholder, true)
 	}
 	return true, "", ""
 }

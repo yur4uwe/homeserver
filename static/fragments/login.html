@@ -8,18 +8,16 @@
             </p>
         </a>
 
-        <div id="id-fieldset-wrapper">
+        <div id="identificator-wrapper">
             <fieldset>
                 <legend>Username or Email</legend>
-                <input type="text" name="identificator" hx-post="/api/v1/login/validate?field=identificator"
-                    hx-trigger="keyup changed delay:500ms" placeholder="Your Username or Email">
+                <input type="text" name="identificator" placeholder="Your Username or Email">
             </fieldset>
         </div>
-        <div id="pwd-fieldset-wrapper">
+        <div id="password-wrapper">
             <fieldset>
                 <legend>Password</legend>
-                <input type="password" name="password" hx-post="/api/v1/login/validate?field=password"
-                    hx-trigger="keyup changed delay:500ms" placeholder="Your Password">
+                <input type="password" name="password" placeholder="Your Password">
             </fieldset>
         </div>
 

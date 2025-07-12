@@ -11,6 +11,13 @@
     padding: 20px 0;
 }
 
+#header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8f9fa;
+}
+
 #modal-content {
     position: absolute;
     top: 0;

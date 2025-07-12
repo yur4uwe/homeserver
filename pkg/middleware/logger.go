@@ -7,24 +7,16 @@ import (
 	"strings"
 )
 
-func AddLog(r *http.Request, entry string) error {
-	reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
-	if !ok {
-		return fmt.Errorf("request context not found")
-	}
-
-	reqCont.LogHistory = append(reqCont.LogHistory, entry)
-	return nil
+type LogHistory struct {
+	Entries []string
 }
 
-func UnloadLogs(r *http.Request) {
-	finalCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
-	if !ok {
-		log.Println("No request context found to unload logs.")
-		return
-	}
+func (lh *LogHistory) AddLog(entry string) {
+	lh.Entries = append(lh.Entries, entry)
+}
 
-	logs := "\n" + strings.Join(finalCont.LogHistory, "\n")
+func (lh *LogHistory) UnloadLogs() {
+	logs := "\n" + strings.Join(lh.Entries, "\n")
 	if len(logs) == 0 {
 		log.Println("No logs to unload.")
 		return
@@ -41,9 +33,9 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
-		reqCont.LogHistory = append(reqCont.LogHistory, fmt.Sprintf("[Logger] Request to %s %s", r.Method, r.URL.Path))
+		reqCont.LogHistory.AddLog(fmt.Sprintf("Request Method: %s, URL: %s", r.Method, r.URL.Path))
 
 		next.ServeHTTP(w, r)
-		UnloadLogs(r)
+		reqCont.LogHistory.UnloadLogs()
 	})
 }

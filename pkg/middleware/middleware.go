@@ -5,6 +5,8 @@ import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"net/http"
+
+	"golang.org/x/net/html"
 )
 
 type contextKey string
@@ -12,17 +14,17 @@ type contextKey string
 const ReqContKey contextKey = "add_req_context"
 
 type AdditionalRequestContext struct {
-	LogHistory     []string
+	LogHistory     *LogHistory
 	ToRestorePage  bool
-	FullPageRender bool
+	FullPageRender *html.Node
 	AuthToken      string
 }
 
 func contextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
-		LogHistory:     []string{},
+		LogHistory:     &LogHistory{Entries: []string{}},
 		ToRestorePage:  false,
-		FullPageRender: false,
+		FullPageRender: nil,
 		AuthToken:      "",
 	}
 }
@@ -37,11 +39,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 
 		if r.Header.Get("HX-Request") != "true" && globals.IsPage(r.URL.Path) {
 			reqCont.ToRestorePage = true
-			err := AddLog(r, "[Middleware] ToRestorePage set to true")
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
+			reqCont.LogHistory.AddLog("[Middleware] ToRestorePage set to true")
 		}
 
 		next.ServeHTTP(w, r)

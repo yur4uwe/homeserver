@@ -17,7 +17,7 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqCont.LogHistory = append(reqCont.LogHistory, "[Handler] Page server accessed for page: "+r.URL.Path)
+	reqCont.LogHistory.AddLog("[Handler] Page server accessed for page: " + r.URL.Path)
 
 	if !globals.IsPage(r.URL.Path) {
 		http.NotFound(w, r)
