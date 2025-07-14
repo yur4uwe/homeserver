@@ -9,9 +9,13 @@ import (
 )
 
 const (
-	EnvPort        = "PORT"
-	EnvDbURL       = "DB_URL"
-	EnvStoragePath = "STORAGE_PATH"
+	EnvPort          = "PORT"
+	EnvDbURL         = "DB_URL"
+	EnvStoragePath   = "STORAGE_PATH"
+	EnvEmailPassword = "EMAIL_PASSWORD"
+	EnvEmailHost     = "EMAIL_HOST"
+	EnvEmailPort     = "EMAIL_PORT"
+	EnvEmailUser     = "EMAIL_USER"
 )
 
 const (
@@ -22,6 +26,10 @@ var requiredVars = []string{
 	EnvPort,
 	EnvDbURL,
 	EnvStoragePath,
+	EnvEmailPassword,
+	EnvEmailHost,
+	EnvEmailPort,
+	EnvEmailUser,
 }
 
 var required_db_tables = []string{

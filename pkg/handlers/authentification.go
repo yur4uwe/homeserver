@@ -56,7 +56,12 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		newToken := auth.NewToken(userId)
+		newToken, err := auth.NewToken()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to generate new token: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		err = connection.CreateToken(r.Context(), userId, newToken)
 		if err != nil {
@@ -129,16 +134,32 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		// _, err = connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
-		// if err != nil {
-		// 	fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error()), "login"
-		// 	http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		userId, err := connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		verification_token, err := auth.NewToken()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to generate verification token: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = connection.CreateToken(r.Context(), userId, verification_token)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		go sendVerificationEmail(form, verification_token)
 
 		alert, err := parser.ParseString(`
 			<div class="alert alert-success" hx-get="/nothing" hx-trigger="load delay:3s" hx-swap="delete">
-				<strong>Success!</strong> You have registered successfully. Now log in
+				<strong>Success!</strong> You have registered successfully. Now verify your email address.
 			</div>
 		`)
 		if err != nil {

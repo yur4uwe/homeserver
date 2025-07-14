@@ -50,7 +50,7 @@ func (db *Database) CreateUser(ctx context.Context, username, email, password st
 
 func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE (username = $1 OR email = $1) AND password = $2`, form.Identificator, form.Password).Scan(&userID)
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE (username = $1 OR email = $1) AND password = $2 AND email_verified = true`, form.Identificator, form.Password).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +59,7 @@ func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm
 
 func (db *Database) CheckToken(ctx context.Context, token string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1`, token).Scan(&userID)
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1 AND email_verified = true`, token).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error checking token: %v", err)
 	}
@@ -99,4 +99,29 @@ func (db *Database) QueryPassword(ctx context.Context, password string) (int, er
 		return 0, fmt.Errorf("error querying password: %v", err)
 	}
 	return userID, nil
+}
+
+func (db *Database) VerifyToken(ctx context.Context, token string) error {
+	var userID int
+	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1 AND email_verified = false`, token).Scan(&userID)
+	if err != nil {
+		return fmt.Errorf("error verifying token: %v", err)
+	}
+	if userID == 0 {
+		return fmt.Errorf("invalid token")
+	}
+
+	tag, err := db.pool.Exec(ctx, `UPDATE users SET email_verified = true WHERE id = $1`, userID)
+	if err != nil {
+		return fmt.Errorf("error updating email verification status: %v", err)
+	}
+
+	if tag.RowsAffected() != 1 {
+		return fmt.Errorf("affected rows mismatch: expected 1, got %d", tag.RowsAffected())
+	}
+
+	// The command tag is returned by Exec and contains information about the executed SQL command,
+	// such as the number of rows affected. You might need it if you want to check how many rows were updated,
+	// or to verify that the command executed as expected.
+	return nil
 }
