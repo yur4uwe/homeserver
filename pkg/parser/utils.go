@@ -41,3 +41,31 @@ func HTMLToByte(node *html.Node) ([]byte, error) {
 
 	return []byte(buf.String()), nil
 }
+
+const (
+	AlertSuccess = "success"
+	AlertError   = "error"
+	AlertWarning = "warning"
+	AlertInfo    = "info"
+)
+
+func NewAlert(message string, status string) *html.Node {
+	alertNode := &html.Node{
+		Type: html.ElementNode,
+		Data: "div",
+		Attr: []html.Attribute{
+			{Key: "class", Val: fmt.Sprintf("alert alert-%s", status)},
+			{Key: "hx-get", Val: "/nothing"},
+			{Key: "hx-trigger", Val: "load delay:3s"},
+			{Key: "hx-swap", Val: "delete"},
+		},
+	}
+
+	alertText := &html.Node{
+		Type: html.TextNode,
+		Data: message,
+	}
+
+	alertNode.AppendChild(alertText)
+	return alertNode
+}

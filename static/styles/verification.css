@@ -1,0 +1,25 @@
+.verification {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    stroke: currentColor;
+    fill: currentColor;
+}
+
+#ver-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.ver-faliure {
+    color: #ff0000;
+}
+
+.ver-success {
+    color: #00ff00;
+}

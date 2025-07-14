@@ -61,7 +61,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 		body_node, err := parser.ParseString(interceptor.body.String())
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse response body: %v\n", err.Error())
+			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error(), "Interceptor:65")
 			http.Error(w, "Failed to parse response body", http.StatusInternalServerError)
 			return
 		}
@@ -71,7 +71,7 @@ func Interceptor(next http.Handler) http.Handler {
 		if reqCont.ToRestorePage {
 			modifiedContent, err = parser.MergePage(body_node)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to merge page content: %v\n", err.Error())
+				reqCont.LogHistory.ErrLog("Failed to merge page content: "+err.Error(), "Interceptor:75")
 				http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
 				return
 			}
@@ -82,7 +82,7 @@ func Interceptor(next http.Handler) http.Handler {
 		}
 
 		if err := html.Render(w, modifiedContent); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
+			reqCont.LogHistory.ErrLog("Failed to render HTML response: "+err.Error(), "Interceptor:86")
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}

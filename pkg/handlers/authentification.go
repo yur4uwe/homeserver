@@ -22,7 +22,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		reqCont.LogHistory.AddLog("[Handler] Login endpoint accessed")
+		reqCont.LogHistory.Log("[Handler] Login endpoint accessed")
 
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to parse login form: %v\n", err.Error())
@@ -40,7 +40,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		userId, err := connection.QueryUserOnLogin(r.Context(), form)
+		userId, email_verified, err := connection.QueryUserOnLogin(r.Context(), form)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
@@ -53,6 +53,15 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			}
 			fmt.Fprintf(os.Stderr, "Failed to query user on login: %v\n", err.Error())
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !email_verified {
+			fmt.Fprintf(os.Stderr, "User %d has not verified their email\n", userId)
+			w.Header().Set("HX-Retarget", "#error-resp")
+			w.Header().Set("HX-Reswap", "innerHTML")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Forbidden: Email not verified"))
 			return
 		}
 
@@ -122,7 +131,7 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		reqCont.LogHistory.AddLog("[Handler] Register endpoint accessed")
+		reqCont.LogHistory.Log("[Handler] Register endpoint accessed")
 
 		form := globals.RegisterFormFromRequest(r)
 
@@ -157,16 +166,7 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 
 		go sendVerificationEmail(form, verification_token)
 
-		alert, err := parser.ParseString(`
-			<div class="alert alert-success" hx-get="/nothing" hx-trigger="load delay:3s" hx-swap="delete">
-				<strong>Success!</strong> You have registered successfully. Now verify your email address.
-			</div>
-		`)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse alert HTML: %v\n", err.Error())
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+		alert := parser.NewAlert("You have registered successfully. Now verify your email address.", parser.AlertSuccess)
 
 		index, err := parser.ParseFile("../static/index.html")
 		if err != nil {

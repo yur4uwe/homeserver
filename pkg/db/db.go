@@ -48,13 +48,15 @@ func (db *Database) CreateUser(ctx context.Context, username, email, password st
 	return userID, nil
 }
 
-func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, error) {
+func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE (username = $1 OR email = $1) AND password = $2 AND email_verified = true`, form.Identificator, form.Password).Scan(&userID)
+	var email_verified bool
+	err := db.pool.QueryRow(ctx, `SELECT id, email_verified FROM users WHERE (username = $1 OR email = $1) AND password = $2`, form.Identificator, form.Password).
+		Scan(&userID, &email_verified)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
-	return userID, nil
+	return userID, email_verified, nil
 }
 
 func (db *Database) CheckToken(ctx context.Context, token string) (int, error) {

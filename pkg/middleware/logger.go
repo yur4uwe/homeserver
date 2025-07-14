@@ -11,8 +11,12 @@ type LogHistory struct {
 	Entries []string
 }
 
-func (lh *LogHistory) AddLog(entry string) {
+func (lh *LogHistory) Log(entry string) {
 	lh.Entries = append(lh.Entries, entry)
+}
+
+func (lh *LogHistory) ErrLog(entry, at string) {
+	lh.Entries = append(lh.Entries, "[Err at "+at+"] "+entry)
 }
 
 func (lh *LogHistory) UnloadLogs() {
@@ -33,7 +37,7 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
-		reqCont.LogHistory.AddLog(fmt.Sprintf("Request Method: %s, URL: %s", r.Method, r.URL.Path))
+		reqCont.LogHistory.Log(fmt.Sprintf("Request Method: %s, URL: %s", r.Method, r.URL.Path))
 
 		next.ServeHTTP(w, r)
 		reqCont.LogHistory.UnloadLogs()

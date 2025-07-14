@@ -39,7 +39,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 
 		if r.Header.Get("HX-Request") != "true" && globals.IsPage(r.URL.Path) {
 			reqCont.ToRestorePage = true
-			reqCont.LogHistory.AddLog("[Middleware] ToRestorePage set to true")
+			reqCont.LogHistory.Log("[Middleware] ToRestorePage set to true")
 		}
 
 		next.ServeHTTP(w, r)
