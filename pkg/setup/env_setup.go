@@ -4,36 +4,23 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/db"
+	"homeserver/pkg/globals"
 	"os"
 	"strings"
 )
 
-const (
-	EnvPort          = "PORT"
-	EnvDbURL         = "DB_URL"
-	EnvStoragePath   = "STORAGE_PATH"
-	EnvEmailPassword = "EMAIL_PASSWORD"
-	EnvEmailHost     = "EMAIL_HOST"
-	EnvEmailPort     = "EMAIL_PORT"
-	EnvEmailUser     = "EMAIL_USER"
-)
-
-const (
-	DBUsersTable = "users"
-)
-
 var requiredVars = []string{
-	EnvPort,
-	EnvDbURL,
-	EnvStoragePath,
-	EnvEmailPassword,
-	EnvEmailHost,
-	EnvEmailPort,
-	EnvEmailUser,
+	globals.EnvPort,
+	globals.EnvDbURL,
+	globals.EnvStoragePath,
+	globals.EnvEmailPassword,
+	globals.EnvEmailHost,
+	globals.EnvEmailPort,
+	globals.EnvEmailUser,
 }
 
 var required_db_tables = []string{
-	DBUsersTable,
+	globals.DBUsersTable,
 }
 
 func CheckVariables() error {
@@ -55,7 +42,7 @@ func CheckVariables() error {
 }
 
 func CheckStoragePath() error {
-	storagePath := os.Getenv(EnvStoragePath)
+	storagePath := os.Getenv(globals.EnvStoragePath)
 	if storagePath == "" {
 		return fmt.Errorf("storage path is not set in environment variables")
 	}

@@ -6,7 +6,6 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/setup"
 	"homeserver/pkg/templates"
 	"html/template"
 	"net/http"
@@ -40,13 +39,13 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 		`, form.Username, verification_token),
 	)
 
-	port, err := strconv.Atoi(os.Getenv(setup.EnvEmailPort))
+	port, err := strconv.Atoi(os.Getenv(globals.EnvEmailPort))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid email port: %v\n", err.Error())
 		return
 	}
 
-	d := gomail.NewDialer(os.Getenv(setup.EnvEmailHost), port, os.Getenv(setup.EnvEmailUser), os.Getenv(setup.EnvEmailPassword))
+	d := gomail.NewDialer(os.Getenv(globals.EnvEmailHost), port, os.Getenv(globals.EnvEmailUser), os.Getenv(globals.EnvEmailPassword))
 	if err := d.DialAndSend(m); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send verification email: %v\n", err.Error())
 		return

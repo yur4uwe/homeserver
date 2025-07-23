@@ -1,0 +1,75 @@
+package handlers
+
+import (
+	"homeserver/pkg/db"
+	"homeserver/pkg/middleware"
+	"homeserver/pkg/templates"
+	"html/template"
+	"net/http"
+	"strconv"
+)
+
+func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont.LogHistory.Log("Download file request received")
+
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
+			http.Error(w, "Error retrieving file", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		fileInfo := templates.FileInfo{
+			Name:        header.Filename,
+			Size:        header.Size,
+			ContentType: header.Header.Get("Content-Type"),
+		}
+
+		reqCont.LogHistory.Log("File received: " + fileInfo.Name)
+		reqCont.LogHistory.Log("File size: " + strconv.FormatInt(fileInfo.Size, 10) + " bytes")
+		reqCont.LogHistory.Log("File content type: " + fileInfo.ContentType)
+
+		// connection.SaveFile(r.Context(), &fileInfo, &file, "/", reqCont.AuthToken)
+
+		// Process the file (e.g., save it to the server)
+
+		reqCont.LogHistory.Log("File successfully processed for upload")
+		w.WriteHeader(http.StatusOK)
+
+		tmpl := template.Must(template.ParseFiles("../static/templates/upload.html"))
+		data := templates.UploadPageData{
+			Files:     []templates.FileInfo{fileInfo}, // Populate with actual file info if needed
+			FileCount: 1,                              // Update with actual file count
+		}
+		tmpl.Execute(w, data)
+	}
+}
+
+func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont.LogHistory.Log("Delete file request received")
+		// Handle file deletion
+	}
+}
+
+func UploadHandler(connection *db.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+		if !ok {
+			http.Error(w, "Invalid request context", http.StatusInternalServerError)
+			return
+		}
+
+		switch r.Method {
+		case http.MethodPost:
+			downloadFile(connection, reqCont)(w, r)
+		case http.MethodDelete:
+			deleteFile(connection, reqCont)(w, r)
+		default:
+			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}

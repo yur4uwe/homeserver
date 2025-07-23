@@ -27,3 +27,24 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	tmpl.Execute(w, data)
 }
+
+func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
+	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+	if !ok {
+		http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		return
+	}
+
+	reqCont.LogHistory.Log("[Handler] Upload page accessed")
+
+	tmpl := template.Must(template.ParseFiles("../static/templates/upload.html"))
+
+	data := templates.UploadPageData{
+		Files:     []templates.FileInfo{},
+		FileCount: 0,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	tmpl.Execute(w, data)
+}

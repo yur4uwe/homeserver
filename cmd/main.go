@@ -49,6 +49,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.HandleFunc("/verification", handlers.VerificationHandler(connection))
+	mux.HandleFunc("/upload", handlers.UploadPageHandler)
+	mux.HandleFunc("/api/v1/upload", handlers.UploadHandler(connection))
 	mux.HandleFunc("/api/v1/login", handlers.LoginHandler(connection))
 	mux.HandleFunc("/api/v1/register", handlers.RegisterHandler(connection))
 	mux.HandleFunc("/nothing", handlers.NothingHandler)

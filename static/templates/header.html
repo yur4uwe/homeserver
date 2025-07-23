@@ -1,4 +1,16 @@
-<div>
+<div class="header-wrapper">
     <h1><a class="hidden-link" hx-target="#main-content" hx-get="/" hx-push-url="true">Storage</a></h1>
-    <img src="/static/assets/empty-icon.svg" alt="icon placeholder" style="width: 60px; height: 60px;">
+    <div id="header-actions-container">
+        <input type="checkbox" id="toggle-actions" class="hidden-checkbox">
+        <label for="toggle-actions">
+            <img src="/static/assets/empty-icon.svg" alt="icon placeholder" style="width: 60px; height: 60px;">
+        </label>
+        <div id="actions" hx-push-url="true" hx-target="#main-content">
+            <button class="button" hx-get="/">Home</button>
+            <button class="button" hx-get="/upload">Upload</button>
+            <button class="button" hx-get="/search">Find</button>
+            <button class="button" hx-get="/settings">Settings</button>
+            <button class="button" hx-get="/api/v1/logout">Logout</button>
+        </div>
+    </div>
 </div>
