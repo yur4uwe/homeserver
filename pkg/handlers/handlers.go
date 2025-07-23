@@ -26,10 +26,8 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 
 	file_to_serve := "../static/fragments/"
 	if r.URL.Path == "/" {
-		file_to_serve += "welcome"
-		if reqCont.AuthToken != "" {
-			file_to_serve += "_logged_in"
-		}
+		WelcomePageHandler(w, r)
+		return
 	} else {
 		file_to_serve += r.URL.Path[1:]
 	}

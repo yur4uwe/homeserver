@@ -104,7 +104,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 
 		err := connection.VerifyToken(r.Context(), token)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to check verification token: %v\n", err.Error())
+			reqCont.LogHistory.ErrLog("Failed to check verification token: "+err.Error(), "VerificationHandler:64")
 			sendVerificationFaliurePage(w, reqCont, "Token not found", http.StatusInternalServerError)
 			return
 		}

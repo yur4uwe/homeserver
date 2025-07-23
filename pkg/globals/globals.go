@@ -8,6 +8,7 @@ func FillPages() {
 		"/",
 		"/login",
 		"/register",
+		"/verification",
 		"/settings",
 		"/upload",
 		"/files",
