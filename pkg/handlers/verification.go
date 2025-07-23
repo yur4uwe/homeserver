@@ -55,7 +55,6 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 
 func VerificationHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in VerificationHandler\n")
@@ -68,6 +67,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		verification := &templates.VerificationPageData{
 			Success: false,
 			Error:   "",
+			Causes:  []template.HTML{},
 			Icon:    template.HTML(parser.LoadIcon("x")),
 		}
 
@@ -75,6 +75,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		if token == "" {
 			reqCont.LogHistory.ErrLog("Missing verification token in request\n", "VerificationHandler:58")
 			verification.Error = "Missing verification token"
+			verification.Causes = append(verification.Causes, template.HTML("You shouldn't be here"))
 			sendVerificationFailurePage(w, verification, http.StatusBadRequest)
 			return
 		}
@@ -85,6 +86,8 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to check verification token: "+err.Error(), "VerificationHandler:64")
 			verification.Error = "Failed to check verification token"
+			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
+			verification.Causes = append(verification.Causes, template.HTML("You refreshed the page with already verified token"))
 			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
 			return
 		}
@@ -96,6 +99,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to convert alert to string: "+err.Error(), "VerificationHandler:112")
 			verification.Error = "Internal server error"
+			verification.Causes = append(verification.Causes, template.HTML("Failed to render success message"))
 			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
 			return
 		}

@@ -9,8 +9,16 @@
     <p>Thank you for verifying your email. You can now use all the features of our service.</p>
     {{else}}
     <p>We could not verify your email.</p>
-    <p>Reason:</p>
-    <p>{{.Error}}</p>
+    <div class="error-details">
+        <h3>Reason:</h3>
+        <p>{{.Error}}</p>
+        <h3>Probable Causes:</h3>
+        <ul>
+            {{range .Causes}}
+            <li>{{.}}</li>
+            {{end}}
+        </ul>
+    </div>
     <p>Please try again or contact support if the issue persists.</p>
     {{end}}
     <button class="button" hx-get="/" hx-push-url="true" hx-target="#main-content">Go to Home Page</button>
