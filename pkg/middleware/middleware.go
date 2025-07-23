@@ -4,9 +4,10 @@ import (
 	"context"
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/parser"
+	"homeserver/pkg/templates"
+	"html/template"
 	"net/http"
-
-	"golang.org/x/net/html"
 )
 
 type contextKey string
@@ -14,18 +15,23 @@ type contextKey string
 const ReqContKey contextKey = "add_req_context"
 
 type AdditionalRequestContext struct {
-	LogHistory     *LogHistory
-	ToRestorePage  bool
-	FullPageRender *html.Node
-	AuthToken      string
+	LogHistory    *LogHistory
+	ToRestorePage bool
+	RerenderBody  bool
+	AuthToken     string
+	PageContent   *templates.LayoutPageData
 }
 
 func contextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
-		LogHistory:     &LogHistory{Entries: []string{}},
-		ToRestorePage:  false,
-		FullPageRender: nil,
-		AuthToken:      "",
+		LogHistory:    &LogHistory{Entries: []string{}},
+		ToRestorePage: false,
+		RerenderBody:  false,
+		AuthToken:     "",
+		PageContent: &templates.LayoutPageData{
+			Header: template.HTML(parser.MustAsString(parser.ParseFile("../static/templates/header.html"))),
+			Footer: template.HTML(parser.MustAsString(parser.ParseFile("../static/fragments/footer.html"))),
+		},
 	}
 }
 

@@ -1,0 +1,17 @@
+<div class="verification {{if .Success}}ver-success{{else}}ver-failure{{end}}">
+    <div>
+        <div class="svg-wrapper">
+            {{.Icon}}
+        </div>
+        <h2>{{if .Success}}Verification Successful{{else}}Verification Failed{{end}}</h2>
+    </div>
+    {{if .Success}}
+    <p>Thank you for verifying your email. You can now use all the features of our service.</p>
+    {{else}}
+    <p>We could not verify your email.</p>
+    <p>Reason:</p>
+    <p>{{.Error}}</p>
+    <p>Please try again or contact support if the issue persists.</p>
+    {{end}}
+    <button class="button" hx-get="/" hx-push-url="true" hx-target="#main-content">Go to Home Page</button>
+</div>

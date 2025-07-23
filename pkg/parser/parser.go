@@ -2,12 +2,33 @@ package parser
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"strings"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
+
+func Must(node *html.Node, err error) *html.Node {
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse HTML: %v\n", err))
+	}
+	return node
+}
+
+func MustAsString(node *html.Node, err error) string {
+	if err != nil {
+		panic(fmt.Sprintf("Failed to convert HTML to string: %v\n", err))
+	}
+
+	data, err := HTMLToString(node)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to convert HTML to string: %v\n", err))
+	}
+
+	return data
+}
 
 func ParseString(htmlString string) (*html.Node, error) {
 	if htmlString == "<nil>" {
@@ -72,4 +93,15 @@ func ParseFile(filePath string) (*html.Node, error) {
 	}
 
 	return nodes[0], nil
+}
+
+func ParseTemplate(template_filepath string, template_data interface{}) (*html.Node, error) {
+	tmpl := template.Must(template.ParseFiles(template_filepath))
+
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, template_data); err != nil {
+		return nil, fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return ParseString(buf.String())
 }

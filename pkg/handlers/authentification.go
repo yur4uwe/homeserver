@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
+	"homeserver/pkg/templates"
 )
 
 func LoginHandler(connection *db.Database) http.HandlerFunc {
@@ -87,32 +89,18 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			HttpOnly: true,
 		})
 
-		index, err := parser.ParseFile("../static/index.html")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse index HTML file: %v\n", err.Error())
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		body := parser.GetNodeByTagName(index, "body")
-		if body == nil {
-			fmt.Fprintf(os.Stderr, "Failed to find body tag in index HTML\n")
-			http.Error(w, "Internal Server Error: Body tag not found", http.StatusInternalServerError)
-			return
-		}
-
-		welcomeNode, err := parser.ParseFile("../static/fragments/welcome_logged_in.html")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse welcome HTML file: %v\n", err.Error())
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		parser.InsertNodeIntoPage(body, welcomeNode, "main-content")
-
 		w.Header().Set("HX-Push-Url", "/")
 		w.WriteHeader(http.StatusOK)
 
+		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+		welcomeData := &templates.WelcomePageData{
+			IsLoggedIn: true,
+		}
+		if err := tmpl.Execute(w, welcomeData); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to execute welcome template: %v\n", err.Error())
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -168,31 +156,31 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 
 		alert := parser.NewAlert("You have registered successfully. Now verify your email address.", parser.AlertSuccess)
 
-		index, err := parser.ParseFile("../static/index.html")
+		welcomeTmpl, err := parser.ParseTemplate("../static/templates/welcome.html", &templates.WelcomePageData{IsLoggedIn: false})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse index HTML file: %v\n", err.Error())
+			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "AuthenticationHandler:196")
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		body := parser.GetNodeByTagName(index, "body")
-		if body == nil {
-			fmt.Fprintf(os.Stderr, "Failed to find body tag in index HTML\n")
-			http.Error(w, "Internal Server Error: Body tag not found", http.StatusInternalServerError)
-			return
-		}
-
-		welcomeNode, err := parser.ParseFile("../static/fragments/welcome.html")
+		modal_string, err := parser.HTMLToString(alert)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse welcome HTML file: %v\n", err.Error())
+			reqCont.LogHistory.ErrLog("Failed to convert alert to string: "+err.Error(), "AuthenticationHandler:196")
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		parser.InsertNodeIntoPage(body, welcomeNode, "main-content")
-		parser.InsertNodeIntoPage(body, alert, "modal-content")
+		welcome_string, err := parser.HTMLToString(welcomeTmpl)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to convert welcome template to string: "+err.Error(), "AuthenticationHandler:196")
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-		reqCont.FullPageRender = body
+		reqCont.PageContent.Content = template.HTML(welcome_string)
+		reqCont.PageContent.ModalContent = template.HTML(modal_string)
+
+		reqCont.RerenderBody = true
 
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

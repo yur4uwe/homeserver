@@ -7,53 +7,22 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/setup"
+	"homeserver/pkg/templates"
+	"html/template"
 	"net/http"
 	"os"
 	"strconv"
 
-	"golang.org/x/net/html"
 	"gopkg.in/gomail.v2"
 )
 
-func sendVerificationFaliurePage(w http.ResponseWriter, reqCont *middleware.AdditionalRequestContext, message string, errCode int) {
-	verification_failure_page, err := parser.ParseFile("../static/fragments/verification_failed.html")
-	if err != nil {
-		reqCont.LogHistory.ErrLog("Failed to parse verification failure HTML file: "+err.Error(), "VerificationHandler:58")
-		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	header_node := parser.GetNodeById(verification_failure_page, "ver-header")
-	if header_node == nil {
-		reqCont.LogHistory.ErrLog("Failed to find header node in verification failure HTML", "VerificationHandler:62")
-		http.Error(w, "Internal Server Error: Failed to find header node", http.StatusInternalServerError)
-		return
-	}
-
-	check_icon, err := parser.ParseFile("../static/assets/check.svg")
-	if err != nil {
-		reqCont.LogHistory.ErrLog("Failed to parse check icon: "+err.Error(), "VerificationHandler:68")
-		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	header_node.AppendChild(check_icon)
-	header_node.FirstChild.Data = "Verification Failed"
-
-	error_message := fmt.Sprintf("Verification failed: %v", message)
-
-	error_node := parser.GetNodeById(verification_failure_page, "error-msg")
-	if error_node == nil {
-		reqCont.LogHistory.ErrLog("Failed to find error message node in verification failure HTML", "VerificationHandler:66")
-		http.Error(w, "Internal Server Error: Failed to find error message node", http.StatusInternalServerError)
-		return
-	}
-
-	error_node.Data = error_message
+func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
+	tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(errCode)
-	html.Render(w, verification_failure_page)
+	verification.Success = false
+	tmpl.Execute(w, verification)
 }
 
 func sendVerificationEmail(form globals.RegisterForm, verification_token string) {
@@ -86,6 +55,7 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 
 func VerificationHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in VerificationHandler\n")
@@ -95,66 +65,48 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Verification endpoint accessed")
 
+		verification := &templates.VerificationPageData{
+			Success: false,
+			Error:   "",
+			Icon:    template.HTML(parser.LoadIcon("x")),
+		}
+
 		token := r.URL.Query().Get("token")
 		if token == "" {
 			reqCont.LogHistory.ErrLog("Missing verification token in request\n", "VerificationHandler:58")
-			sendVerificationFaliurePage(w, reqCont, "Missing verification token token", http.StatusBadRequest)
+			verification.Error = "Missing verification token"
+			sendVerificationFailurePage(w, verification, http.StatusBadRequest)
 			return
 		}
+
+		reqCont.LogHistory.Log("[Handler] Verification token received: '" + token + "'")
 
 		err := connection.VerifyToken(r.Context(), token)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to check verification token: "+err.Error(), "VerificationHandler:64")
-			sendVerificationFaliurePage(w, reqCont, "Token not found", http.StatusInternalServerError)
+			verification.Error = "Failed to check verification token"
+			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
 			return
 		}
 
-		alert := parser.NewAlert("Your email has been verified successfully!", parser.AlertSuccess)
+		verification.Success = true
+		verification.Icon = template.HTML(parser.LoadIcon("check"))
 
-		index, err := parser.ParseFile("../static/index.html")
+		alert_string, err := parser.HTMLToString(parser.NewAlert("Your email has been verified successfully!", parser.AlertSuccess))
 		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse index file: "+err.Error(), "VerificationHandler:78")
-			sendVerificationFaliurePage(w, reqCont, "Internal server error", http.StatusInternalServerError)
+			reqCont.LogHistory.ErrLog("Failed to convert alert to string: "+err.Error(), "VerificationHandler:112")
+			verification.Error = "Internal server error"
+			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
 			return
 		}
 
-		body := parser.GetNodeByTagName(index, "body")
-		if body == nil {
-			fmt.Fprintf(os.Stderr, "Failed to find body tag in index HTML\n")
-			sendVerificationFaliurePage(w, reqCont, "Internal server error", http.StatusInternalServerError)
-			return
-		}
+		reqCont.PageContent.ModalContent = template.HTML(alert_string)
+		reqCont.RerenderBody = true
 
-		verification_page, err := parser.ParseFile("../static/fragments/verification_success.html")
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse verification HTML file: "+err.Error(), "VerificationHandler:90")
-			sendVerificationFaliurePage(w, reqCont, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		header_node := parser.GetNodeById(verification_page, "ver-header")
-		if header_node == nil {
-			reqCont.LogHistory.ErrLog("Failed to find header node in verification HTML", "VerificationHandler:95")
-			sendVerificationFaliurePage(w, reqCont, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		check_icon, err := parser.ParseFile("../static/assets/check.svg")
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse check icon: "+err.Error(), "VerificationHandler:101")
-			sendVerificationFaliurePage(w, reqCont, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		header_node.AppendChild(check_icon)
-		header_node.Data = "Verification Successful"
-
-		parser.InsertNodeIntoPage(body, verification_page, "main-content")
-		parser.InsertNodeIntoPage(body, alert, "modal-content")
-
-		reqCont.FullPageRender = index
+		tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
+		tmpl.Execute(w, verification)
 	}
 }

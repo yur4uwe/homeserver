@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"homeserver/pkg/parser"
+	"html/template"
 	"net/http"
 	"os"
 
@@ -52,13 +53,6 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		if reqCont.FullPageRender != nil {
-			w.Header().Set("HX-Retarget", "body")
-			w.Header().Set("HX-Reswap", "innerHTML")
-			html.Render(w, reqCont.FullPageRender)
-			return
-		}
-
 		body_node, err := parser.ParseString(interceptor.body.String())
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error(), "Interceptor:65")
@@ -66,22 +60,33 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		var modifiedContent *html.Node = nil
-
 		if reqCont.ToRestorePage {
-			modifiedContent, err = parser.MergePage(body_node)
-			if err != nil {
-				reqCont.LogHistory.ErrLog("Failed to merge page content: "+err.Error(), "Interceptor:75")
-				http.Error(w, "Failed to merge page content", http.StatusInternalServerError)
-				return
+			tmpl := template.Must(template.ParseFiles("../static/index.html", "../static/layout.html"))
+
+			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+
+			if err := tmpl.ExecuteTemplate(w, "index.html", reqCont.PageContent); err != nil {
+				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
+				http.Error(w, "Failed to render page", http.StatusInternalServerError)
 			}
+			return
 		}
 
-		if modifiedContent == nil {
-			modifiedContent = body_node
+		if reqCont.RerenderBody {
+			reqCont.LogHistory.Log("[Interceptor] RerenderBody is true, rendering body")
+			w.Header().Set("HX-Retarget", "body")
+			w.Header().Set("HX-Reswap", "innerHTML")
+
+			tmpl := template.Must(template.ParseFiles("../static/layout.html"))
+
+			if err := tmpl.Execute(w, reqCont.PageContent); err != nil {
+				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
+				http.Error(w, "Failed to render page", http.StatusInternalServerError)
+			}
+			return
 		}
 
-		if err := html.Render(w, modifiedContent); err != nil {
+		if err := html.Render(w, body_node); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to render HTML response: "+err.Error(), "Interceptor:86")
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return

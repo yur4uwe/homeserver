@@ -42,6 +42,30 @@ func HTMLToByte(node *html.Node) ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
+func HTMLToString(node *html.Node) (string, error) {
+	data, err := HTMLToByte(node)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert HTML to string: %w", err)
+	}
+
+	return string(data), nil
+}
+
+func LoadIcon(icon_name string) string {
+	icon_path := fmt.Sprintf("../static/assets/%s.svg", icon_name)
+	icon_node, err := ParseFile(icon_path)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load icon %s: %v\n", icon_name, err))
+	}
+
+	icon_data, err := HTMLToString(icon_node)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to convert icon %s to string: %v\n", icon_name, err))
+	}
+
+	return icon_data
+}
+
 const (
 	AlertSuccess = "success"
 	AlertError   = "error"

@@ -24,14 +24,12 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file_to_serve := "../static/fragments/"
 	if r.URL.Path == "/" {
 		WelcomePageHandler(w, r)
 		return
-	} else {
-		file_to_serve += r.URL.Path[1:]
 	}
-	file_to_serve += ".html"
+
+	file_to_serve := "../static/fragments/" + r.URL.Path[1:] + ".html"
 
 	content, err := os.ReadFile(file_to_serve)
 	if err != nil {

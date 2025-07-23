@@ -4,6 +4,9 @@
     align-items: center;
     justify-content: center;
     height: 100%;
+}
+
+.svg-wrapper {
     stroke: currentColor;
     fill: currentColor;
 }
@@ -16,10 +19,10 @@
     font-size: 2rem;
 }
 
-.ver-faliure {
+.ver-failure .svg-wrapper {
     color: #ff0000;
 }
 
-.ver-success {
+.ver-success .svg-wrapper {
     color: #00ff00;
 }
