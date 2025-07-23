@@ -11,13 +11,13 @@ func FillPages() {
 		"/verification",
 		"/settings",
 		"/upload",
-		"/files",
+		"/search",
 	}
 
 	ProtectedPages = []string{
 		"/settings",
 		"/upload",
-		"/files",
+		"/search",
 	}
 }
 
