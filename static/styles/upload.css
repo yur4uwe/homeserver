@@ -27,6 +27,7 @@ form[action="/api/v1/upload"] {
 }
 
 .upload-actions {
+    position: relative;
     display: flex;
     align-items: center;
 }
@@ -35,11 +36,11 @@ form[action="/api/v1/upload"] {
     margin-left: 10px;
 }
 
-label[for="file"] {
+label[for="upload-type-menu"] {
     cursor: pointer;
 }
 
-.form-body {
+#form-body {
     min-height: 50vh;
     display: flex;
     flex-direction: column;
@@ -54,3 +55,82 @@ label[for="file"] {
     color: var(--light-text);
     stroke: currentColor;
 }
+
+.file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #cecece;
+}
+
+.file-preview .file-name {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.file-preview .file-size {
+    margin-right: 10px;
+}
+
+.file-preview .file-progress-bar {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.file-preview .status-message {
+    margin-right: 10px;
+}
+
+.file-preview .remove-button {
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.file-preview .status-message {
+    color: #555;
+}
+
+#upload-actions {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    max-height: 300px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid #cecece;
+    transition: max-height 0.3s ease;
+    /*, border-width 0s ease*/
+}
+
+#upload-type-menu:checked~#upload-actions {
+    max-height: 0;
+    border-color: #f0f0f0;
+    transition: max-height 0.3s ease, border-color 0s 0.3s ease;
+}
+
+#upload-actions label {
+    white-space: nowrap;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+#upload-actions label>img {
+    margin-right: 5px;
+    width: 25px;
+    height: 25px;
+}
+
+#upload-actions label:hover {
+    background-color: #e0e0e0;
+}
+
+/* #upload-actions label:last-of-type {
+    padding-top: 10px;
+} */

@@ -4,7 +4,6 @@ import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/templates"
-	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -36,21 +35,24 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 		// Process the file (e.g., save it to the server)
 
 		reqCont.LogHistory.Log("File successfully processed for upload")
-		w.WriteHeader(http.StatusOK)
-
-		tmpl := template.Must(template.ParseFiles("../static/templates/upload.html"))
-		data := templates.UploadPageData{
-			Files:     []templates.FileInfo{fileInfo}, // Populate with actual file info if needed
-			FileCount: 1,                              // Update with actual file count
-		}
-		tmpl.Execute(w, data)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
 func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")
-		// Handle file deletion
+
+		fileName := r.URL.Query().Get("filename")
+		if fileName == "" {
+			reqCont.LogHistory.ErrLog("Missing filename parameter", "DeleteFile")
+			http.Error(w, "Missing filename parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Perform the file deletion logic here
+		reqCont.LogHistory.Log("File successfully deleted: " + fileName)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

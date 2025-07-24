@@ -51,3 +51,19 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 func NothingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 }
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+	if !ok {
+		http.Error(w, "Invalid request context", http.StatusInternalServerError)
+		return
+	}
+
+	reqCont.LogHistory.Log("Logout request received")
+
+	// Clear the session or authentication token
+	reqCont.AuthToken = ""
+
+	// Redirect to the login page or home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}

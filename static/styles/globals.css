@@ -49,3 +49,11 @@ fieldset input:focus {
 input::placeholder {
     font-size: 0.8em;
 }
+
+.success {
+    color: green !important;
+}
+
+.error {
+    color: red !important;
+}

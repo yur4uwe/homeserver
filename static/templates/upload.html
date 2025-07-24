@@ -2,25 +2,35 @@
     <div class="upload-wrapper">
         <h1>Upload File</h1>
         <form id="upload-form" action="/api/v1/upload" method="post" hx-encoding="multipart/form-data"
-            hx-post="/api/v1/upload" hx-target=".form-body" hx-swap="outerHTML" hx-select=".form-body">
+            hx-post="/api/v1/upload">
             <div class="form-header">
                 Choose a file to upload
                 <div class="upload-actions">
-                    <progress id="progress" value="0" max="100"></progress>
-                    <label for="file">
+                    <label for="upload-type-menu">
                         <svg width="25" height="25" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path stroke="#565656"
                                 d="M19 13V17C19 17.5304 18.7893 18.0391 18.4142 18.4142C18.0391 18.7893 17.5304 19 17 19H3C2.46957 19 1.96086 18.7893 1.58579 18.4142C1.21071 18.0391 1 17.5304 1 17V13M5 8L10 13M10 13L15 8M10 13V1"
                                 stroke="#565656" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </label>
-                    <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
-                        hx-trigger="change" hx-post="/api/v1/upload" hx-target=".form-body" hx-swap="outerHTML"
-                        hx-select=".form-body">
+                    <input type="checkbox" id="upload-type-menu" hidden checked>
+                    <div id="upload-actions">
+                        <label for="file">
+                            <img src="/static/assets/file.svg" alt="Upload Files">
+                            Upload Files
+                        </label>
+                        <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
+                            hx-trigger="change" hx-post="/api/v1/upload" multiple>
+                        <label for="folder">
+                            <img src="/static/assets/folder.svg" alt="Upload Folder">
+                            Upload Folder
+                        </label>
+                        <input type="file" id="folder" hx-encoding="multipart/form-data" name="folder" required hidden
+                            webkitdirectory mozdirectory>
+                    </div>
                 </div>
             </div>
-            <div class="form-body">
-                {{if eq .FileCount 0}}
+            <div id="form-body">
                 <div class="empty">
                     <svg width="110" height="95" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -29,23 +39,8 @@
                     </svg>
                     <p class="no-files">No file chosen</p>
                 </div>
-                {{else}}
-                {{range .Files}}
-                <div class="file-preview">
-                    <p>{{.Name}}</p>
-                    <div>
-                        <button class="button" hx-delete="/api/v1/upload?filename={{.Name}}"
-                            data-file="{{.Name}}">Remove</button>
-                    </div>
-                </div>
-                {{end}}
-                {{end}}
             </div>
         </form>
     </div>
-    <script>
-        htmx.on('#upload-form', 'htmx:xhr:progress', function (evt) {
-            htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100)
-        });
-    </script>
+    <script src="/static/scripts/file_upload_hook.js"></script>
 </div>
