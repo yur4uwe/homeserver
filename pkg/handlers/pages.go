@@ -5,7 +5,10 @@ import (
 	"net/http"
 
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+
+	"golang.org/x/net/html"
 )
 
 func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,14 +40,9 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqCont.LogHistory.Log("[Handler] Upload page accessed")
 
-	tmpl := template.Must(template.ParseFiles("../static/templates/upload.html"))
-
-	data := templates.UploadPageData{
-		Files:     []templates.FileInfo{},
-		FileCount: 0,
-	}
+	fragment := parser.Must(parser.ParseFile("../static/fragments/upload.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	tmpl.Execute(w, data)
+	html.Render(w, fragment)
 }
