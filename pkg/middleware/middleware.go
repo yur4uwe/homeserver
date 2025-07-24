@@ -29,7 +29,6 @@ func contextConstructor() *AdditionalRequestContext {
 		RerenderBody:  false,
 		AuthToken:     "",
 		PageContent: &templates.LayoutPageData{
-			Header: template.HTML(parser.MustAsString(parser.ParseFile("../static/templates/header.html"))),
 			Footer: template.HTML(parser.MustAsString(parser.ParseFile("../static/fragments/footer.html"))),
 		},
 	}

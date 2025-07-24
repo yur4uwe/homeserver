@@ -2,11 +2,15 @@ package handlers
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 
+	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/parser"
+	"homeserver/pkg/templates"
 )
 
 func PageServer(w http.ResponseWriter, r *http.Request) {
@@ -52,18 +56,53 @@ func NothingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 }
 
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
-	if !ok {
-		http.Error(w, "Invalid request context", http.StatusInternalServerError)
-		return
+func LogoutHandler(connection *db.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+		if !ok {
+			http.Error(w, "Invalid request context", http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.LogHistory.Log("Logout request received")
+
+		authToken := reqCont.AuthToken
+		if authToken == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if err := connection.DeleteToken(r.Context(), authToken); err != nil {
+			http.Error(w, "Failed to delete token: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.RerenderBody = true
+
+		reqCont.AuthToken = ""
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("HX-Push-Url", "/")
+		w.WriteHeader(http.StatusOK)
+
+		data := templates.WelcomePageData{
+			IsLoggedIn: false,
+		}
+
+		header, err := parser.ParseTemplateToString("../static/templates/header.html", data)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LogoutHandler:66")
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		content, err := parser.ParseTemplateToString("../static/templates/welcome.html", data)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "LogoutHandler:66")
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.PageContent.Header = template.HTML(header)
+		reqCont.PageContent.Content = template.HTML(content)
 	}
-
-	reqCont.LogHistory.Log("Logout request received")
-
-	// Clear the session or authentication token
-	reqCont.AuthToken = ""
-
-	// Redirect to the login page or home page
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

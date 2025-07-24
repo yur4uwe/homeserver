@@ -89,18 +89,33 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			HttpOnly: true,
 		})
 
+		reqCont.RerenderBody = true
+		reqCont.AuthToken = newToken
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("HX-Push-Url", "/")
 		w.WriteHeader(http.StatusOK)
 
-		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
 		welcomeData := &templates.WelcomePageData{
 			IsLoggedIn: true,
 		}
-		if err := tmpl.Execute(w, welcomeData); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to execute welcome template: %v\n", err.Error())
+
+		header, err := parser.ParseTemplateToString("../static/templates/header.html", welcomeData)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LoginHandler:66")
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		content, err := parser.ParseTemplateToString("../static/templates/welcome.html", welcomeData)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "LoginHandler:66")
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.PageContent.Header = template.HTML(header)
+		reqCont.PageContent.Content = template.HTML(content)
 	}
 }
 

@@ -1,5 +1,6 @@
 <div class="header-wrapper">
     <h1><a class="hidden-link" hx-target="#main-content" hx-get="/" hx-push-url="true">Storage</a></h1>
+    {{ if .IsLoggedIn }}
     <div id="header-actions-container">
         <input type="checkbox" id="toggle-actions" class="hidden-checkbox">
         <label for="toggle-actions">
@@ -13,4 +14,7 @@
             <button class="button" hx-get="/api/v1/logout">Logout</button>
         </div>
     </div>
+    {{ else }}
+    <div></div>
+    {{ end }}
 </div>

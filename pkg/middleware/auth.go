@@ -3,6 +3,9 @@ package middleware
 import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/parser"
+	"homeserver/pkg/templates"
+	"html/template"
 	"net/http"
 )
 
@@ -29,6 +32,19 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
+
+			data := templates.WelcomePageData{
+				IsLoggedIn: reqCont.AuthToken != "",
+			}
+
+			header, err := parser.ParseTemplateToString("../static/templates/header.html", data)
+			if err != nil {
+				reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "AuthMiddleware:66")
+				http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			reqCont.PageContent.Header = template.HTML(header)
 
 			reqCont.LogHistory.Log("[AuthMiddleware] Request to " + r.URL.Path + " with token: '" + reqCont.AuthToken + "'")
 

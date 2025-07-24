@@ -37,7 +37,12 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
-		reqCont.LogHistory.Log(fmt.Sprintf("Request Method: %s, URL: %s", r.Method, r.URL.Path))
+		query := r.URL.RawQuery
+		url := r.URL.Path
+		if query != "" {
+			url += "?" + query
+		}
+		reqCont.LogHistory.Log(fmt.Sprintf("Request: %s %s", r.Method, url))
 
 		next.ServeHTTP(w, r)
 		reqCont.LogHistory.UnloadLogs()

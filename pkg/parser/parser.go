@@ -96,12 +96,20 @@ func ParseFile(filePath string) (*html.Node, error) {
 }
 
 func ParseTemplate(template_filepath string, template_data interface{}) (*html.Node, error) {
+	tmpl, err := ParseTemplateToString(template_filepath, template_data)
+	if err != nil {
+		return nil, err
+	}
+	return ParseString(tmpl)
+}
+
+func ParseTemplateToString(template_filepath string, template_data interface{}) (string, error) {
 	tmpl := template.Must(template.ParseFiles(template_filepath))
 
 	var buf strings.Builder
 	if err := tmpl.Execute(&buf, template_data); err != nil {
-		return nil, fmt.Errorf("failed to execute template: %w", err)
+		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	return ParseString(buf.String())
+	return buf.String(), nil
 }

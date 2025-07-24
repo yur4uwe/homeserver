@@ -53,14 +53,8 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		body_node, err := parser.ParseString(interceptor.body.String())
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error(), "Interceptor:65")
-			http.Error(w, "Failed to parse response body", http.StatusInternalServerError)
-			return
-		}
-
 		if reqCont.ToRestorePage {
+			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
 			tmpl := template.Must(template.ParseFiles("../static/index.html", "../static/layout.html"))
 
 			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
@@ -83,6 +77,13 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
 				http.Error(w, "Failed to render page", http.StatusInternalServerError)
 			}
+			return
+		}
+
+		body_node, err := parser.ParseString(interceptor.body.String())
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error()+"\nBody: "+interceptor.body.String(), "Interceptor:65")
+			http.Error(w, "Failed to parse response body", http.StatusInternalServerError)
 			return
 		}
 
