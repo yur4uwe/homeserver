@@ -66,34 +66,40 @@ function addFilePreviewWithProgress(file) {
     filePreview.appendChild(statusMessage);
     filePreview.appendChild(removeButton);
 
-    const formBody = document.getElementById('form-body');
-
-    const isEmpty = formBody.getElementsByClassName('empty').length > 0;
-    if (isEmpty) {
-        formBody.innerHTML = ''; // Clear the empty message if it exists
-    }
-
-    formBody.appendChild(filePreview);
+    document.getElementById('form-body').appendChild(filePreview);
 
     return { progressBar, statusMessage };
 }
 
-document.getElementById('file').addEventListener('change', function () {
-    const fileInput = this;
-    const form = document.getElementById('upload-form');
+function requestQueue(tasks) {
+    let currentIndex = 0;
 
-    // Iterate over each selected file
-    Array.from(fileInput.files).forEach(file => {
-        // Add file preview with progress bar
-        const { progressBar, statusMessage } = addFilePreviewWithProgress(file);
+    return new Promise((resolve) => {
+        const handleResult = () => {
+            currentIndex++;
+            if (currentIndex < tasks.length) {
+                startNext();
+            } else {
+                resolve();
+            }
+        }
 
-        // Prepare FormData for the current file
-        const formData = new FormData();
-        formData.append('file', file);
+        const startNext = () => {
+            if (currentIndex < tasks.length) {
+                tasks[currentIndex]().then(handleResult).catch(handleResult);
+            } else if (currentIndex === tasks.length) {
+                resolve();
+            }
+        }
 
-        // Perform the upload using XMLHttpRequest
+        startNext();
+    });
+}
+
+function sendXHRRequest(url, formData, progressBar, statusMessage) {
+    return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', form.action, true);
+        xhr.open('POST', url);
 
         // Update progress bar for the current file
         xhr.upload.addEventListener('progress', function (event) {
@@ -109,19 +115,53 @@ document.getElementById('file').addEventListener('change', function () {
                 statusMessage.textContent = 'Upload complete!';
                 statusMessage.classList.add('success');
                 progressBar.value = 100;
+                resolve();
             } else {
                 statusMessage.textContent = 'Upload failed. Please try again.';
                 statusMessage.classList.add('error');
             }
         };
 
-        // Handle upload errors for the current file
         xhr.onerror = function () {
             statusMessage.textContent = 'An error occurred during the upload.';
             statusMessage.classList.add('error');
         };
 
-        // Send the form data for the current file
         xhr.send(formData);
     });
+}
+
+function fileUploadHook() {
+    const fileInput = this;
+    const form = document.getElementById('upload-form');
+    const formBody = document.getElementById('form-body');
+
+    const isEmpty = formBody.getElementsByClassName('empty').length > 0;
+    if (isEmpty) {
+        formBody.innerHTML = ''; // Clear the empty message if it exists
+    }
+
+    // Create a queue of functions that return promises
+    const xhrRequestQueue = Array.from(fileInput.files).map(file => {
+        const { progressBar, statusMessage } = addFilePreviewWithProgress(file);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        if (fileInput.id === 'folder') {
+            formData.append('folder', file.webkitRelativePath); // Include folder path if needed
+        }
+
+        return () => sendXHRRequest(form.action, formData, progressBar, statusMessage);
+    });
+
+    requestQueue(xhrRequestQueue)
+}
+
+document.getElementById('file').addEventListener('change', (event) => {
+    fileUploadHook.call(event.target);
+});
+
+document.getElementById('folder').addEventListener('change', (event) => {
+    fileUploadHook.call(event.target);
 });

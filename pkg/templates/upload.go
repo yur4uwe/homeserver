@@ -7,6 +7,7 @@ type UploadPageData struct {
 
 type FileInfo struct {
 	Name        string
+	Path        string
 	Size        int64
 	ContentType string
 }
