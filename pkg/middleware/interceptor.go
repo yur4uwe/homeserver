@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -30,6 +31,12 @@ func (ri *responseInterceptor) WriteHeader(code int) {
 }
 
 func (ri *responseInterceptor) Write(b []byte) (int, error) {
+	if ri.ResponseWriter.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+		return ri.body.Write(b)
+	}
+
+	b = InterceptIcons(b)
+
 	return ri.body.Write(b)
 }
 
@@ -73,6 +80,8 @@ func Interceptor(next http.Handler) http.Handler {
 
 			tmpl := template.Must(template.ParseFiles("../static/layout.html"))
 
+			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+
 			if err := tmpl.Execute(w, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
 				http.Error(w, "Failed to render page", http.StatusInternalServerError)
@@ -93,4 +102,57 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 	})
+}
+
+func InterceptIcons(b []byte) []byte {
+	str := string(b)
+
+	// fmt.Printf("Intercepting icons in response: %s\n", str)
+
+	for i := 0; i <= len(str)-7; i++ {
+		if str[i:i+6] != "<icon " {
+			continue
+		}
+
+		cut_str := str[i:]
+
+		// fmt.Printf("Found icon tag at index %d\n", i)
+
+		end_index := strings.Index(cut_str, "</icon>")
+		if end_index == -1 {
+			fmt.Fprintf(os.Stderr, "Malformed icon tag in response\n")
+			continue
+		}
+
+		end_index += len("</icon>")
+
+		cut_str = cut_str[:end_index]
+		// fmt.Printf("Cut string for icon tag: %s\n", cut_str)
+
+		// fmt.Printf("End of icon tag found at index %d\n", end_index)
+
+		name_start_idx := strings.Index(cut_str, "\"")
+		if name_start_idx == -1 {
+			fmt.Fprintf(os.Stderr, "Missing name attribute in icon tag\n")
+			continue
+		}
+
+		name_end_idx := strings.Index(cut_str[name_start_idx+1:], "\"")
+		if name_end_idx == -1 {
+			fmt.Fprintf(os.Stderr, "Malformed icon tag in response\n")
+			continue
+		}
+
+		name_end_idx += name_start_idx + 1
+
+		iconName := cut_str[name_start_idx+1 : name_end_idx]
+		// fmt.Printf("Found icon: %s\n", iconName)
+
+		iconSVG := parser.LoadIcon(iconName)
+
+		str = str[:i] + iconSVG + str[i+end_index:] // 7 is the length of "</icon>"
+		i += len(iconSVG) - 1                       // Adjust index to account for the new length
+	}
+
+	return []byte(str)
 }

@@ -28,11 +28,12 @@
     background-color: #7c7c7c;
     color: #e0e0e0;
     cursor: pointer;
+    width: 100px;
 }
 
-.nav-pill img {
-    height: 20%;
-    width: 20%;
+.nav-pill svg {
+    width: 40px;
+    height: 40px;
     margin-bottom: 10px;
 }
 

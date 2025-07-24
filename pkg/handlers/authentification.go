@@ -107,15 +107,14 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		content, err := parser.ParseTemplateToString("../static/templates/welcome.html", welcomeData)
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "LoginHandler:66")
+		reqCont.PageContent.Header = template.HTML(header)
+
+		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+		if err := tmpl.Execute(w, welcomeData); err != nil {
+			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LoginHandler:66")
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		reqCont.PageContent.Header = template.HTML(header)
-		reqCont.PageContent.Content = template.HTML(content)
 	}
 }
 
@@ -171,13 +170,6 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 
 		alert := parser.NewAlert("You have registered successfully. Now verify your email address.", parser.AlertSuccess)
 
-		welcomeTmpl, err := parser.ParseTemplate("../static/templates/welcome.html", &templates.WelcomePageData{IsLoggedIn: false})
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "AuthenticationHandler:196")
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		modal_string, err := parser.HTMLToString(alert)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to convert alert to string: "+err.Error(), "AuthenticationHandler:196")
@@ -185,19 +177,18 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		welcome_string, err := parser.HTMLToString(welcomeTmpl)
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to convert welcome template to string: "+err.Error(), "AuthenticationHandler:196")
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		reqCont.PageContent.Content = template.HTML(welcome_string)
 		reqCont.PageContent.ModalContent = template.HTML(modal_string)
 
 		reqCont.RerenderBody = true
 
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+		if err := tmpl.Execute(w, &templates.WelcomePageData{IsLoggedIn: false}); err != nil {
+			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "AuthenticationHandler:196")
+			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }

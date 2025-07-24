@@ -5,14 +5,23 @@
         <p>Select action you want to perform</p>
     </div>
     <ul hx-push-url="true" hx-target="#main-content" class="nav">
-        <li hx-get="/upload" class="nav-pill"><img src="/static/assets/upload.svg" alt="upload">Upload</li>
-        <li hx-get="/search" class="nav-pill"><img src="/static/assets/search.svg" alt="search">Find</li>
-        <li hx-get="/settings" class="nav-pill"><img src="/static/assets/settings.svg" alt="settings">Settings
+        <li hx-get="/upload" class="nav-pill">
+            <icon name="upload"></icon>
+            Upload
+        </li>
+        <li hx-get="/search" class="nav-pill">
+            <icon name="search"></icon>
+            Find
+        </li>
+        <li hx-get="/settings" class="nav-pill">
+            <icon name="settings"></icon>
+            Settings
         </li>
     </ul>
 </div>
 {{else}}
 <div id="welcome-container">
+    <icon name="search"></icon>
     <h2>Welcome to the Storage</h2>
     <button class="button" hx-target="#main-content" hx-get="/login" hx-swap="innerHTML"
         hx-push-url="true">Login?</button>

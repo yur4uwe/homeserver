@@ -30,6 +30,8 @@ form[action="/api/v1/upload"] {
     position: relative;
     display: flex;
     align-items: center;
+    stroke: currentColor;
+    color: var(--secondary-text);
 }
 
 .upload-actions>* {
@@ -121,10 +123,10 @@ label[for="upload-type-menu"] {
     padding: 10px;
 }
 
-#upload-actions label>img {
+#upload-actions label svg {
     margin-right: 5px;
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
 }
 
 #upload-actions label:hover {

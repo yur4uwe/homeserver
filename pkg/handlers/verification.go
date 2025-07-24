@@ -106,10 +106,10 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		reqCont.PageContent.ModalContent = template.HTML(alert_string)
 		reqCont.RerenderBody = true
 
-		tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
-
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
+
+		tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
 		tmpl.Execute(w, verification)
 	}
 }

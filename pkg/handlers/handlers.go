@@ -95,14 +95,13 @@ func LogoutHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		content, err := parser.ParseTemplateToString("../static/templates/welcome.html", data)
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse welcome template: "+err.Error(), "LogoutHandler:66")
+		reqCont.PageContent.Header = template.HTML(header)
+
+		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+		if err := tmpl.Execute(w, data); err != nil {
+			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LogoutHandler:66")
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		reqCont.PageContent.Header = template.HTML(header)
-		reqCont.PageContent.Content = template.HTML(content)
 	}
 }
