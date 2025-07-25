@@ -84,7 +84,7 @@ label[for="upload-type-menu"] {
     margin-right: 10px;
 }
 
-.file-preview .remove-button {
+.file-preview img {
     cursor: pointer;
     margin-left: 10px;
 }

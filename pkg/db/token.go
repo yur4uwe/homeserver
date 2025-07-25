@@ -47,13 +47,15 @@ func (db *Database) QueryToken(ctx context.Context, token string) (*User, error)
 
 func (db *Database) VerifyToken(ctx context.Context, token string) error {
 	var userName string
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1 AND email_verified = false`, token).Scan(&userName)
+	err := db.pool.QueryRow(ctx, `SELECT username FROM users WHERE auth_token = $1 AND email_verified = false`, token).Scan(&userName)
 	if err != nil {
 		return fmt.Errorf("error verifying token: %v", err)
 	}
 	if userName == "" {
 		return fmt.Errorf("invalid token")
 	}
+
+	fmt.Println("Token verified for user:", userName)
 
 	tag, err := db.pool.Exec(ctx, `UPDATE users SET email_verified = true WHERE username = $1`, userName)
 	if err != nil {

@@ -41,22 +41,17 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			ContentType: header.Header.Get("Content-Type"),
 		}
 
-		// reqCont.LogHistory.Log("File received: " + fileInfo.Name)
-		// reqCont.LogHistory.Log("Relative path: '" + fileInfo.Path + "'")
-		// reqCont.LogHistory.Log("File size: " + strconv.FormatInt(fileInfo.Size, 10) + " bytes")
-		// reqCont.LogHistory.Log("File content type: " + fileInfo.ContentType)
-
-		_, err = connection.SaveFile(r.Context(), fileInfo, &file, reqCont.AuthToken)
+		_, saved_name, err := connection.SaveFile(r.Context(), fileInfo, &file, reqCont.AuthToken)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
 			http.Error(w, "Error saving file", http.StatusInternalServerError)
 			return
 		}
 
-		// Process the file (e.g., save it to the server)
-
 		reqCont.LogHistory.Log("File successfully processed for upload")
-		w.WriteHeader(http.StatusNoContent)
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(saved_name))
 	}
 }
 
@@ -64,16 +59,42 @@ func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestCo
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")
 
-		fileName := r.URL.Query().Get("filename")
-		if fileName == "" {
+		filePath := r.URL.Query().Get("filename")
+		if filePath == "" {
 			reqCont.LogHistory.ErrLog("Missing filename parameter", "DeleteFile")
 			http.Error(w, "Missing filename parameter", http.StatusBadRequest)
 			return
 		}
 
+		if err := connection.DeleteFile(r.Context(), filePath, reqCont.AuthToken); err != nil {
+			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
+			http.Error(w, "Error deleting file", http.StatusInternalServerError)
+			return
+		}
+
 		// Perform the file deletion logic here
-		reqCont.LogHistory.Log("File successfully deleted: " + fileName)
-		w.WriteHeader(http.StatusNoContent)
+		reqCont.LogHistory.Log("File successfully deleted: " + filePath)
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func patchFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont.LogHistory.Log("Patch file request received")
+
+		newFileName := r.URL.Query().Get("new_name")
+		oldFileName := r.URL.Query().Get("old_name")
+
+		newFilePath, err := connection.RenameFile(r.Context(), oldFileName, newFileName, reqCont.AuthToken)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
+			http.Error(w, "Error renaming file", http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.LogHistory.Log("File Renamed successfully: " + oldFileName + " to " + newFileName)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(newFilePath))
 	}
 }
 
@@ -90,6 +111,8 @@ func UploadHandler(connection *db.Database) http.HandlerFunc {
 			downloadFile(connection, reqCont)(w, r)
 		case http.MethodDelete:
 			deleteFile(connection, reqCont)(w, r)
+		case http.MethodPatch:
+			patchFile(connection, reqCont)(w, r)
 		default:
 			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

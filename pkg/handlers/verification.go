@@ -10,7 +10,6 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"gopkg.in/gomail.v2"
@@ -93,22 +92,6 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		}
 
 		verification.Success = true
-
-		go func() {
-			storage_folder := os.Getenv(globals.EnvStoragePath)
-
-			user, err := connection.QueryToken(r.Context(), token)
-			if err != nil {
-				reqCont.LogHistory.ErrLog("Failed to query user by token: "+err.Error(), "VerificationHandler:102")
-				return
-			}
-
-			if err = os.MkdirAll(filepath.Join(storage_folder, user.Username), 0755); err != nil {
-				reqCont.LogHistory.ErrLog("Failed to create user directory: "+err.Error(), "VerificationHandler:107")
-				return
-			}
-		}()
-
 		verification.Icon = template.HTML(parser.LoadIcon("check"))
 
 		alert_string, err := parser.HTMLToString(parser.NewAlert("Your email has been verified successfully!", parser.AlertSuccess))

@@ -1,3 +1,71 @@
+const emptyFormBody = `
+<div class="empty">
+    <svg width="110" height="95" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 12.0001L6.5 9.1001C6.66307 8.77624 6.91112 8.5028 7.21761 8.30904C7.5241 8.11529 7.8775 8.0085 8.24 8.0001H19M19 8.0001C19.3055 7.99956 19.6071 8.06903 19.8816 8.20318C20.1561 8.33733 20.3963 8.53258 20.5836 8.77396C20.7709 9.01534 20.9004 9.29643 20.9622 9.59565C21.024 9.89487 21.0164 10.2043 20.94 10.5001L19.4 16.5001C19.2886 16.9317 19.0362 17.3136 18.6829 17.5854C18.3296 17.8571 17.8957 18.0031 17.45 18.0001H3C2.46957 18.0001 1.96086 17.7894 1.58579 17.4143C1.21071 17.0392 1 16.5305 1 16.0001V3.0001C1 2.46966 1.21071 1.96096 1.58579 1.58588C1.96086 1.21081 2.46957 1.0001 3 1.0001H6.9C7.23449 0.996817 7.56445 1.07748 7.8597 1.23472C8.15495 1.39195 8.40604 1.62072 8.59 1.9001L9.4 3.1001C9.58211 3.37663 9.83003 3.60362 10.1215 3.7607C10.413 3.91778 10.7389 4.00004 11.07 4.0001H17C17.5304 4.0001 18.0391 4.21081 18.4142 4.58588C18.7893 4.96096 19 5.46966 19 6.0001V8.0001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="no-files">No file chosen</p>
+</div>`
+
+/**
+ * @param {HTMLParagraphElement} fileName 
+ * @param {string | null} path 
+ * @returns 
+ */
+function renameFile(fileName, path = null) {
+    let newFileName = prompt('Enter new file name:', fileName.textContent);
+    if (!newFileName || newFileName.trim() === '') {
+        return;
+    }
+
+    if (path) {
+        newFileName = path.split('/').slice(0, -1).join('/') + '/' + newFileName
+        console.log(newFileName);
+    }
+
+    fetch(`/api/v1/upload?new_name=${encodeURIComponent(newFileName)}&old_name=${encodeURIComponent(fileName.textContent)}`, {
+        method: 'PATCH',
+    }).then(response => {
+        if (!response.ok) {
+            alert('Failed to rename file. Please try again.');
+            console.error('Error renaming file:', response.statusText);
+            return;
+        }
+        return response.text();
+    }).then(newFilePath => {
+        newFilePath = newFilePath.split('/').pop();
+
+        fileName.textContent = newFilePath;
+        fileName.title = newFilePath;
+    });
+}
+
+function removeFile(filePreview, fileName, relativePath = null) {
+    let filename = ""
+
+    if (relativePath) {
+        filename = relativePath;
+    } else {
+        filename = fileName;
+    }
+
+    fetch('/api/v1/upload?filename=' + encodeURIComponent(filename), {
+        method: 'DELETE',
+    }).then(response => {
+        if (!response.ok) {
+            console.error('Failed to remove file:', response.statusText);
+        }
+        filePreview.remove();
+
+        const formBody = document.getElementById('form-body');
+
+        if (formBody.children.length === 0) {
+            formBody.innerHTML = emptyFormBody;
+        }
+    }).catch(error => {
+        console.error('Error removing file:', error);
+    });
+}
+
 function addFilePreviewWithProgress(file) {
     const filePreview = document.createElement('div');
     filePreview.classList.add('file-preview');
@@ -5,6 +73,14 @@ function addFilePreviewWithProgress(file) {
     const fileName = document.createElement('p');
     fileName.textContent = file.name;
     fileName.classList.add('file-name');
+
+    const editIcon = document.createElement('img');
+    editIcon.src = '/static/assets/pencil.svg';
+    editIcon.alt = 'Edit';
+    editIcon.style.width = '20px';
+    editIcon.style.height = '20px';
+    editIcon.classList.add('edit-icon');
+    editIcon.onclick = () => renameFile(fileName, file.webkitRelativePath || null);
 
     const fileSize = document.createElement('p');
     fileSize.classList.add('file-size');
@@ -32,43 +108,18 @@ function addFilePreviewWithProgress(file) {
     removeButton.style.width = '20px';
     removeButton.style.height = '20px';
     removeButton.classList.add('remove-button');
-    removeButton.onclick = function () {
-        fetch('/api/v1/upload?filename=' + encodeURIComponent(file.name), {
-            method: 'DELETE',
-        })
-            .then(response => {
-                if (response.ok) {
-                    filePreview.remove();
-
-                    const formBody = document.getElementById('form-body');
-
-                    if (formBody.children.length === 0) {
-                        formBody.innerHTML = `<div class="empty">
-                            <svg width="110" height="95" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5 12.0001L6.5 9.1001C6.66307 8.77624 6.91112 8.5028 7.21761 8.30904C7.5241 8.11529 7.8775 8.0085 8.24 8.0001H19M19 8.0001C19.3055 7.99956 19.6071 8.06903 19.8816 8.20318C20.1561 8.33733 20.3963 8.53258 20.5836 8.77396C20.7709 9.01534 20.9004 9.29643 20.9622 9.59565C21.024 9.89487 21.0164 10.2043 20.94 10.5001L19.4 16.5001C19.2886 16.9317 19.0362 17.3136 18.6829 17.5854C18.3296 17.8571 17.8957 18.0031 17.45 18.0001H3C2.46957 18.0001 1.96086 17.7894 1.58579 17.4143C1.21071 17.0392 1 16.5305 1 16.0001V3.0001C1 2.46966 1.21071 1.96096 1.58579 1.58588C1.96086 1.21081 2.46957 1.0001 3 1.0001H6.9C7.23449 0.996817 7.56445 1.07748 7.8597 1.23472C8.15495 1.39195 8.40604 1.62072 8.59 1.9001L9.4 3.1001C9.58211 3.37663 9.83003 3.60362 10.1215 3.7607C10.413 3.91778 10.7389 4.00004 11.07 4.0001H17C17.5304 4.0001 18.0391 4.21081 18.4142 4.58588C18.7893 4.96096 19 5.46966 19 6.0001V8.0001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <p class="no-files">No file chosen</p>
-                        </div>`;
-                    }
-
-                } else {
-                    console.error('Failed to remove file:', response.statusText);
-                }
-            })
-            .catch(error => {
-                console.error('Error removing file:', error);
-            });
-    };
+    removeButton.onclick = () => removeFile(filePreview, file.name, file.webkitRelativePath || null);
 
     filePreview.appendChild(fileName);
     filePreview.appendChild(fileSize);
     filePreview.appendChild(progressBar);
     filePreview.appendChild(statusMessage);
+    filePreview.appendChild(editIcon);
     filePreview.appendChild(removeButton);
 
     document.getElementById('form-body').appendChild(filePreview);
 
-    return { progressBar, statusMessage };
+    return { fileName, progressBar, statusMessage };
 }
 
 function requestQueue(tasks) {
@@ -96,7 +147,7 @@ function requestQueue(tasks) {
     });
 }
 
-function sendXHRRequest(url, formData, progressBar, statusMessage) {
+function sendXHRRequest(url, formData, fileName, progressBar, statusMessage) {
     return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', url);
@@ -115,6 +166,10 @@ function sendXHRRequest(url, formData, progressBar, statusMessage) {
                 statusMessage.textContent = 'Upload complete!';
                 statusMessage.classList.add('success');
                 progressBar.value = 100;
+                console.log('File uploaded successfully:', xhr.response);
+
+                fileName.textContent = xhr.response;
+
                 resolve();
             } else {
                 statusMessage.textContent = 'Upload failed. Please try again.';
@@ -143,7 +198,7 @@ function fileUploadHook() {
 
     // Create a queue of functions that return promises
     const xhrRequestQueue = Array.from(fileInput.files).map(file => {
-        const { progressBar, statusMessage } = addFilePreviewWithProgress(file);
+        const { fileName, progressBar, statusMessage } = addFilePreviewWithProgress(file);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -152,7 +207,7 @@ function fileUploadHook() {
             formData.append('folder', file.webkitRelativePath); // Include folder path if needed
         }
 
-        return () => sendXHRRequest(form.action, formData, progressBar, statusMessage);
+        return () => sendXHRRequest(form.action, formData, fileName, progressBar, statusMessage);
     });
 
     requestQueue(xhrRequestQueue)
