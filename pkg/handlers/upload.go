@@ -5,7 +5,6 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/templates"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -35,19 +34,24 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			relative_path = ""
 		}
 
-		fileInfo := templates.FileInfo{
+		fileInfo := &templates.FileInfo{
 			Name:        file_name,
 			Path:        relative_path,
 			Size:        header.Size,
 			ContentType: header.Header.Get("Content-Type"),
 		}
 
-		reqCont.LogHistory.Log("File received: " + fileInfo.Name)
-		reqCont.LogHistory.Log("Relative path: '" + fileInfo.Path + "'")
-		reqCont.LogHistory.Log("File size: " + strconv.FormatInt(fileInfo.Size, 10) + " bytes")
-		reqCont.LogHistory.Log("File content type: " + fileInfo.ContentType)
+		// reqCont.LogHistory.Log("File received: " + fileInfo.Name)
+		// reqCont.LogHistory.Log("Relative path: '" + fileInfo.Path + "'")
+		// reqCont.LogHistory.Log("File size: " + strconv.FormatInt(fileInfo.Size, 10) + " bytes")
+		// reqCont.LogHistory.Log("File content type: " + fileInfo.ContentType)
 
-		// connection.SaveFile(r.Context(), &fileInfo, &file, "/", reqCont.AuthToken)
+		_, err = connection.SaveFile(r.Context(), fileInfo, &file, reqCont.AuthToken)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
 
 		// Process the file (e.g., save it to the server)
 

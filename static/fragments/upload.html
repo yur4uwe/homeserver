@@ -1,8 +1,7 @@
 <div class="upload-content-wrapper">
     <div class="upload-wrapper">
         <h1>Upload File</h1>
-        <form id="upload-form" action="/api/v1/upload" method="post" hx-encoding="multipart/form-data"
-            hx-post="/api/v1/upload">
+        <form id="upload-form" action="/api/v1/upload" method="post" hx-encoding="multipart/form-data">
             <div class="form-header">
                 Choose a file to upload
                 <div class="upload-actions">
@@ -18,7 +17,7 @@
                             Upload Files
                         </label>
                         <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
-                            hx-trigger="change" hx-post="/api/v1/upload" multiple>
+                            multiple>
                         <label for="folder">
                             <icon name="folder"></icon>
                             Upload Folder

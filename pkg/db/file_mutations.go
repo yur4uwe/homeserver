@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/templates"
+
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 )
 
 func BuildFilePath(owner string, path string, filename string) string {
@@ -16,18 +18,20 @@ func BuildFilePath(owner string, path string, filename string) string {
 		panic("Storage path must end with a slash")
 	}
 
-	if path != "" && (path[len(path)-1] != '/' || path[0] != '/') {
-		panic("Path must start and end with a slash")
+	var file_path string
+	if path != "" {
+		file_path = fmt.Sprintf("/%s/%s", path, filename)
+	} else {
+		file_path = fmt.Sprintf("/%s", filename)
 	}
 
-	return fmt.Sprintf("%s%s%s%s", os.Getenv(globals.EnvStoragePath), owner, path, filename)
+	return fmt.Sprintf("%s%s%s", storage_path, owner, file_path)
 }
 
 func (db *Database) SaveFile(
 	ctx context.Context,
 	header *templates.FileInfo,
 	file *multipart.File,
-	save_location string,
 	token string,
 ) (int, error) {
 	user, err := db.QueryToken(ctx, token)
@@ -36,7 +40,29 @@ func (db *Database) SaveFile(
 	}
 
 	// Define the file path
-	filePath := BuildFilePath(user.Username, save_location, header.Name)
+	filePath := BuildFilePath(user.Username, header.Path, header.Name)
+
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		return 0, fmt.Errorf("error creating directory: %v", err)
+	}
+
+	// Check if the file already exists
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		// If the file exists, append a number to the filename
+		base := header.Name
+		ext := filepath.Ext(base)
+		name := base[:len(base)-len(ext)]
+		counter := 1
+		for {
+			newName := fmt.Sprintf("%s_%d%s", name, counter, ext)
+			newPath := BuildFilePath(user.Username, header.Path, newName)
+			if _, err := os.Stat(newPath); os.IsNotExist(err) {
+				filePath = newPath
+				break
+			}
+			counter++
+		}
+	}
 
 	// Save the file to disk
 	outFile, err := os.Create(filePath)
@@ -52,14 +78,13 @@ func (db *Database) SaveFile(
 
 	// Insert file metadata into the database
 	var fileID int
-	query := `
-		INSERT INTO user_files (filename, path, owner_id, metadata)
-		VALUES ($1, $2, $3, $4)
+	query := fmt.Sprintf(`
+		INSERT INTO user_files (%s, %s, %s, %s, %s)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id
-	`
-	metadata := fmt.Sprintf(`{"size": %d, "content_type": "%s"}`, header.Size, header.ContentType)
-	fmt.Println("Metadata:", metadata, "query:", query)
-	err = db.pool.QueryRow(ctx, query, header.Name, filePath, user.ID, metadata).Scan(&fileID)
+	`, Filename, Path, OwnerID, Size, ContentType)
+
+	err = db.pool.QueryRow(ctx, query, header.Name, filePath, user.ID, header.Size, header.ContentType).Scan(&fileID)
 	if err != nil {
 		return 0, fmt.Errorf("error inserting file metadata: %v", err)
 	}
@@ -67,10 +92,10 @@ func (db *Database) SaveFile(
 	return fileID, nil
 }
 
-func (db *Database) DeleteFile(ctx context.Context, fileID int) error {
+func (db *Database) DeleteFile(ctx context.Context, filename int) error {
 	// Get the file path from the database
 	var filePath string
-	err := db.pool.QueryRow(ctx, `SELECT path FROM user_files WHERE id = $1`, fileID).Scan(&filePath)
+	err := db.pool.QueryRow(ctx, `SELECT path FROM user_files WHERE filename = $1`, filename).Scan(&filePath)
 	if err != nil {
 		return fmt.Errorf("error retrieving file path: %v", err)
 	}
@@ -81,7 +106,7 @@ func (db *Database) DeleteFile(ctx context.Context, fileID int) error {
 	}
 
 	// Delete the file metadata from the database
-	_, err = db.pool.Exec(ctx, `DELETE FROM user_files WHERE id = $1`, fileID)
+	_, err = db.pool.Exec(ctx, `DELETE FROM user_files WHERE filename = $1`, filename)
 	if err != nil {
 		return fmt.Errorf("error deleting file metadata: %v", err)
 	}
