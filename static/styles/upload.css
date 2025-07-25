@@ -133,6 +133,51 @@ label[for="upload-type-menu"] {
     background-color: #e0e0e0;
 }
 
-/* #upload-actions label:last-of-type {
-    padding-top: 10px;
-} */
+.folder-preview {
+    display: flex;
+    flex-direction: column;
+}
+
+.folder-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #cecece;
+    width: 100%;
+}
+
+.folder-header:hover {
+    background-color: #e0e0e0;
+}
+
+.file-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 0px;
+    overflow-y: hidden;
+
+    transition: max-height 0.3s ease;
+}
+
+.folder-preview.expanded .file-container {
+    max-height: initial;
+}
+
+.folder-name {
+    font-size: 20px;
+    margin: 10px;
+}
+
+.chevron-icon {
+    width: 20px;
+    height: 20px;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.folder-preview.expanded .chevron-icon {
+    transform: rotate(90deg);
+}

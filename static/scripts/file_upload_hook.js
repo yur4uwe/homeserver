@@ -66,7 +66,64 @@ function removeFile(filePreview, fileName, relativePath = null) {
     });
 }
 
+/**
+ * @param {HTMLDivElement} formBody 
+ * @param {string[]} folders 
+ */
+function addFolderPreview(formBody, folders) {
+    folders.forEach((folder, index) => {
+        path = folders.slice(0, index + 1).join('/');
+        if (document.getElementById(path)) {
+            return;
+        }
+
+        const folderPreview = document.createElement('div');
+        folderPreview.classList.add('folder-preview');
+        folderPreview.classList.add('expanded');
+        folderPreview.id = path;
+
+        const folderName = document.createElement('p');
+        folderName.textContent = path;
+        folderName.classList.add('folder-name');
+
+        const chevronIcon = document.createElement('img');
+        chevronIcon.src = '/static/assets/chevron-right.svg';
+        chevronIcon.alt = 'Expand';
+        chevronIcon.classList.add('chevron-icon');
+
+        folderPreview.onclick = () => {
+            if (folderPreview.classList.contains('expanded')) {
+                folderPreview.classList.remove('expanded');
+            } else {
+                folderPreview.classList.add('expanded');
+            }
+        };
+
+        const folderHeader = document.createElement('div');
+        folderHeader.classList.add('folder-header');
+
+        folderHeader.appendChild(folderName);
+        folderHeader.appendChild(chevronIcon);
+
+        const fileContainer = document.createElement('div');
+        fileContainer.classList.add('file-container');
+        fileContainer.id = path + '-files';
+
+        folderPreview.appendChild(folderHeader);
+        folderPreview.appendChild(fileContainer);
+
+        formBody.appendChild(folderPreview);
+    });
+}
+
 function addFilePreviewWithProgress(file) {
+    const formBody = document.getElementById('form-body');
+
+    if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+        const folderPath = file.webkitRelativePath.split('/').slice(0, -1);
+        addFolderPreview(formBody, folderPath);
+    }
+
     const filePreview = document.createElement('div');
     filePreview.classList.add('file-preview');
 
@@ -117,7 +174,13 @@ function addFilePreviewWithProgress(file) {
     filePreview.appendChild(editIcon);
     filePreview.appendChild(removeButton);
 
-    document.getElementById('form-body').appendChild(filePreview);
+    if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+        const fileContainer = file.webkitRelativePath.split('/').slice(0, -1).join('/') + '-files';
+
+        document.getElementById(fileContainer).appendChild(filePreview);
+    } else {
+        formBody.appendChild(filePreview);
+    }
 
     return { fileName, progressBar, statusMessage };
 }
