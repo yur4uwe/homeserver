@@ -145,7 +145,7 @@ label[for="upload-type-menu"] {
     padding: 10px;
     background-color: #f0f0f0;
     border-bottom: 1px solid #cecece;
-    width: 100%;
+    width: calc(100% - 20px);
 }
 
 .folder-header:hover {
@@ -158,11 +158,12 @@ label[for="upload-type-menu"] {
     width: 100%;
     max-height: 0px;
     overflow-y: hidden;
+    box-sizing: border-box;
 
     transition: max-height 0.3s ease;
 }
 
-.folder-preview.expanded .file-container {
+.folder-preview.expanded>.file-container {
     max-height: initial;
 }
 
@@ -178,6 +179,6 @@ label[for="upload-type-menu"] {
     transition: transform 0.3s ease;
 }
 
-.folder-preview.expanded .chevron-icon {
+.folder-preview.expanded>.folder-header>.chevron-icon {
     transform: rotate(90deg);
 }

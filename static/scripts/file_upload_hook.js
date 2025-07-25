@@ -17,12 +17,16 @@ function renameFile(fileName, path = null) {
         return;
     }
 
+    let oldFileName = fileName.textContent;
+
     if (path) {
         newFileName = path.split('/').slice(0, -1).join('/') + '/' + newFileName
         console.log(newFileName);
+        oldFileName = path.split('/').slice(0, -1).join('/') + '/' + oldFileName;
+        console.log(oldFileName);
     }
 
-    fetch(`/api/v1/upload?new_name=${encodeURIComponent(newFileName)}&old_name=${encodeURIComponent(fileName.textContent)}`, {
+    fetch(`/api/v1/upload?new_name=${encodeURIComponent(newFileName)}&old_name=${encodeURIComponent(oldFileName)}`, {
         method: 'PATCH',
     }).then(response => {
         if (!response.ok) {
@@ -39,13 +43,23 @@ function renameFile(fileName, path = null) {
     });
 }
 
-function removeFile(filePreview, fileName, relativePath = null) {
+function removeFile(xhr, filePreview, fileName, relativePath = null) {
+    const cancel = confirm(`Are you sure you want to remove the file "${fileName.textContent}"?`);
+
+    if (!cancel) {
+        return;
+    }
+
     let filename = ""
 
     if (relativePath) {
-        filename = relativePath;
+        filename = relativePath.split('/').slice(0, -1).join('/') + '/' + fileName.textContent;
     } else {
-        filename = fileName;
+        filename = fileName.textContent;
+    }
+
+    if (xhr) {
+        xhr.abort();
     }
 
     fetch('/api/v1/upload?filename=' + encodeURIComponent(filename), {
@@ -66,6 +80,7 @@ function removeFile(filePreview, fileName, relativePath = null) {
     });
 }
 
+
 /**
  * @param {HTMLDivElement} formBody 
  * @param {string[]} folders 
@@ -83,7 +98,7 @@ function addFolderPreview(formBody, folders) {
         folderPreview.id = path;
 
         const folderName = document.createElement('p');
-        folderName.textContent = path;
+        folderName.textContent = folder;
         folderName.classList.add('folder-name');
 
         const chevronIcon = document.createElement('img');
@@ -91,16 +106,17 @@ function addFolderPreview(formBody, folders) {
         chevronIcon.alt = 'Expand';
         chevronIcon.classList.add('chevron-icon');
 
-        folderPreview.onclick = () => {
+
+        const folderHeader = document.createElement('div');
+        folderHeader.classList.add('folder-header');
+
+        folderHeader.onclick = () => {
             if (folderPreview.classList.contains('expanded')) {
                 folderPreview.classList.remove('expanded');
             } else {
                 folderPreview.classList.add('expanded');
             }
         };
-
-        const folderHeader = document.createElement('div');
-        folderHeader.classList.add('folder-header');
 
         folderHeader.appendChild(folderName);
         folderHeader.appendChild(chevronIcon);
@@ -112,7 +128,20 @@ function addFolderPreview(formBody, folders) {
         folderPreview.appendChild(folderHeader);
         folderPreview.appendChild(fileContainer);
 
-        formBody.appendChild(folderPreview);
+        const parentFolders = path.split('/').slice(0, -1);
+
+        if (parentFolders.length > 0) {
+            const parentFolder = parentFolders.join('/');
+            const parentContainer = document.getElementById(parentFolder + '-files');
+            if (parentContainer) {
+                folderPreview.style.marginLeft = parentFolders.length * 20 + 'px';
+                folderPreview.style.width = 'calc(100% - ' + ((parentFolders.length * 20) + 2) + 'px)';
+                folderPreview.style.borderLeft = '1px solid #cecece';
+                parentContainer.appendChild(folderPreview);
+            }
+        } else {
+            formBody.appendChild(folderPreview);
+        }
     });
 }
 
@@ -131,6 +160,7 @@ function addFilePreviewWithProgress(file) {
     fileName.textContent = file.name;
     fileName.classList.add('file-name');
 
+
     const editIcon = document.createElement('img');
     editIcon.src = '/static/assets/pencil.svg';
     editIcon.alt = 'Edit';
@@ -138,6 +168,8 @@ function addFilePreviewWithProgress(file) {
     editIcon.style.height = '20px';
     editIcon.classList.add('edit-icon');
     editIcon.onclick = () => renameFile(fileName, file.webkitRelativePath || null);
+
+
 
     const fileSize = document.createElement('p');
     fileSize.classList.add('file-size');
@@ -159,13 +191,18 @@ function addFilePreviewWithProgress(file) {
     statusMessage.textContent = 'Waiting to upload...';
     statusMessage.classList.add('status-message');
 
+    let associatedXHR = null;
+    const bindXHR = (xhr) => {
+        associatedXHR = xhr;
+    }
+
     const removeButton = document.createElement('img');
     removeButton.src = '/static/assets/trash.svg';
     removeButton.alt = 'Remove';
     removeButton.style.width = '20px';
     removeButton.style.height = '20px';
     removeButton.classList.add('remove-button');
-    removeButton.onclick = () => removeFile(filePreview, file.name, file.webkitRelativePath || null);
+    removeButton.onclick = () => removeFile(associatedXHR, filePreview, fileName, file.webkitRelativePath || null);
 
     filePreview.appendChild(fileName);
     filePreview.appendChild(fileSize);
@@ -182,7 +219,7 @@ function addFilePreviewWithProgress(file) {
         formBody.appendChild(filePreview);
     }
 
-    return { fileName, progressBar, statusMessage };
+    return { fileName, progressBar, statusMessage, bindXHR };
 }
 
 function requestQueue(tasks) {
@@ -210,43 +247,47 @@ function requestQueue(tasks) {
     });
 }
 
-function sendXHRRequest(url, formData, fileName, progressBar, statusMessage) {
-    return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', url);
-
-        // Update progress bar for the current file
-        xhr.upload.addEventListener('progress', function (event) {
-            if (event.lengthComputable) {
-                const percentComplete = (event.loaded / event.total) * 100;
-                progressBar.value = percentComplete;
-            }
-        });
-
-        // Handle upload completion for the current file
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                statusMessage.textContent = 'Upload complete!';
-                statusMessage.classList.add('success');
-                progressBar.value = 100;
-                console.log('File uploaded successfully:', xhr.response);
-
-                fileName.textContent = xhr.response;
-
-                resolve();
-            } else {
-                statusMessage.textContent = 'Upload failed. Please try again.';
-                statusMessage.classList.add('error');
-            }
-        };
-
-        xhr.onerror = function () {
-            statusMessage.textContent = 'An error occurred during the upload.';
-            statusMessage.classList.add('error');
-        };
-
+function sendXHRRequest(xhr, formData) {
+    return new Promise(() => {
         xhr.send(formData);
     });
+}
+
+function buildXHRRequest(url, fileName, progressBar, statusMessage) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+
+    // Update progress bar for the current file
+    xhr.upload.addEventListener('progress', function (event) {
+        if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            progressBar.value = percentComplete;
+        }
+    });
+
+    // Handle upload completion for the current file
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            statusMessage.textContent = 'Upload complete!';
+            statusMessage.classList.add('success');
+            progressBar.value = 100;
+            console.log('File uploaded successfully:', xhr.response);
+
+            fileName.textContent = xhr.response;
+
+            resolve();
+        } else {
+            statusMessage.textContent = 'Upload failed. Please try again.';
+            statusMessage.classList.add('error');
+        }
+    };
+
+    xhr.onerror = function () {
+        statusMessage.textContent = 'An error occurred during the upload.';
+        statusMessage.classList.add('error');
+    };
+
+    return xhr;
 }
 
 function fileUploadHook() {
@@ -261,7 +302,11 @@ function fileUploadHook() {
 
     // Create a queue of functions that return promises
     const xhrRequestQueue = Array.from(fileInput.files).map(file => {
-        const { fileName, progressBar, statusMessage } = addFilePreviewWithProgress(file);
+        const { fileName, progressBar, statusMessage, bindXHR } = addFilePreviewWithProgress(file);
+
+        const xhr = buildXHRRequest(form.action, fileName, progressBar, statusMessage);
+
+        bindXHR(xhr);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -270,7 +315,7 @@ function fileUploadHook() {
             formData.append('folder', file.webkitRelativePath); // Include folder path if needed
         }
 
-        return () => sendXHRRequest(form.action, formData, fileName, progressBar, statusMessage);
+        return () => sendXHRRequest(xhr, formData);
     });
 
     requestQueue(xhrRequestQueue)
