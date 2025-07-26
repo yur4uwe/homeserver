@@ -1,5 +1,7 @@
 package globals
 
+import "strings"
+
 var Pages []string
 var ProtectedPages []string
 
@@ -23,7 +25,7 @@ func FillPages() {
 
 func IsPage(path string) bool {
 	for _, page := range Pages {
-		if page == path {
+		if strings.HasPrefix(path, page) {
 			return true
 		}
 	}
@@ -32,7 +34,7 @@ func IsPage(path string) bool {
 
 func IsProtectedPath(path string) bool {
 	for _, page := range ProtectedPages {
-		if page == path {
+		if strings.HasPrefix(path, page) {
 			return true
 		}
 	}

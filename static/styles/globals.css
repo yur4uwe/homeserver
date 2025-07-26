@@ -4,6 +4,7 @@
     --light-text: #a7a7a7;
     --text-color: #333333;
     --background-color: #ffffff;
+    --light-border: #cecece;
 }
 
 .button {
@@ -32,8 +33,9 @@ body {
 
 fieldset {
     color: var(--secondary-text);
-    border: 1px solid #cecece;
+    border: 1px solid var(--light-border);
     border-radius: 5px;
+    margin: 0px;
 }
 
 fieldset input {

@@ -53,6 +53,15 @@ func Interceptor(next http.Handler) http.Handler {
 
 		next.ServeHTTP(interceptor, r)
 
+		reqCont.LogHistory.Log("[Interceptor] Response status code: " + fmt.Sprint(interceptor.statusCode))
+
+		if interceptor.statusCode >= 400 {
+			reqCont.LogHistory.ErrLog("[Interceptor] Response status code indicates an error: "+fmt.Sprint(interceptor.statusCode), "Interceptor:50")
+
+			http.Error(w, http.StatusText(interceptor.statusCode), interceptor.statusCode)
+			return
+		}
+
 		if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
 			if _, err := w.Write(interceptor.body.Bytes()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
