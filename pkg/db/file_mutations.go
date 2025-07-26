@@ -43,10 +43,11 @@ func PreventDuplicateFileName(filePath string, owner string) (string, error) {
 		if _, err := os.Stat(newPath); os.IsNotExist(err) {
 			return newPath, nil
 		}
-		counter++
 
 		newName = fmt.Sprintf("%s_%d%s", name, counter, ext)
 		newPath = BuildFilePath(owner, dirPath, newName)
+
+		counter++
 	}
 }
 

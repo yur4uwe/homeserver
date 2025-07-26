@@ -1,4 +1,4 @@
-const emptyFormBody = `
+let emptyFormBody = `
 <div class="empty">
     <svg width="110" height="95" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 12.0001L6.5 9.1001C6.66307 8.77624 6.91112 8.5028 7.21761 8.30904C7.5241 8.11529 7.8775 8.0085 8.24 8.0001H19M19 8.0001C19.3055 7.99956 19.6071 8.06903 19.8816 8.20318C20.1561 8.33733 20.3963 8.53258 20.5836 8.77396C20.7709 9.01534 20.9004 9.29643 20.9622 9.59565C21.024 9.89487 21.0164 10.2043 20.94 10.5001L19.4 16.5001C19.2886 16.9317 19.0362 17.3136 18.6829 17.5854C18.3296 17.8571 17.8957 18.0031 17.45 18.0001H3C2.46957 18.0001 1.96086 17.7894 1.58579 17.4143C1.21071 17.0392 1 16.5305 1 16.0001V3.0001C1 2.46966 1.21071 1.96096 1.58579 1.58588C1.96086 1.21081 2.46957 1.0001 3 1.0001H6.9C7.23449 0.996817 7.56445 1.07748 7.8597 1.23472C8.15495 1.39195 8.40604 1.62072 8.59 1.9001L9.4 3.1001C9.58211 3.37663 9.83003 3.60362 10.1215 3.7607C10.413 3.91778 10.7389 4.00004 11.07 4.0001H17C17.5304 4.0001 18.0391 4.21081 18.4142 4.58588C18.7893 4.96096 19 5.46966 19 6.0001V8.0001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -58,9 +58,7 @@ function removeFile(xhr, filePreview, fileName, relativePath = null) {
         filename = fileName.textContent;
     }
 
-    if (xhr) {
-        xhr.abort();
-    }
+    xhr.abort();
 
     fetch('/api/v1/upload?filename=' + encodeURIComponent(filename), {
         method: 'DELETE',
@@ -145,7 +143,7 @@ function addFolderPreview(formBody, folders) {
     });
 }
 
-function addFilePreviewWithProgress(file) {
+function addFilePreviewWithProgress(file, xhr) {
     const formBody = document.getElementById('form-body');
 
     if (file.webkitRelativePath && file.webkitRelativePath !== '') {
@@ -191,18 +189,13 @@ function addFilePreviewWithProgress(file) {
     statusMessage.textContent = 'Waiting to upload...';
     statusMessage.classList.add('status-message');
 
-    let associatedXHR = null;
-    const bindXHR = (xhr) => {
-        associatedXHR = xhr;
-    }
-
     const removeButton = document.createElement('img');
     removeButton.src = '/static/assets/trash.svg';
     removeButton.alt = 'Remove';
     removeButton.style.width = '20px';
     removeButton.style.height = '20px';
     removeButton.classList.add('remove-button');
-    removeButton.onclick = () => removeFile(associatedXHR, filePreview, fileName, file.webkitRelativePath || null);
+    removeButton.onclick = () => removeFile(xhr, filePreview, fileName, file.webkitRelativePath || null);
 
     filePreview.appendChild(fileName);
     filePreview.appendChild(fileSize);
@@ -219,7 +212,7 @@ function addFilePreviewWithProgress(file) {
         formBody.appendChild(filePreview);
     }
 
-    return { fileName, progressBar, statusMessage, bindXHR };
+    return { fileName, progressBar, statusMessage };
 }
 
 function requestQueue(tasks) {
@@ -247,45 +240,45 @@ function requestQueue(tasks) {
     });
 }
 
-function sendXHRRequest(xhr, formData) {
-    return new Promise(() => {
+function sendXHRRequest(xhr, formData, fileName, progressBar, statusMessage) {
+    return new Promise((resolve) => {
+        // Update progress bar for the current file
+        xhr.upload.addEventListener('progress', function (event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                progressBar.value = percentComplete;
+            }
+        });
+
+        // Handle upload completion for the current file
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                statusMessage.textContent = 'Upload complete!';
+                statusMessage.classList.add('success');
+                progressBar.value = 100;
+
+                fileName.textContent = xhr.response;
+
+                resolve();
+            } else {
+                statusMessage.textContent = 'Upload failed. Please try again.';
+                statusMessage.classList.add('error');
+            }
+        };
+
+        xhr.onerror = function () {
+            statusMessage.textContent = 'An error occurred during the upload.';
+            statusMessage.classList.add('error');
+        };
+
         xhr.send(formData);
+
     });
 }
 
-function buildXHRRequest(url, fileName, progressBar, statusMessage) {
+function buildXHRRequest(url) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url);
-
-    // Update progress bar for the current file
-    xhr.upload.addEventListener('progress', function (event) {
-        if (event.lengthComputable) {
-            const percentComplete = (event.loaded / event.total) * 100;
-            progressBar.value = percentComplete;
-        }
-    });
-
-    // Handle upload completion for the current file
-    xhr.onload = function () {
-        if (xhr.status === 200) {
-            statusMessage.textContent = 'Upload complete!';
-            statusMessage.classList.add('success');
-            progressBar.value = 100;
-            console.log('File uploaded successfully:', xhr.response);
-
-            fileName.textContent = xhr.response;
-
-            resolve();
-        } else {
-            statusMessage.textContent = 'Upload failed. Please try again.';
-            statusMessage.classList.add('error');
-        }
-    };
-
-    xhr.onerror = function () {
-        statusMessage.textContent = 'An error occurred during the upload.';
-        statusMessage.classList.add('error');
-    };
 
     return xhr;
 }
@@ -302,20 +295,19 @@ function fileUploadHook() {
 
     // Create a queue of functions that return promises
     const xhrRequestQueue = Array.from(fileInput.files).map(file => {
-        const { fileName, progressBar, statusMessage, bindXHR } = addFilePreviewWithProgress(file);
+        const xhr = buildXHRRequest(form.action);
 
-        const xhr = buildXHRRequest(form.action, fileName, progressBar, statusMessage);
+        const { fileName, progressBar, statusMessage } = addFilePreviewWithProgress(file, xhr);
 
-        bindXHR(xhr);
 
         const formData = new FormData();
         formData.append('file', file);
 
         if (fileInput.id === 'folder') {
-            formData.append('folder', file.webkitRelativePath); // Include folder path if needed
+            formData.append('folder', file.webkitRelativePath);
         }
 
-        return () => sendXHRRequest(xhr, formData);
+        return () => sendXHRRequest(xhr, formData, fileName, progressBar, statusMessage);
     });
 
     requestQueue(xhrRequestQueue)

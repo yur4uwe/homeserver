@@ -9,22 +9,22 @@
                         <div style="width: 25px; height: 25px;">
                             <icon name="upload"></icon>
                         </div>
+                        <input type="checkbox" id="upload-type-menu" hidden checked>
+                        <div id="upload-actions">
+                            <label for="file">
+                                <icon name="file"></icon>
+                                Upload Files
+                            </label>
+                            <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
+                                multiple>
+                            <label for="folder">
+                                <icon name="folder"></icon>
+                                Upload Folder
+                            </label>
+                            <input type="file" id="folder" hx-encoding="multipart/form-data" name="folder" required
+                                hidden webkitdirectory mozdirectory>
+                        </div>
                     </label>
-                    <input type="checkbox" id="upload-type-menu" hidden checked>
-                    <div id="upload-actions">
-                        <label for="file">
-                            <icon name="file"></icon>
-                            Upload Files
-                        </label>
-                        <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
-                            multiple>
-                        <label for="folder">
-                            <icon name="folder"></icon>
-                            Upload Folder
-                        </label>
-                        <input type="file" id="folder" hx-encoding="multipart/form-data" name="folder" required hidden
-                            webkitdirectory mozdirectory>
-                    </div>
                 </div>
             </div>
             <div id="form-body">
