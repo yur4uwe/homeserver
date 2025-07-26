@@ -4,12 +4,13 @@
     --light-text: #a7a7a7;
     --text-color: #333333;
     --background-color: #ffffff;
+    --attention-color: #f0f0f0;
     --light-border: #cecece;
 }
 
 .button {
     padding: 10px 20px;
-    background-color: #cecece;
+    background-color: var(--light-border);
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -58,4 +59,8 @@ input::placeholder {
 
 .error {
     color: red !important;
+}
+
+svg {
+    cursor: pointer;
 }

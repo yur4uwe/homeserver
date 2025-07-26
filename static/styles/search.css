@@ -23,9 +23,9 @@
     flex-direction: column;
     border: 1px solid var(--light-border);
     min-height: 50vh;
-    padding: 10px;
     border-radius: 10px;
     margin-top: 20px;
+    overflow: hidden;
 }
 
 .search-input-container {
@@ -43,4 +43,37 @@
 
 .search-input-container>div {
     margin-right: 5px;
+}
+
+.search-result {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--light-border);
+}
+
+.search-folder {
+    cursor: pointer;
+}
+
+.search-folder:hover {
+    background-color: var(--attention-color);
+}
+
+.search-directory {
+    background-color: var(--attention-color);
+}
+
+.directory-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.directory-header>div {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
 }

@@ -6,8 +6,38 @@ import (
 )
 
 func (db *Database) SearchFiles(ctx context.Context, query string, token string) ([]templates.SearchEntry, error) {
-	// This function should implement the logic to search files in the database
-	// based on the provided query. It should return a slice of SearchEntry.
-	// For now, we will return an empty slice and nil error.
-	return []templates.SearchEntry{}, nil
+	// Example static data for demonstration: only files, no folders
+	results := []templates.SearchEntry{
+		{
+			Name:     "example_file.txt",
+			Path:     "/files/example_file.txt",
+			IsFolder: false,
+			Size:     "1 MB",
+		},
+		{
+			Name:     "photo.jpg",
+			Path:     "/files/photos/photo.jpg",
+			IsFolder: false,
+			Size:     "54 KB",
+		},
+		{
+			Name:     "document.pdf",
+			Path:     "/files/docs/document.pdf",
+			IsFolder: false,
+			Size:     "2 MB",
+		},
+		{
+			Name:     "music.mp3",
+			Path:     "/files/music/music.mp3",
+			IsFolder: false,
+			Size:     "4 MB",
+		},
+		{
+			Name:     "presentation.pptx",
+			Path:     "/files/presentations/presentation.pptx",
+			IsFolder: false,
+			Size:     "1 GB",
+		},
+	}
+	return results, nil
 }

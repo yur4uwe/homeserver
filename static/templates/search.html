@@ -1,4 +1,4 @@
-<div class="search-container">
+<div class="search-container" hx-target="#search-results" hx-select="#search-results" hx-swap="outerHTML">
     <div class="header-container">
         <h2>Find the file you want</h2>
         <fieldset>
@@ -8,22 +8,39 @@
                     <icon name="search"></icon>
                 </div>
                 <input type="text" name="search" id="search-input" placeholder="Search files..." value="{{.Query}}"
-                    hx-get="/api/v1/search" hx-target="#search-results" hx-trigger="keyup changed delay:500ms">
+                    hx-get="/search/" hx-swap="outerHTML" hx-trigger="keyup changed delay:500ms">
             </div>
         </fieldset>
     </div>
     <div id="search-results">
+        {{if .Directory}}
+        <div class="search-result search-directory">
+            <div class="directory-header">
+                <div hx-get="/search/{{.Parent}}?query={{.Query}}">
+                    <icon name="arrow-left"></icon>
+                </div>
+                <span class="directory-name">{{.Directory}}</span>
+            </div>
+            <div style="width: 20px; height: 20px;">
+                <icon name="folder"></icon>
+            </div>
+        </div>
+        {{end}}
         {{range .Entries}}
-        <div class="search-result {{if .IsFolder}} search-folder{{else}} search-file{{end}}" {{if .IsFolder}}
-            hx-get="/api/v1/search?directory={{.Path}}" hx-target="#search-results" hx-select="#search-results"
-            hx-push-url="true" hx-swap="innerHTML" {{else}} {{end}}>
+        <div class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" {{if .IsFolder}}
+            hx-get="/search{{.Path}}/{{.Name}}?query={{$.Query}}" data-folder-path="{{.Path}}/{{.Name}}" {{end}}>
             <span class="file-name">{{.Name}}</span>
-            <span class="file-path">{{.Path}}</span>
-            {{if .IsFolder}}
-            <span class="file-type">Folder</span>
-            {{else}}
-            <span class="file-type">File</span>
-            {{end}}
+            <div style="width: 20px; height: 20px;">
+                {{if .IsFolder}}
+                <icon name="folder"></icon>
+                {{else}}
+                <icon name="file"></icon>
+                {{end}}
+            </div>
+            <span class="file-size">{{.Size}}</span>
+            <div style="width: 20px; height: 20px;">
+                <icon name="more"></icon>
+            </div>
         </div>
         {{end}}
         {{if not .Entries}}
@@ -41,4 +58,5 @@
         {{end}}
         {{end}}
     </div>
+    <script src="/static/scripts/file_search_hook.js"></script>
 </div>

@@ -134,7 +134,7 @@ function addFolderPreview(formBody, folders) {
             if (parentContainer) {
                 folderPreview.style.marginLeft = parentFolders.length * 20 + 'px';
                 folderPreview.style.width = 'calc(100% - ' + ((parentFolders.length * 20) + 2) + 'px)';
-                folderPreview.style.borderLeft = '1px solid #cecece';
+                folderPreview.style.borderLeft = '1px solid var(--light-border';
                 parentContainer.appendChild(folderPreview);
             }
         } else {
@@ -166,8 +166,6 @@ function addFilePreviewWithProgress(file, xhr) {
     editIcon.style.height = '20px';
     editIcon.classList.add('edit-icon');
     editIcon.onclick = () => renameFile(fileName, file.webkitRelativePath || null);
-
-
 
     const fileSize = document.createElement('p');
     fileSize.classList.add('file-size');
@@ -272,7 +270,6 @@ function sendXHRRequest(xhr, formData, fileName, progressBar, statusMessage) {
         };
 
         xhr.send(formData);
-
     });
 }
 
@@ -298,7 +295,6 @@ function fileUploadHook() {
         const xhr = buildXHRRequest(form.action);
 
         const { fileName, progressBar, statusMessage } = addFilePreviewWithProgress(file, xhr);
-
 
         const formData = new FormData();
         formData.append('file', file);
