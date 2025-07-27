@@ -1,12 +1,9 @@
 package setup
 
 import (
-	"context"
 	"fmt"
-	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"os"
-	"strings"
 )
 
 var requiredVars = []string{
@@ -17,10 +14,6 @@ var requiredVars = []string{
 	globals.EnvEmailHost,
 	globals.EnvEmailPort,
 	globals.EnvEmailUser,
-}
-
-var required_db_tables = []string{
-	globals.DBUsersTable,
 }
 
 func CheckVariables() error {
@@ -58,24 +51,5 @@ func CheckStoragePath() error {
 	}
 
 	fmt.Println("Storage path exists:", storagePath)
-	return nil
-}
-
-func CheckDatabaseTables(connection *db.Database) error {
-	ctx := context.Background()
-
-	missing_tables := make([]string, 0, len(required_db_tables))
-	for _, table := range required_db_tables {
-		exists, err := connection.TableExists(ctx, table)
-		if err != nil || !exists {
-			missing_tables = append(missing_tables, table)
-		}
-	}
-
-	if len(missing_tables) > 0 {
-		return fmt.Errorf("missing required database tables: %s", strings.Join(missing_tables, ", "))
-	}
-
-	fmt.Println("All required database tables exist.")
 	return nil
 }

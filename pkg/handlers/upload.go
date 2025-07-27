@@ -12,22 +12,38 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Download file request received")
 
+		// Monitor for cancellation
+		ctx := r.Context()
+		done := make(chan struct{})
+		go func() {
+			<-ctx.Done()
+			reqCont.LogHistory.ErrLog("Request canceled by client", "DownloadFile")
+			done <- struct{}{}
+		}()
+
 		var file_name, relative_path string
 
 		file, header, err := r.FormFile("file")
 		if err != nil {
-			reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
-			http.Error(w, "Error retrieving file", http.StatusBadRequest)
-			return
+			select {
+			case <-done:
+				// Handle cancellation
+				reqCont.LogHistory.ErrLog("Request canceled during file upload", "DownloadFile")
+				http.Error(w, "Request canceled", http.StatusRequestTimeout)
+				return
+			default:
+				// Handle other errors
+				reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
+				http.Error(w, "Error retrieving file", http.StatusBadRequest)
+				return
+			}
 		}
 		defer file.Close()
 
 		relative_path = r.FormValue("folder")
 		if relative_path != "" {
 			path_segments := strings.Split(relative_path, "/")
-
 			relative_path = strings.Join(path_segments[:len(path_segments)-1], "/")
-
 			file_name = path_segments[len(path_segments)-1]
 		} else {
 			file_name = header.Filename
@@ -43,9 +59,18 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 
 		_, saved_name, err := connection.SaveFile(r.Context(), fileInfo, &file, reqCont.AuthToken)
 		if err != nil {
-			reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
+			select {
+			case <-done:
+				// Handle cancellation
+				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile")
+				http.Error(w, "Request canceled", http.StatusRequestTimeout)
+				return
+			default:
+				// Handle other errors
+				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
+				http.Error(w, "Error saving file", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		reqCont.LogHistory.Log("File successfully processed for upload")

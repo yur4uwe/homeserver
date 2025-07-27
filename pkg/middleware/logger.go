@@ -42,9 +42,12 @@ func Logger(next http.Handler) http.Handler {
 		if query != "" {
 			url += "?" + query
 		}
+
 		reqCont.LogHistory.Log(fmt.Sprintf("Request: %s %s", r.Method, url))
 
 		next.ServeHTTP(w, r)
-		reqCont.LogHistory.UnloadLogs()
+		if !strings.HasPrefix(url, "/static/") {
+			reqCont.LogHistory.UnloadLogs()
+		}
 	})
 }

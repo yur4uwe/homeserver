@@ -12,6 +12,20 @@ import (
 	"golang.org/x/net/html"
 )
 
+type WriterWithIcons struct {
+	http.ResponseWriter
+}
+
+func (w *WriterWithIcons) Write(b []byte) (int, error) {
+	if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+		return w.ResponseWriter.Write(b)
+	}
+
+	b = InterceptIcons(b)
+
+	return w.ResponseWriter.Write(b)
+}
+
 type responseInterceptor struct {
 	statusCode int
 	body       *bytes.Buffer
@@ -31,12 +45,6 @@ func (ri *responseInterceptor) WriteHeader(code int) {
 }
 
 func (ri *responseInterceptor) Write(b []byte) (int, error) {
-	if ri.ResponseWriter.Header().Get("Content-Type") != "text/html; charset=utf-8" {
-		return ri.body.Write(b)
-	}
-
-	b = InterceptIcons(b)
-
 	return ri.body.Write(b)
 }
 
@@ -69,13 +77,15 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
+		wr := &WriterWithIcons{ResponseWriter: w}
+
 		if reqCont.ToRestorePage {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
 			tmpl := template.Must(template.ParseFiles("../static/index.html", "../static/layout.html"))
 
 			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 
-			if err := tmpl.ExecuteTemplate(w, "index.html", reqCont.PageContent); err != nil {
+			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
 				http.Error(w, "Failed to render page", http.StatusInternalServerError)
 			}
@@ -91,7 +101,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 
-			if err := tmpl.Execute(w, reqCont.PageContent); err != nil {
+			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
 				http.Error(w, "Failed to render page", http.StatusInternalServerError)
 			}
@@ -105,7 +115,7 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := html.Render(w, body_node); err != nil {
+		if err := html.Render(wr, body_node); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to render HTML response: "+err.Error(), "Interceptor:86")
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return
@@ -116,16 +126,12 @@ func Interceptor(next http.Handler) http.Handler {
 func InterceptIcons(b []byte) []byte {
 	str := string(b)
 
-	// fmt.Printf("Intercepting icons in response: %s\n", str)
-
 	for i := 0; i <= len(str)-7; i++ {
 		if str[i:i+6] != "<icon " {
 			continue
 		}
 
 		cut_str := str[i:]
-
-		// fmt.Printf("Found icon tag at index %d\n", i)
 
 		end_index := strings.Index(cut_str, "</icon>")
 		if end_index == -1 {
@@ -136,9 +142,6 @@ func InterceptIcons(b []byte) []byte {
 		end_index += len("</icon>")
 
 		cut_str = cut_str[:end_index]
-		// fmt.Printf("Cut string for icon tag: %s\n", cut_str)
-
-		// fmt.Printf("End of icon tag found at index %d\n", end_index)
 
 		name_start_idx := strings.Index(cut_str, "\"")
 		if name_start_idx == -1 {
@@ -155,12 +158,11 @@ func InterceptIcons(b []byte) []byte {
 		name_end_idx += name_start_idx + 1
 
 		iconName := cut_str[name_start_idx+1 : name_end_idx]
-		// fmt.Printf("Found icon: %s\n", iconName)
 
 		iconSVG := parser.LoadIcon(iconName)
 
-		str = str[:i] + iconSVG + str[i+end_index:] // 7 is the length of "</icon>"
-		i += len(iconSVG) - 1                       // Adjust index to account for the new length
+		str = str[:i] + iconSVG + str[i+end_index:]
+		i += len(iconSVG) - 1
 	}
 
 	return []byte(str)

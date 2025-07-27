@@ -50,7 +50,7 @@ function removeFile(xhr, filePreview, fileName, relativePath = null) {
         return;
     }
 
-    let filename = ""
+    let filename = "";
 
     if (relativePath) {
         filename = relativePath.split('/').slice(0, -1).join('/') + '/' + fileName.textContent;
@@ -58,7 +58,17 @@ function removeFile(xhr, filePreview, fileName, relativePath = null) {
         filename = fileName.textContent;
     }
 
-    xhr.abort();
+    // If upload is still in progress (readyState < 4 or status === 0), abort and don't send DELETE
+    if (xhr.readyState !== 4 || xhr.status === 0) {
+        xhr.abort();
+        filePreview.remove();
+
+        const formBody = document.getElementById('form-body');
+        if (formBody.children.length === 0) {
+            formBody.innerHTML = emptyFormBody;
+        }
+        return;
+    }
 
     fetch('/api/v1/upload?filename=' + encodeURIComponent(filename), {
         method: 'DELETE',

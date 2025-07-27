@@ -39,5 +39,5 @@ type UserFiles struct {
 	OwnerID     int       `db:"owner_id" json:"owner_id"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
-	Metadata    string    `db:"metadata" json:"metadata"`
+	Metadata    *string   `db:"metadata" json:"metadata"`
 }

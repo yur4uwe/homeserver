@@ -19,6 +19,7 @@ type AdditionalRequestContext struct {
 	ToRestorePage bool
 	RerenderBody  bool
 	AuthToken     string
+	Requester     *db.User
 	PageContent   *templates.LayoutPageData
 }
 
@@ -28,6 +29,7 @@ func contextConstructor() *AdditionalRequestContext {
 		ToRestorePage: false,
 		RerenderBody:  false,
 		AuthToken:     "",
+		Requester:     nil,
 		PageContent: &templates.LayoutPageData{
 			Footer: template.HTML(parser.MustAsString(parser.ParseFile("../static/fragments/footer.html"))),
 		},

@@ -1,24 +1,14 @@
 package globals
 
-import "strings"
+import (
+	"encoding/json"
+	"os"
+	"strings"
+)
 
 var Pages []string
 var ProtectedPages []string
-var AvailableFileTypes = []string{
-	".svg",
-	".txt",
-	".jpg",
-	".png",
-	".pdf",
-	".docx",
-	".xlsx",
-	".pptx",
-	".mp3",
-	".mp4",
-	".avi",
-	".zip",
-	".rar",
-}
+var AvailableFileTypes = []string{}
 
 func FillPages() {
 	Pages = []string{
@@ -36,6 +26,16 @@ func FillPages() {
 		"/upload",
 		"/search",
 	}
+
+	data, err := os.ReadFile("../resources/catalog.json")
+	if err != nil {
+		panic("unable to read catalog.json: " + err.Error())
+	}
+
+	err = json.Unmarshal(data, &AvailableFileTypes)
+	if err != nil {
+		panic("unable to parse catalog.json: " + err.Error())
+	}
 }
 
 func IsPage(path string) bool {
@@ -50,6 +50,15 @@ func IsPage(path string) bool {
 func IsProtectedPath(path string) bool {
 	for _, page := range ProtectedPages {
 		if strings.HasPrefix(path, page) {
+			return true
+		}
+	}
+	return false
+}
+
+func IsFileTypeAvailable(fileType string) bool {
+	for _, availableType := range AvailableFileTypes {
+		if strings.EqualFold(availableType, fileType) {
 			return true
 		}
 	}

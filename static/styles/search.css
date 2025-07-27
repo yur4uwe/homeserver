@@ -22,7 +22,9 @@
 }
 
 .search-input-container {
-    display: table;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
     width: 100%;
 }
 
@@ -105,8 +107,7 @@ tbody td, thead th {
     padding: 5px;
 }
 
-.file-type, .file-actions,
-.file-type>div, .file-actions>div {
+.file-type, .file-actions {
     width: 20px;
     height: 20px;
     object-fit: contain;
@@ -114,4 +115,18 @@ tbody td, thead th {
 
 .file-type>div, .file-actions>div {
     margin: auto;
+}
+
+.folder-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.file-icon {
+    width: 15px;
+    height: 20px;
+}
+
+.empty-results {
+    height: 100%;
 }

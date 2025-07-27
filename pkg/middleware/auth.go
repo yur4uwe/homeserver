@@ -22,9 +22,10 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 			if authToken == nil {
 				reqCont.AuthToken = ""
 			} else {
-				_, err := connection.CheckToken(r.Context(), authToken.Value)
+				user, err := connection.QueryToken(r.Context(), authToken.Value)
 				if err == nil {
 					reqCont.AuthToken = authToken.Value
+					reqCont.Requester = user
 				}
 			}
 

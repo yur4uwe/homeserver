@@ -4,6 +4,11 @@ import (
 	"net/http"
 )
 
+type DBTable struct {
+	Name        string
+	SQLCreation string
+}
+
 const (
 	EnvPort          = "PORT"
 	EnvDbURL         = "DB_URL"
@@ -14,8 +19,36 @@ const (
 	EnvEmailUser     = "EMAIL_USER"
 )
 
-const (
-	DBUsersTable = "users"
+var (
+	DBUsersTable = &DBTable{
+		Name: "users",
+		SQLCreation: `
+			CREATE TABLE IF NOT EXISTS users (
+    			id SERIAL PRIMARY KEY,
+    			username TEXT NOT NULL,
+    			password TEXT NOT NULL,
+    			email TEXT NOT NULL,
+    			auth_token TEXT,
+    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    			email_verified BOOLEAN NOT NULL DEFAULT false
+			);`,
+	}
+	DBFilesTable = &DBTable{
+		Name: "user_files",
+		SQLCreation: `
+			CREATE TABLE IF NOT EXISTS user_files (
+    			id SERIAL PRIMARY KEY,
+    			filename TEXT NOT NULL,
+    			path TEXT NOT NULL,
+    			owner_id INTEGER NOT NULL,
+    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    			metadata JSONB,
+    			size BIGINT NOT NULL DEFAULT 0,
+    			content_type TEXT NOT NULL DEFAULT '',
+    			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    			CONSTRAINT user_files_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id)
+			);`,
+	}
 )
 
 type LoginForm struct {

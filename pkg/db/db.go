@@ -39,6 +39,15 @@ func (db *Database) TableExists(ctx context.Context, tableName string) (bool, er
 	return exists, nil
 }
 
+func (db *Database) CreateTable(ctx context.Context, table *globals.DBTable) error {
+	_, err := db.pool.Exec(ctx, table.SQLCreation)
+	if err != nil {
+		return fmt.Errorf("error creating table %s: %v", table.Name, err)
+	}
+	fmt.Printf("Table %s created successfully.\n", table.Name)
+	return nil
+}
+
 func (db *Database) CreateUser(ctx context.Context, username, email, password string) (int, error) {
 	var userID int
 	err := db.pool.QueryRow(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id`, username, email, password).Scan(&userID)
