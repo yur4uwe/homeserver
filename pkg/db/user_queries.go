@@ -55,7 +55,7 @@ func (db *Database) CheckUserFolder(ctx context.Context, user *User) error {
 	}
 
 	if !exists {
-		folder := &UserFolders{
+		folder := &UserFolder{
 			Name:    user.Username,
 			Parent:  nil,
 			OwnerID: user.ID,

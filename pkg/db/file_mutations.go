@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/templates"
 	"strings"
 
 	"io"
@@ -69,29 +68,24 @@ func BuildFilePath(owner string, relative_path string, filename string) string {
 
 func (db *Database) SaveFile(
 	ctx context.Context,
-	header *templates.FileInfo,
+	header *UserFile,
 	file *multipart.File,
-	token string,
+	requester *User,
 ) (int, string, error) {
-	user, err := db.QueryToken(ctx, token)
-	if err != nil {
-		return 0, "", fmt.Errorf("error querying token: %v", err)
-	}
-
 	// Define the file path
-	filePath := BuildFilePath(user.Username, header.Path, header.Name)
+	filePath := BuildFilePath(requester.Username, header.Path, header.Filename)
 
 	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return 0, "", fmt.Errorf("error creating directory: %v", err)
 	}
 
 	// Check if the file already exists
-	filePath, err = PreventDuplicateFileName(filePath, user.Username)
+	filePath, err := PreventDuplicateFileName(filePath, requester.Username)
 	if err != nil {
 		return 0, "", fmt.Errorf("error preventing duplicate file name: %v", err)
 	}
 
-	header.Name = filepath.Base(filePath)
+	header.Filename = filepath.Base(filePath)
 
 	// Save the file to disk
 	outFile, err := os.Create(filePath)
@@ -105,6 +99,8 @@ func (db *Database) SaveFile(
 		return 0, "", fmt.Errorf("error writing file to disk: %v", err)
 	}
 
+	filePath = strings.ReplaceAll(filePath, "\\", "/")
+
 	// Insert file metadata into the database
 	var fileID int
 	query := fmt.Sprintf(`
@@ -113,12 +109,12 @@ func (db *Database) SaveFile(
 		RETURNING id
 	`, Filename, Path, OwnerID, Size, ContentType)
 
-	err = db.pool.QueryRow(ctx, query, header.Name, filePath, user.ID, header.Size, header.ContentType).Scan(&fileID)
+	err = db.pool.QueryRow(ctx, query, header.Filename, filePath, requester.ID, header.Size, header.ContentType).Scan(&fileID)
 	if err != nil {
 		return 0, "", fmt.Errorf("error inserting file metadata: %v", err)
 	}
 
-	return fileID, header.Name, nil
+	return fileID, header.Filename, nil
 }
 
 func (db *Database) DeleteFile(ctx context.Context, filePath string, owner_token string) error {

@@ -10,8 +10,8 @@ import (
 
 var required_db_tables = []*globals.DBTable{
 	globals.DBUsersTable,
-	globals.DBFilesTable,
 	globals.DBFoldersTable,
+	globals.DBFilesTable,
 }
 
 func CheckDatabaseTables(connection *db.Database) error {
@@ -22,6 +22,8 @@ func CheckDatabaseTables(connection *db.Database) error {
 		if err != nil {
 			return fmt.Errorf("error checking table %s: %v", table.Name, err)
 		}
+
+		fmt.Printf("Checking table %s: exists=%v\n", table.Name, exists)
 
 		if !exists {
 			connection.CreateTable(ctx, table)

@@ -36,6 +36,7 @@ var (
 			"id",
 			"filename",
 			"path",
+			"directory",
 			"size",
 			"content_type",
 			"owner_id",
@@ -45,16 +46,16 @@ var (
 		},
 		SQLCreation: `
 			CREATE TABLE IF NOT EXISTS user_files (
-    			id SERIAL PRIMARY KEY,
-    			filename TEXT NOT NULL,
-    			path TEXT NOT NULL,
-    			owner_id INTEGER NOT NULL,
-    			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    			metadata JSONB,
-    			size BIGINT NOT NULL DEFAULT 0,
-    			content_type TEXT NOT NULL DEFAULT '',
-    			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    			CONSTRAINT user_files_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id)
+				id SERIAL PRIMARY KEY,
+				filename TEXT NOT NULL,
+				path TEXT NOT NULL,
+				directory_id INTEGER NOT NULL REFERENCES user_folders(id),
+				owner_id INTEGER NOT NULL,
+				size BIGINT NOT NULL DEFAULT 0,
+				content_type TEXT NOT NULL DEFAULT '',
+				metadata JSONB,
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 			);
 		`,
 	}
@@ -63,6 +64,7 @@ var (
 		Fields: []string{
 			"id",
 			"name",
+			"path",
 			"parent",
 			"owner_id",
 			"created_at",
@@ -71,6 +73,7 @@ var (
 			CREATE TABLE IF NOT EXISTS user_folders (
 				id SERIAL PRIMARY KEY,
 				name TEXT NOT NULL,
+				path TEXT NOT NULL,
 				parent INTEGER REFERENCES user_folders(id),
 				owner_id INTEGER NOT NULL,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -33,10 +33,11 @@ type User struct {
 	EmailVerified bool      `db:"email_verified" json:"email_verified"`
 }
 
-type UserFiles struct {
+type UserFile struct {
 	ID          int       `db:"id" json:"id"`
 	Filename    string    `db:"filename" json:"filename"`
 	Path        string    `db:"path" json:"path"`
+	Directory   int       `db:"directory" json:"directory"`
 	Size        int64     `db:"size" json:"size"`
 	ContentType string    `db:"content_type" json:"content_type"`
 	OwnerID     int       `db:"owner_id" json:"owner_id"`
@@ -45,9 +46,10 @@ type UserFiles struct {
 	Metadata    *string   `db:"metadata" json:"metadata"`
 }
 
-type UserFolders struct {
+type UserFolder struct {
 	ID        int       `db:"id" json:"id"`
 	Name      string    `db:"name" json:"name"`
+	Path      string    `db:"path" json:"path"`
 	Parent    *int      `db:"parent" json:"parent,omitempty"`
 	OwnerID   int       `db:"owner_id" json:"owner_id"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`

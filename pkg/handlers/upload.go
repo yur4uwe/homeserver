@@ -3,7 +3,6 @@ package handlers
 import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/templates"
 	"net/http"
 	"strings"
 )
@@ -50,14 +49,15 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			relative_path = ""
 		}
 
-		fileInfo := &templates.FileInfo{
-			Name:        file_name,
+		new_file := &db.UserFile{
+			Filename:    file_name,
 			Path:        relative_path,
 			Size:        header.Size,
 			ContentType: header.Header.Get("Content-Type"),
+			OwnerID:     reqCont.Requester.ID,
 		}
 
-		_, saved_name, err := connection.SaveFile(r.Context(), fileInfo, &file, reqCont.AuthToken)
+		_, saved_name, err := connection.SaveFile(r.Context(), new_file, &file, reqCont.Requester)
 		if err != nil {
 			select {
 			case <-done:

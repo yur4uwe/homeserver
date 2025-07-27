@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
-func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFiles, error) {
+func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFile, error) {
 	rows, err := db.pool.Query(
 		ctx,
 		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,
@@ -18,9 +19,9 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFi
 	}
 	defer rows.Close()
 
-	var entries []*UserFiles
+	var entries []*UserFile
 	for rows.Next() {
-		entry := &UserFiles{}
+		entry := &UserFile{}
 		if err := rows.Scan(&entry.ID, &entry.Filename, &entry.Path, &entry.Size, &entry.ContentType, &entry.OwnerID, &entry.CreatedAt, &entry.UpdatedAt, &entry.Metadata); err != nil {
 			return nil, fmt.Errorf("error scanning user file entry: %v", err)
 		}
@@ -30,7 +31,7 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFi
 	return entries, nil
 }
 
-func (db *Database) SearchFiles(ctx context.Context, query string, token string) ([]*UserFiles, error) {
+func (db *Database) SearchFiles(ctx context.Context, query string, token string) ([]*UserFile, error) {
 	user, err := db.QueryToken(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("error querying user by token: %v", err)
@@ -75,4 +76,40 @@ func (db *Database) SearchFiles(ctx context.Context, query string, token string)
 	// 	},
 	// }
 	return files, nil
+}
+
+func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, requester *User) error {
+	if file.Filename == "" || file.Size == 0 || file.ContentType == "" || requester == nil {
+		return fmt.Errorf("invalid file entry data")
+	}
+
+	// Ensure the file path is valid
+	if strings.Contains(file.Path, "..") || strings.Contains(file.Path, "//") || strings.Contains(file.Path, "\\") {
+		return fmt.Errorf("invalid file path: %s", file.Path)
+	}
+
+	relative_path := strings.Split(file.Path, "/")
+	if len(relative_path) == 0 || relative_path[0] == "" {
+		relative_path = []string{requester.Username} // Ensure at least one element
+	}
+
+	id, err := db.QueryFolderByName(ctx, relative_path[len(relative_path)-1], requester.ID, strings.Join(relative_path[:len(relative_path)-1], "/"))
+	if err != nil {
+		return fmt.Errorf("error querying folder by name: %v", err)
+	}
+	file.Directory = id
+
+	var fileID int
+	query := fmt.Sprintf(`
+		INSERT INTO user_files (%s, %s, %s, %s, %s)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
+	`, Filename, Path, OwnerID, Size, ContentType)
+
+	err = db.pool.QueryRow(ctx, query, file.Filename, strings.Join(relative_path, "/"), requester.ID, file.Size, file.ContentType).Scan(&fileID)
+	if err != nil {
+		return fmt.Errorf("error inserting file metadata: %v", err)
+	}
+
+	return nil
 }

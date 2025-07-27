@@ -63,7 +63,7 @@ func HasFolder(folder_name string, entries []templates.SearchEntry) bool {
 	return false
 }
 
-func FilterRelevantEntries(files []*db.UserFiles, directory []string, base []string) []templates.SearchEntry {
+func FilterRelevantEntries(files []*db.UserFile, directory []string, base []string) []templates.SearchEntry {
 	var filteredEntries []templates.SearchEntry
 	for _, file := range files {
 		normalizedPath := strings.TrimPrefix(strings.ReplaceAll(file.Path, "\\", "/"), strings.Join(base, "/")+"/") // Normalize path separators
