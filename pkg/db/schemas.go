@@ -18,6 +18,9 @@ const (
 	OwnerID       = "owner_id"
 	UpdatedAt     = "updated_at"
 	Metadata      = "metadata"
+	FolderID      = "id"
+	FolderName    = "name"
+	FolderParent  = "parent"
 )
 
 type User struct {
@@ -40,4 +43,12 @@ type UserFiles struct {
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
 	Metadata    *string   `db:"metadata" json:"metadata"`
+}
+
+type UserFolders struct {
+	ID        int       `db:"id" json:"id"`
+	Name      string    `db:"name" json:"name"`
+	Parent    *int      `db:"parent" json:"parent,omitempty"`
+	OwnerID   int       `db:"owner_id" json:"owner_id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
