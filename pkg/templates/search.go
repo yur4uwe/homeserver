@@ -3,6 +3,7 @@ package templates
 type SearchEntry struct {
 	Name     string
 	Path     string
+	Type     string // e.g., ".svg", ".txt", ".jpg"
 	IsFolder bool
 	Size     string
 }

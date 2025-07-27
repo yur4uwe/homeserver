@@ -4,6 +4,21 @@ import "strings"
 
 var Pages []string
 var ProtectedPages []string
+var AvailableFileTypes = []string{
+	".svg",
+	".txt",
+	".jpg",
+	".png",
+	".pdf",
+	".docx",
+	".xlsx",
+	".pptx",
+	".mp3",
+	".mp4",
+	".avi",
+	".zip",
+	".rar",
+}
 
 func FillPages() {
 	Pages = []string{

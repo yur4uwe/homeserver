@@ -1,15 +1,10 @@
 .search-container {
-    display: flex;
-    flex-direction: column;
     margin: auto;
     width: 80%;
 }
 
 .header-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    display: table;
     width: 100%;
 }
 
@@ -19,8 +14,6 @@
 }
 
 #search-results {
-    display: flex;
-    flex-direction: column;
     border: 1px solid var(--light-border);
     min-height: 50vh;
     border-radius: 10px;
@@ -29,28 +22,24 @@
 }
 
 .search-input-container {
-    display: flex;
-    align-items: center;
-    flex-direction: row;
+    display: table;
+    width: 100%;
 }
 
 .search-input-container>input {
     border: none;
     outline: none;
-    flex-grow: 1;
+    width: 100%;
     padding: 5px;
 }
 
 .search-input-container>div {
     margin-right: 5px;
+    display: inline-block;
 }
 
 .search-result {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
+    display: table-row;
     border-bottom: 1px solid var(--light-border);
 }
 
@@ -67,13 +56,62 @@
 }
 
 .directory-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+    display: table-caption;
 }
 
 .directory-header>div {
     width: 20px;
     height: 20px;
     margin-right: 10px;
+}
+
+.search-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.search-table th, .search-table td {
+    text-align: left;
+}
+
+.search-table th {
+    font-weight: bold;
+}
+
+.search-table .file-name {
+    font-weight: bold;
+}
+
+.search-table .file-type, .search-table .file-actions {
+    text-align: center;
+}
+
+.search-table .no-results, .search-table .empty {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.search-header th {
+    padding: 5px;
+}
+
+thead tr {
+    background-color: var(--attention-color);
+    border-bottom: 1px solid var(--light-border);
+}
+
+tbody td, thead th {
+    padding: 5px;
+}
+
+.file-type, .file-actions,
+.file-type>div, .file-actions>div {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.file-type>div, .file-actions>div {
+    margin: auto;
 }
