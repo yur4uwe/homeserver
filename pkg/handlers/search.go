@@ -227,7 +227,7 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 
 		var tmpl *template.Template
-		if reqCont.ToRestorePage || reqCont.RerenderBody {
+		if reqCont.ToRestorePage || reqCont.RerenderBody || r.URL.Query().Get("redirect") != "" {
 			tmpl = template.Must(template.ParseFiles("../static/templates/search_base.html", "../static/templates/search_results.html"))
 
 			tmpl.ExecuteTemplate(w, "search_base.html", data)
