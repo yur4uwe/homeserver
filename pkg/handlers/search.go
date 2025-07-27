@@ -16,21 +16,12 @@ import (
 	"homeserver/pkg/templates"
 )
 
-func IsFileInActiveDirectory(directory []string, path []string) bool {
-	if len(path) != len(directory) {
+func IsInActiveDirectory(directory []string, path []string, is_folder bool) bool {
+	if !is_folder && len(path) != len(directory) {
 		return false
 	}
 
-	for i := 0; i < len(directory); i++ {
-		if directory[i] != path[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func IsFolderInActiveDirectory(directory []string, path []string) bool {
-	if len(path) != len(directory)+1 {
+	if is_folder && len(path) != len(directory)+1 {
 		return false
 	}
 
@@ -73,11 +64,6 @@ func HasFolder(folder_name string, entries []templates.SearchEntry) bool {
 }
 
 func FilterRelevantEntries(files []*db.UserFiles, directory []string, base []string) []templates.SearchEntry {
-	// directory = strings.TrimPrefix(directory, "/")
-	fmt.Println("Directory:", strings.Join(directory, "/"))
-	fmt.Println("Directory Length:", len(directory))
-	fmt.Println("Base:", strings.Join(base, "/"))
-
 	var filteredEntries []templates.SearchEntry
 	for _, file := range files {
 		normalizedPath := strings.TrimPrefix(strings.ReplaceAll(file.Path, "\\", "/"), strings.Join(base, "/")+"/") // Normalize path separators
@@ -85,10 +71,6 @@ func FilterRelevantEntries(files []*db.UserFiles, directory []string, base []str
 		relative_path := strings.Split(normalizedPath, "/")
 
 		relative_path = relative_path[:len(relative_path)-1] // Remove the file name
-
-		fmt.Println("Relative Path:", strings.Join(relative_path, "/"))
-		fmt.Println("is file in active directory:", IsFileInActiveDirectory(directory, relative_path))
-		fmt.Println("is folder in active directory:", IsFolderInActiveDirectory(directory, relative_path))
 
 		// is a folder on this level
 		if len(relative_path)-len(directory) > 0 {
@@ -108,7 +90,7 @@ func FilterRelevantEntries(files []*db.UserFiles, directory []string, base []str
 				folder.URIPath += "/"
 			}
 
-			if !IsFolderInActiveDirectory(directory, relative_path) {
+			if !IsInActiveDirectory(directory, relative_path, true) {
 				continue
 			}
 
@@ -136,7 +118,7 @@ func FilterRelevantEntries(files []*db.UserFiles, directory []string, base []str
 			entry.Type = "file"
 		}
 
-		if !IsFileInActiveDirectory(directory, relative_path) {
+		if !IsInActiveDirectory(directory, relative_path, false) {
 			continue
 		}
 		filteredEntries = append(filteredEntries, entry)
@@ -174,10 +156,6 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 			if len(directory) > 0 {
 				directory_string = ParseQuerySlice(directory)
 			}
-
-			fmt.Println("Directory:", directory)
-			fmt.Println("Directory Length:", len(directory))
-			fmt.Println("Directory String:", directory_string)
 
 			w.Header().Set("HX-Push-Url", "/search/"+directory_string)
 		}
@@ -220,8 +198,6 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 			URIDirectory: ParseQuerySlice(directory),
 			Entries:      relevant_entries,
 		}
-
-		reqCont.LogHistory.Log(fmt.Sprintln("+-----+\nData:", data, "\n+-----+"))
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
