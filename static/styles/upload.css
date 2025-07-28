@@ -182,3 +182,20 @@ label[for="upload-type-menu"] {
 .folder-preview.expanded>.folder-header>.chevron-icon {
     transform: rotate(90deg);
 }
+
+.search-result.selected {
+    background-color: #dae8ff;
+}
+
+.search-result.dragging {
+    opacity: 0.5;
+}
+
+.search-result {
+    box-sizing: border-box;
+}
+
+#search-results.drag-over {
+    border: 2px dashed #007bff;
+    background-color: #f0f8ff;
+}

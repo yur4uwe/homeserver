@@ -20,9 +20,9 @@
         </thead>
         <tbody>
             {{range .Entries}}
-            <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" {{if .IsFolder}}
-                hx-get="/search/{{.URIPath}}{{.URIName}}?query={{$.URIQuery}}" data-folder-path="{{.Path}}/{{.Name}}"
-                {{end}}>
+            <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
+                .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}?query={{$.URIQuery}}" hx-trigger="dblclick"
+                data-folder-path="{{.Path}}/{{.Name}}" {{end}}>
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
                         <icon name="{{.Type}}"></icon>

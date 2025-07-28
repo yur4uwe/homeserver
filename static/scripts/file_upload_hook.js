@@ -142,9 +142,9 @@ function addFolderPreview(formBody, folders) {
             const parentFolder = parentFolders.join('/');
             const parentContainer = document.getElementById(parentFolder + '-files');
             if (parentContainer) {
-                folderPreview.style.marginLeft = parentFolders.length * 20 + 'px';
-                folderPreview.style.width = 'calc(100% - ' + ((parentFolders.length * 20) + 2) + 'px)';
-                folderPreview.style.borderLeft = '1px solid var(--light-border';
+                folderPreview.style.marginLeft = '20px';
+                folderPreview.style.width = 'calc(100% - 21px)';
+                folderPreview.style.borderLeft = '1px solid var(--light-border)';
                 parentContainer.appendChild(folderPreview);
             }
         } else {
@@ -213,7 +213,13 @@ function addFilePreviewWithProgress(file, xhr) {
     filePreview.appendChild(removeButton);
 
     if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-        const fileContainer = file.webkitRelativePath.split('/').slice(0, -1).join('/') + '-files';
+        const parentFolders = file.webkitRelativePath.split('/').slice(0, -1);
+
+        const fileContainer = parentFolders.join('/') + '-files';
+
+        filePreview.style.marginLeft = '20px';
+        filePreview.style.width = 'calc(100% - 41px)';
+        filePreview.style.borderLeft = '1px solid var(--light-border)';
 
         document.getElementById(fileContainer).appendChild(filePreview);
     } else {
