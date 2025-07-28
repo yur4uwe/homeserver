@@ -7,6 +7,8 @@ import (
 	"homeserver/pkg/templates"
 	"html/template"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
@@ -21,16 +23,37 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 			authToken, _ := r.Cookie("authTokenHS")
 			if authToken == nil {
 				reqCont.AuthToken = ""
+			} else if authToken.Expires.Before(time.Now()) {
+				reqCont.AuthToken = ""
+
+				http.SetCookie(w, &http.Cookie{
+					Name:     "authTokenHS",
+					Value:    "",
+					Path:     "/",
+					MaxAge:   -1,
+					HttpOnly: true,
+				})
 			} else {
-				user, err := connection.QueryToken(r.Context(), authToken.Value)
-				if err == nil {
-					reqCont.AuthToken = authToken.Value
-					reqCont.Requester = user
-				}
+				reqCont.AuthToken = authToken.Value
+			}
+
+			user, err := connection.QueryToken(r.Context(), reqCont.AuthToken)
+			if err == nil && user != nil {
+				reqCont.Requester = user
+			} else {
+				reqCont.AuthToken = ""
 			}
 
 			if globals.IsProtectedPath(r.URL.Path) && reqCont.AuthToken == "" {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				referer_slice := strings.Split(r.Referer(), "/")
+
+				if len(referer_slice) > 3 && referer_slice[3] != "login" {
+					http.Redirect(w, r, "/login", http.StatusSeeOther)
+					return
+				}
+
+				w.Header().Set("HX-Trigger", "no-swap")
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
