@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"homeserver/pkg/globals"
 	"os"
+	"strings"
 )
 
 // CreateFolderEntry creates a new folder entry in the database and ensures the folder structure exists on disk.
@@ -64,9 +65,9 @@ func (db *Database) QueryFolderByName(ctx context.Context, folderName string, ow
 	).Scan(&folderID)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
-			return 0, fmt.Errorf("folder does not exist: %s", folderName) // Folder does not exist
+			return -1, fmt.Errorf("folder does not exist: %s", folderName)
 		}
-		return 0, fmt.Errorf("error querying folder by name: %v", err)
+		return -1, fmt.Errorf("error querying folder by name: %v", err)
 	}
 	return folderID, nil
 }
@@ -84,4 +85,29 @@ func (db *Database) FolderExists(ctx context.Context, folderName string, ownerID
 		return false, fmt.Errorf("error checking if folder exists: %v", err)
 	}
 	return exists, nil
+}
+
+func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *User) ([]*UserFolder, error) {
+	query := fmt.Sprintf(`
+		SELECT %s, %s, %s, %s, %s, %s
+		FROM user_folders
+		WHERE path = $1 AND owner_id = $2
+	`, FolderID, FolderName, Path, FolderParent, OwnerID, CreatedAt)
+
+	rows, err := db.pool.Query(ctx, query, strings.Join(directory, "/"), requester.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying folders in directory: %v", err)
+	}
+	defer rows.Close()
+
+	var folders []*UserFolder
+	for rows.Next() {
+		folder := &UserFolder{}
+		if err := rows.Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID, &folder.CreatedAt); err != nil {
+			return nil, fmt.Errorf("error scanning folder entry: %v", err)
+		}
+		folders = append(folders, folder)
+	}
+
+	return folders, nil
 }

@@ -6,7 +6,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 
@@ -63,67 +62,50 @@ func HasFolder(folder_name string, entries []templates.SearchEntry) bool {
 	return false
 }
 
-func FilterRelevantEntries(files []*db.UserFile, directory []string, base []string) []templates.SearchEntry {
-	var filteredEntries []templates.SearchEntry
-	for _, file := range files {
-		normalizedPath := strings.TrimPrefix(strings.ReplaceAll(file.Path, "\\", "/"), strings.Join(base, "/")+"/") // Normalize path separators
+func TransformEntries(file_entries []*db.UserFile, folder_entries []*db.UserFolder) []templates.SearchEntry {
+	var entries []templates.SearchEntry
 
-		relative_path := strings.Split(normalizedPath, "/")
-
-		relative_path = relative_path[:len(relative_path)-1] // Remove the file name
-
-		// is a folder on this level
-		if len(relative_path)-len(directory) > 0 {
-			folder := templates.SearchEntry{
-				IsFolder: true,
-				Name:     relative_path[len(relative_path)-1],
-				Path:     strings.Join(relative_path[:len(relative_path)-1], "/"),
-				Type:     "folder",
-				Size:     "",
-			}
-
-			folder.URIName = url.QueryEscape(folder.Name)
-			folder.URIPath = ParseQuerySlice(relative_path[:len(relative_path)-1])
-
-			if folder.Path != "" {
-				folder.Path += "/"
-				folder.URIPath += "/"
-			}
-
-			if !IsInActiveDirectory(directory, relative_path, true) {
-				continue
-			}
-
-			if !HasFolder(folder.Name, filteredEntries) {
-				filteredEntries = append(filteredEntries, folder)
-			}
-			continue
-		}
-
+	for _, file := range file_entries {
 		entry := templates.SearchEntry{
 			Name:     file.Filename,
-			Path:     strings.Join(relative_path, "/"),
+			Path:     strings.Join(strings.Split(file.Path, "/")[1:], "/"),
 			Size:     ParseSize(file.Size),
 			IsFolder: false,
 		}
 
 		entry.URIName = url.QueryEscape(entry.Name)
-		entry.URIPath = ParseQuerySlice(relative_path)
+		entry.URIPath = ParseQuerySlice(strings.Split(entry.Path, "/"))
 
-		extension := strings.Split(file.Filename, ".")[len(strings.Split(file.Filename, "."))-1]
-
+		extension := strings.Split(file.Filename, ".")[1]
 		if globals.IsFileTypeAvailable(extension) {
 			entry.Type = "icons/" + extension
 		} else {
 			entry.Type = "file"
 		}
 
-		if !IsInActiveDirectory(directory, relative_path, false) {
-			continue
-		}
-		filteredEntries = append(filteredEntries, entry)
+		entries = append(entries, entry)
 	}
-	return filteredEntries
+
+	for _, folder := range folder_entries {
+		entry := templates.SearchEntry{
+			Name:     folder.Name,
+			Path:     strings.Join(strings.Split(folder.Path, "/")[1:], "/"),
+			Size:     "",
+			Type:     "folder",
+			IsFolder: true,
+		}
+
+		if entry.Path != "" {
+			entry.URIPath = ParseQuerySlice(strings.Split(entry.Path, "/"))
+			entry.Path += "/"
+			entry.URIPath += "/"
+		}
+		entry.URIName = url.QueryEscape(entry.Name)
+
+		entries = append(entries, entry)
+	}
+
+	return entries
 }
 
 func SearchHandler(connection *db.Database) http.HandlerFunc {
@@ -144,17 +126,19 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		var directory []string
-		if directory_string == "" {
-			directory = []string{}
-		} else {
-			directory = strings.Split(directory_string, "/")
+		directory := []string{reqCont.Requester.Username}
+		if directory_string != "" {
+			directory = append(directory, strings.Split(directory_string, "/")...)
 		}
 
-		if strings.TrimPrefix(r.Header.Get("Referer"), fmt.Sprintf("http://%s/search/", r.Host)) != strings.Join(directory, "/") {
+		remote_path := strings.TrimPrefix(r.Header.Get("Referer"), fmt.Sprintf("http://%s/search/", r.Host))
+
+		directory_without_username := directory[1:]
+
+		if remote_path != strings.Join(directory_without_username, "/") {
 			reqCont.LogHistory.Log(fmt.Sprintf("[Handler] Restoring directory for client: '%s'", directory))
 			if len(directory) > 0 {
-				directory_string = ParseQuerySlice(directory)
+				directory_string = ParseQuerySlice(directory_without_username)
 			}
 
 			w.Header().Set("HX-Push-Url", "/search/"+directory_string)
@@ -162,18 +146,21 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 
 		reqCont.LogHistory.Log(fmt.Sprintf("[Handler] Search API query: '%s', directory: '%s'", query, strings.Join(directory, "/")))
 
-		entries, err := connection.SearchFiles(r.Context(), query, reqCont.AuthToken)
+		file_entries, err := connection.SearchFiles(r.Context(), query, reqCont.Requester, directory)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("[Handler] Search API db query error: "+err.Error(), "SearchHandler:24")
 			http.Error(w, "Internal Server Error: Failed to search files", http.StatusInternalServerError)
 			return
 		}
 
-		relevant_entries := FilterRelevantEntries(
-			entries,
-			directory,
-			strings.Split(os.Getenv(globals.EnvStoragePath)+reqCont.Requester.Username, "/"),
-		)
+		folder_entries, err := connection.ExtractFoldersFromDirectory(r.Context(), directory, reqCont.Requester)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("[Handler] Search API db query error: "+err.Error(), "SearchHandler:24")
+			http.Error(w, "Internal Server Error: Failed to search folders", http.StatusInternalServerError)
+			return
+		}
+
+		relevant_entries := TransformEntries(file_entries, folder_entries)
 
 		sort.Slice(relevant_entries, func(i, j int) bool {
 			if relevant_entries[i].IsFolder && !relevant_entries[j].IsFolder {
@@ -185,17 +172,17 @@ func SearchHandler(connection *db.Database) http.HandlerFunc {
 		})
 
 		var parent []string
-		if len(directory) > 0 {
-			parent = directory[:len(directory)-1]
+		if len(directory_without_username) > 0 {
+			parent = directory_without_username[:len(directory_without_username)-1]
 		}
 
 		data := &templates.SearchPageData{
 			Query:        query,
 			Parent:       strings.Join(parent, "/"),
-			Directory:    strings.Join(directory, "/"),
+			Directory:    strings.Join(directory_without_username, "/"),
 			URIQuery:     url.QueryEscape(query),
 			URIParent:    ParseQuerySlice(parent),
-			URIDirectory: ParseQuerySlice(directory),
+			URIDirectory: ParseQuerySlice(directory_without_username),
 			Entries:      relevant_entries,
 		}
 

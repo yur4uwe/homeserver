@@ -21,7 +21,7 @@
         <tbody>
             {{range .Entries}}
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" {{if .IsFolder}}
-                hx-get="/search/{{.URIPath}}{{.Name}}?query={{$.URIQuery}}" data-folder-path="{{.Path}}{{.Name}}"
+                hx-get="/search/{{.URIPath}}{{.URIName}}?query={{$.URIQuery}}" data-folder-path="{{.Path}}/{{.Name}}"
                 {{end}}>
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">

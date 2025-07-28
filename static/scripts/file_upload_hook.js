@@ -248,6 +248,15 @@ function requestQueue(tasks) {
     });
 }
 
+/**
+ * 
+ * @param {XMLHttpRequest} xhr 
+ * @param {FormData} formData 
+ * @param {HTMLElement} fileName 
+ * @param {HTMLProgressElement} progressBar
+ * @param {HTMLElement} statusMessage 
+ * @returns 
+ */
 function sendXHRRequest(xhr, formData, fileName, progressBar, statusMessage) {
     return new Promise((resolve) => {
         // Update progress bar for the current file
@@ -271,12 +280,23 @@ function sendXHRRequest(xhr, formData, fileName, progressBar, statusMessage) {
             } else {
                 statusMessage.textContent = 'Upload failed. Please try again.';
                 statusMessage.classList.add('error');
+
+                resolve();
             }
         };
 
         xhr.onerror = function () {
             statusMessage.textContent = 'An error occurred during the upload.';
             statusMessage.classList.add('error');
+
+            resolve();
+        };
+
+        xhr.onabort = function () {
+            statusMessage.textContent = 'Upload aborted.';
+            statusMessage.classList.add('warning');
+
+            resolve();
         };
 
         xhr.send(formData);
