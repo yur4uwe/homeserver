@@ -5,6 +5,7 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"strings"
@@ -16,14 +17,14 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 			if !ok {
-				http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+				utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 				return
 			}
 
 			authToken, _ := r.Cookie("authTokenHS")
 			if authToken == nil {
 				reqCont.AuthToken = ""
-			} else if authToken.Expires.Before(time.Now()) {
+			} else if authToken.Expires.After(time.Now()) {
 				reqCont.AuthToken = ""
 
 				http.SetCookie(w, &http.Cookie{
@@ -64,7 +65,7 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 			header, err := parser.ParseTemplateToString("../static/templates/header.html", data)
 			if err != nil {
 				reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "AuthMiddleware:66")
-				http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+				utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 

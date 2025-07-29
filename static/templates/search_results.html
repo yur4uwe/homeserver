@@ -1,19 +1,24 @@
 <div id="search-results">
-    <table class="search-table">
+    <table class="search-table" hx-push-url="true">
         <thead>
             {{if .Directory}}
             <tr>
                 <th class="directory-header">
-                    <div hx-get="/search/{{.Parent}}?query={{.URIQuery}}">
+                    <div hx-get="/search/{{.Parent}}">
                         <icon name="arrow-left"></icon>
                     </div>
                 </th>
-                <th colspan="3">{{.Directory}}</th>
+                <th colspan="{{if .QueryResults}}4{{else}}3{{end}}">
+                    {{.Directory}}
+                </th>
             </tr>
             {{end}}
             <tr class="search-header">
                 <th>Type</th>
                 <th>Name</th>
+                {{if .QueryResults}}
+                <th>Path</th>
+                {{end}}
                 <th>Size</th>
                 <th>Actions</th>
             </tr>
@@ -21,14 +26,17 @@
         <tbody>
             {{range .Entries}}
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
-                .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}?query={{$.URIQuery}}" hx-trigger="dblclick"
-                data-folder-path="{{.Path}}/{{.Name}}" {{end}}>
+                .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}" hx-trigger="dblclick" {{end}}
+                data-path="{{.Path}}" data-name="{{.Name}}">
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
                         <icon name="{{.Type}}"></icon>
                     </div>
                 </td>
                 <td class="file-name">{{.Name}}</td>
+                {{if .QueryResults}}
+                <td class="file-path">{{.Path}}</td>
+                {{end}}
                 <td class="file-size">{{.Size}}</td>
                 <td class="file-actions">
                     <div class="folder-icon">

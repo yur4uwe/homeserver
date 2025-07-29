@@ -3,6 +3,7 @@ package handlers
 import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -28,12 +29,12 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			case <-done:
 				// Handle cancellation
 				reqCont.LogHistory.ErrLog("Request canceled during file upload", "DownloadFile")
-				http.Error(w, "Request canceled", http.StatusRequestTimeout)
+				utils.ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
 				reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
-				http.Error(w, "Error retrieving file", http.StatusBadRequest)
+				utils.ErrorResponse(w, "Error retrieving file", http.StatusBadRequest)
 				return
 			}
 		}
@@ -63,12 +64,12 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			case <-done:
 				// Handle cancellation
 				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile")
-				http.Error(w, "Request canceled", http.StatusRequestTimeout)
+				utils.ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
 				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
-				http.Error(w, "Error saving file", http.StatusInternalServerError)
+				utils.ErrorResponse(w, "Error saving file", http.StatusInternalServerError)
 				return
 			}
 		}
@@ -87,13 +88,13 @@ func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestCo
 		filePath := r.URL.Query().Get("filename")
 		if filePath == "" {
 			reqCont.LogHistory.ErrLog("Missing filename parameter", "DeleteFile")
-			http.Error(w, "Missing filename parameter", http.StatusBadRequest)
+			utils.ErrorResponse(w, "Missing filename parameter", http.StatusBadRequest)
 			return
 		}
 
 		if err := connection.DeleteFile(r.Context(), filePath, reqCont.Requester); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
-			http.Error(w, "Error deleting file", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return
 		}
 
@@ -113,7 +114,7 @@ func patchFile(connection *db.Database, reqCont *middleware.AdditionalRequestCon
 		newFilePath, err := connection.RenameFile(r.Context(), oldFileName, newFileName, reqCont.Requester)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
-			http.Error(w, "Error renaming file", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
 			return
 		}
 
@@ -127,7 +128,7 @@ func UploadHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
-			http.Error(w, "Invalid request context", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
 			return
 		}
 
@@ -140,7 +141,7 @@ func UploadHandler(connection *db.Database) http.HandlerFunc {
 			patchFile(connection, reqCont)(w, r)
 		default:
 			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	}
 }

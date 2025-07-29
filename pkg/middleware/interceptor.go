@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"homeserver/pkg/parser"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
@@ -53,7 +54,7 @@ func Interceptor(next http.Handler) http.Handler {
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in interceptor middleware\n")
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
@@ -66,7 +67,7 @@ func Interceptor(next http.Handler) http.Handler {
 		if interceptor.statusCode >= 400 {
 			reqCont.LogHistory.ErrLog("[Interceptor] Response status code indicates an error: "+fmt.Sprint(interceptor.statusCode), "Interceptor:50")
 
-			http.Error(w, http.StatusText(interceptor.statusCode), interceptor.statusCode)
+			utils.ErrorResponse(w, http.StatusText(interceptor.statusCode), interceptor.statusCode)
 			return
 		}
 
@@ -87,7 +88,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
-				http.Error(w, "Failed to render page", http.StatusInternalServerError)
+				utils.ErrorResponse(w, "Failed to render page", http.StatusInternalServerError)
 			}
 			return
 		}
@@ -103,7 +104,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
-				http.Error(w, "Failed to render page", http.StatusInternalServerError)
+				utils.ErrorResponse(w, "Failed to render page", http.StatusInternalServerError)
 			}
 			return
 		}
@@ -111,13 +112,13 @@ func Interceptor(next http.Handler) http.Handler {
 		body_node, err := parser.ParseString(interceptor.body.String())
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error()+"\nBody: "+interceptor.body.String(), "Interceptor:65")
-			http.Error(w, "Failed to parse response body", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Failed to parse response body", http.StatusInternalServerError)
 			return
 		}
 
 		if err := html.Render(wr, body_node); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to render HTML response: "+err.Error(), "Interceptor:86")
-			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}
 	})

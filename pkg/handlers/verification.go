@@ -7,6 +7,7 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
@@ -57,7 +58,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in VerificationHandler\n")
-			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 
@@ -94,16 +95,9 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		verification.Success = true
 		verification.Icon = template.HTML(parser.LoadIcon("check"))
 
-		alert_string, err := parser.HTMLToString(parser.NewAlert("Your email has been verified successfully!", parser.AlertSuccess))
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to convert alert to string: "+err.Error(), "VerificationHandler:112")
-			verification.Error = "Internal server error"
-			verification.Causes = append(verification.Causes, template.HTML("Failed to render success message"))
-			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
-			return
-		}
+		alert := parser.NewAlert("Verification success", "check", "Your email has been verified successfully!", utils.AlertSuccess)
 
-		reqCont.PageContent.ModalContent = template.HTML(alert_string)
+		reqCont.PageContent.ModalContent = template.HTML(alert)
 		reqCont.RerenderBody = true
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

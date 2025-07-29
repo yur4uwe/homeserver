@@ -7,7 +7,7 @@
                 <div style="width: 25px; height: 25px;">
                     <icon name="search"></icon>
                 </div>
-                <input type="text" name="search" id="search-input" placeholder="Search files..." value="{{.Query}}"
+                <input type="text" name="query" id="search-input" placeholder="Search files..." value="{{.Query}}"
                     hx-get="/search/" hx-swap="outerHTML" hx-trigger="keyup changed delay:500ms">
             </div>
         </fieldset>

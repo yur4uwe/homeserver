@@ -6,6 +6,7 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 )
@@ -40,7 +41,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
-			http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 

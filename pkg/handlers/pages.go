@@ -7,6 +7,7 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+	"homeserver/pkg/utils"
 
 	"golang.org/x/net/html"
 )
@@ -14,7 +15,7 @@ import (
 func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
-		http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 
@@ -34,7 +35,7 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
-		http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 

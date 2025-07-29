@@ -11,13 +11,14 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
+	"homeserver/pkg/utils"
 )
 
 func PageServer(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "Missing request context in PageServer handler\n")
-		http.Error(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 
@@ -39,7 +40,7 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 	content, err := os.ReadFile(file_to_serve)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read file %s: %v\n", file_to_serve, err.Error())
-		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -47,7 +48,7 @@ func PageServer(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(content)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write reponse: %v\n", err.Error())
-		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -60,7 +61,7 @@ func LogoutHandler(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
-			http.Error(w, "Invalid request context", http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
 			return
 		}
 
@@ -68,12 +69,12 @@ func LogoutHandler(connection *db.Database) http.HandlerFunc {
 
 		authToken := reqCont.AuthToken
 		if authToken == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		if err := connection.DeleteToken(r.Context(), authToken); err != nil {
-			http.Error(w, "Failed to delete token: "+err.Error(), http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Failed to delete token: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -91,7 +92,7 @@ func LogoutHandler(connection *db.Database) http.HandlerFunc {
 		header, err := parser.ParseTemplateToString("../static/templates/header.html", data)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LogoutHandler:66")
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -100,7 +101,7 @@ func LogoutHandler(connection *db.Database) http.HandlerFunc {
 		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
 		if err := tmpl.Execute(w, data); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LogoutHandler:66")
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}

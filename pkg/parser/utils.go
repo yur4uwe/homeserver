@@ -2,6 +2,9 @@ package parser
 
 import (
 	"fmt"
+	"homeserver/pkg/templates"
+	"html/template"
+	"os"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -53,43 +56,31 @@ func HTMLToString(node *html.Node) (string, error) {
 
 func LoadIcon(icon_name string) string {
 	icon_path := fmt.Sprintf("../static/assets/%s.svg", icon_name)
-	icon_node, err := ParseFile(icon_path)
+
+	icon_data, err := os.ReadFile(icon_path)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load icon %s: %v\n", icon_name, err))
 	}
 
-	icon_data, err := HTMLToString(icon_node)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to convert icon %s to string: %v\n", icon_name, err))
-	}
-
-	return icon_data
+	return string(icon_data)
 }
 
-const (
-	AlertSuccess = "success"
-	AlertError   = "error"
-	AlertWarning = "warning"
-	AlertInfo    = "info"
-)
+func NewAlert(title, iconName, message, status string) string {
 
-func NewAlert(message string, status string) *html.Node {
-	alertNode := &html.Node{
-		Type: html.ElementNode,
-		Data: "div",
-		Attr: []html.Attribute{
-			{Key: "class", Val: fmt.Sprintf("alert alert-%s", status)},
-			{Key: "hx-get", Val: "/nothing"},
-			{Key: "hx-trigger", Val: "load delay:3s"},
-			{Key: "hx-swap", Val: "delete"},
-		},
+	alert := templates.ModalContent{
+		Title:   title,
+		Icon:    LoadIcon(iconName),
+		Type:    status,
+		Message: message,
 	}
 
-	alertText := &html.Node{
-		Type: html.TextNode,
-		Data: message,
+	tmpl := template.Must(template.ParseFiles("../static/templates/modal.html"))
+
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, alert); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to execute template: %v\n", err)
+		return ""
 	}
 
-	alertNode.AppendChild(alertText)
-	return alertNode
+	return buf.String()
 }
