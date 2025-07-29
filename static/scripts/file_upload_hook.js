@@ -1,4 +1,4 @@
-let emptyFormBody = `
+var emptyFormBody = `
 <div class="empty">
     <svg width="110" height="95" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 12.0001L6.5 9.1001C6.66307 8.77624 6.91112 8.5028 7.21761 8.30904C7.5241 8.11529 7.8775 8.0085 8.24 8.0001H19M19 8.0001C19.3055 7.99956 19.6071 8.06903 19.8816 8.20318C20.1561 8.33733 20.3963 8.53258 20.5836 8.77396C20.7709 9.01534 20.9004 9.29643 20.9622 9.59565C21.024 9.89487 21.0164 10.2043 20.94 10.5001L19.4 16.5001C19.2886 16.9317 19.0362 17.3136 18.6829 17.5854C18.3296 17.8571 17.8957 18.0031 17.45 18.0001H3C2.46957 18.0001 1.96086 17.7894 1.58579 17.4143C1.21071 17.0392 1 16.5305 1 16.0001V3.0001C1 2.46966 1.21071 1.96096 1.58579 1.58588C1.96086 1.21081 2.46957 1.0001 3 1.0001H6.9C7.23449 0.996817 7.56445 1.07748 7.8597 1.23472C8.15495 1.39195 8.40604 1.62072 8.59 1.9001L9.4 3.1001C9.58211 3.37663 9.83003 3.60362 10.1215 3.7607C10.413 3.91778 10.7389 4.00004 11.07 4.0001H17C17.5304 4.0001 18.0391 4.21081 18.4142 4.58588C18.7893 4.96096 19 5.46966 19 6.0001V8.0001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -12,7 +12,7 @@ let emptyFormBody = `
  * @returns 
  */
 function renameFile(fileName, path = null) {
-    let newFileName = prompt('Enter new file name:', fileName.textContent);
+    let newFileName = prompt('Enter new file name:', fileName.textContent.split('.').shift());
     if (!newFileName || newFileName.trim() === '') {
         return;
     }
@@ -26,16 +26,23 @@ function renameFile(fileName, path = null) {
         console.log(oldFileName);
     }
 
-    fetch(`/api/v1/upload?new_name=${encodeURIComponent(newFileName)}&old_name=${encodeURIComponent(oldFileName)}`, {
+    fetch(`/api/v1/upload?new_name=${encodeURIComponent(newFileName + '.' + oldFileName.split('.').pop())}&old_name=${encodeURIComponent(oldFileName)}`, {
         method: 'PATCH',
-    }).then(response => {
+    }).then(async response => {
         if (!response.ok) {
-            alert('Failed to rename file. Please try again.');
-            console.error('Error renaming file:', response.statusText);
+            const modal = document.getElementById('modal-content')
+            modal.innerHTML = await response.text();
+
+            htmx.process(modal);
+
             return;
         }
-        return response.text();
+        return await response.text();
     }).then(newFilePath => {
+        if (!newFilePath) {
+            return;
+        }
+
         newFilePath = newFilePath.split('/').pop();
 
         fileName.textContent = newFilePath;
@@ -43,8 +50,16 @@ function renameFile(fileName, path = null) {
     });
 }
 
+/**
+ * 
+ * @param {XMLHttpRequest} xhr 
+ * @param {HTMLElement} filePreview 
+ * @param {HTMLElement} fileName 
+ * @param {string | null} relativePath 
+ * @returns 
+ */
 function removeFile(xhr, filePreview, fileName, relativePath = null) {
-    const cancel = confirm(`Are you sure you want to remove the file "${fileName.textContent}"?`);
+    const cancel = confirm(`Are you sure you want to remove the file "${fileName.textContent.split('.').shift()}"?`);
 
     if (!cancel) {
         return;
@@ -72,9 +87,9 @@ function removeFile(xhr, filePreview, fileName, relativePath = null) {
 
     fetch('/api/v1/upload?filename=' + encodeURIComponent(filename), {
         method: 'DELETE',
-    }).then(response => {
+    }).then(async response => {
         if (!response.ok) {
-            console.error('Failed to remove file:', response.statusText);
+            document.getElementById('modal-content').innerHTML = await response.text();
         }
         filePreview.remove();
 

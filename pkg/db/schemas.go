@@ -12,6 +12,7 @@ const (
 	CreatedAt     = "created_at"
 	FileID        = "id"
 	Filename      = "filename"
+	Extension     = "extension"
 	Path          = "path"
 	Directory     = "directory_id"
 	Size          = "size"
@@ -35,8 +36,9 @@ type User struct {
 }
 
 type UserFile struct {
-	ID       int    `db:"id" json:"id"`
-	Filename string `db:"filename" json:"filename"`
+	ID        int    `db:"id" json:"id"`
+	Filename  string `db:"filename" json:"filename"`
+	Extension string `db:"extension" json:"extension"`
 	// Path starts from user root folder, e.g. "root/documents/reports"
 	// With no leading or trailing slashes
 	Path string `db:"path" json:"path"`

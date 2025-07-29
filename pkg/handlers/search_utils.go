@@ -42,7 +42,7 @@ func FileToSearchEntry(file *db.UserFile) templates.SearchEntry {
 	entry.URIName = url.QueryEscape(entry.Name)
 	entry.URIPath = ParseQuerySlice(strings.Split(entry.Path, "/"))
 
-	extension := strings.Split(file.Filename, ".")[1]
+	extension := file.Extension
 	if globals.IsFileTypeAvailable(extension) {
 		entry.Type = "icons/" + extension
 	} else {

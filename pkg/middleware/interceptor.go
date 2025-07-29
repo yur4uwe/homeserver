@@ -64,6 +64,10 @@ func Interceptor(next http.Handler) http.Handler {
 
 		reqCont.LogHistory.Log("[Interceptor] Response status code: " + fmt.Sprint(interceptor.statusCode))
 
+		if interceptor.statusCode >= 400 {
+			w.WriteHeader(interceptor.statusCode)
+		}
+
 		if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
 			if _, err := w.Write(interceptor.body.Bytes()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
@@ -81,7 +85,6 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 			} else {
 				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
-				w.WriteHeader(interceptor.statusCode)
 			}
 
 			reqCont.LogHistory.Log("body diff:" + strings.ReplaceAll(interceptor.body.String(), "\n", "\\n"))
@@ -105,7 +108,6 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 			} else {
 				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
-				w.WriteHeader(interceptor.statusCode)
 			}
 
 			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {

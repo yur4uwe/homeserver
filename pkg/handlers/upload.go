@@ -21,7 +21,7 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			done <- struct{}{}
 		}()
 
-		var file_name string
+		var file_sig []string
 
 		file, header, err := r.FormFile("file")
 		if err != nil {
@@ -44,15 +44,16 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 		if path_str != "" {
 			path_segments := strings.Split(path_str, "/")
 			path_str = reqCont.Requester.Username + "/" + strings.Join(path_segments[:len(path_segments)-1], "/")
-			file_name = path_segments[len(path_segments)-1]
+			file_sig = strings.Split(path_segments[len(path_segments)-1], ".")
 		} else {
-			file_name = header.Filename
+			file_sig = strings.Split(header.Filename, ".")
 			path_str = reqCont.Requester.Username
 		}
 
 		new_file := &db.UserFile{
-			Filename:    file_name,
+			Filename:    file_sig[0],
 			Path:        path_str,
+			Extension:   file_sig[1],
 			Size:        header.Size,
 			ContentType: header.Header.Get("Content-Type"),
 			OwnerID:     reqCont.Requester.ID,

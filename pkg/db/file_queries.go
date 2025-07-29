@@ -9,8 +9,8 @@ import (
 func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFile, error) {
 	rows, err := db.pool.Query(
 		ctx,
-		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,
-			FileID, Filename, Path, Size, ContentType, OwnerID, CreatedAt, UpdatedAt, Metadata, OwnerID,
+		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,
+			FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt, UpdatedAt, Metadata, OwnerID,
 		),
 		userID,
 	)
@@ -22,7 +22,7 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFi
 	var entries []*UserFile
 	for rows.Next() {
 		entry := &UserFile{}
-		if err := rows.Scan(&entry.ID, &entry.Filename, &entry.Path, &entry.Size, &entry.ContentType, &entry.OwnerID, &entry.CreatedAt, &entry.UpdatedAt, &entry.Metadata); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.Filename, &entry.Extension, &entry.Path, &entry.Size, &entry.ContentType, &entry.OwnerID, &entry.CreatedAt, &entry.UpdatedAt, &entry.Metadata); err != nil {
 			return nil, fmt.Errorf("error scanning user file entry: %v", err)
 		}
 		entries = append(entries, entry)
@@ -62,12 +62,12 @@ func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, request
 
 	var fileID int
 	query := fmt.Sprintf(`
-		INSERT INTO user_files (%s, %s, %s, %s, %s, %s)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO user_files (%s, %s, %s, %s, %s, %s, %s)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
-	`, Filename, Path, OwnerID, Size, ContentType, Directory)
+	`, Filename, Extension, Path, OwnerID, Size, ContentType, Directory)
 
-	err = db.pool.QueryRow(ctx, query, file.Filename, strings.Join(relative_path, "/"), requester.ID, file.Size, file.ContentType, file.Directory).Scan(&fileID)
+	err = db.pool.QueryRow(ctx, query, file.Filename, file.Extension, strings.Join(relative_path, "/"), requester.ID, file.Size, file.ContentType, file.Directory).Scan(&fileID)
 	if err != nil {
 		return -1, fmt.Errorf("error inserting file metadata: %v", err)
 	}
@@ -77,10 +77,10 @@ func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, request
 
 func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory string, requester *User) ([]*UserFile, error) {
 	query := fmt.Sprintf(`
-		SELECT %s, %s, %s, %s, %s, %s, %s
+		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
 		WHERE path = $1 AND owner_id = $2
-	`, FileID, Filename, Path, Size, ContentType, OwnerID, CreatedAt)
+	`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt)
 
 	rows, err := db.pool.Query(ctx, query, directory, requester.ID)
 	if err != nil {
@@ -91,7 +91,26 @@ func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory str
 	var files []*UserFile
 	for rows.Next() {
 		file := &UserFile{}
-		if err := rows.Scan(&file.ID, &file.Filename, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
+		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
+			return nil, fmt.Errorf("error scanning file entry: %v", err)
+		}
+		files = append(files, file)
+	}
+
+	return files, nil
+}
+
+func (db *Database) ExtractAllFiles(ctx context.Context) ([]*UserFile, error) {
+	rows, err := db.pool.Query(ctx, fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s FROM user_files`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID))
+	if err != nil {
+		return nil, fmt.Errorf("error querying all files: %v", err)
+	}
+	defer rows.Close()
+
+	var files []*UserFile
+	for rows.Next() {
+		file := &UserFile{}
+		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID); err != nil {
 			return nil, fmt.Errorf("error scanning file entry: %v", err)
 		}
 		files = append(files, file)

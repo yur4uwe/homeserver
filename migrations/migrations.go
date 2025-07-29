@@ -18,7 +18,11 @@ func main() {
 	}
 	defer connection.Close()
 
-	if err := CreateFolderStructure(connection); err != nil {
-		log.Fatalf("Error creating folder structure: %v", err)
+	// if err := CreateFolderStructure(connection); err != nil {
+	// 	log.Fatalf("Error creating folder structure: %v", err)
+	// }
+
+	if err := SeparateExtensionsFromNames(connection); err != nil {
+		log.Fatalf("Error separating extensions from names: %v", err)
 	}
 }
