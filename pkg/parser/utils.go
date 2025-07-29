@@ -67,9 +67,9 @@ func LoadIcon(icon_name string) string {
 
 func NewAlert(title, iconName, message, status string) string {
 
-	alert := templates.ModalContent{
+	alert := &templates.ModalContent{
 		Title:   title,
-		Icon:    LoadIcon(iconName),
+		Icon:    template.HTML("<icon name=\"" + iconName + "\"></icon>"),
 		Type:    status,
 		Message: message,
 	}

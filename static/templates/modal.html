@@ -1,6 +1,8 @@
-<div class="alert alert-{{.Type}}" hx-get="/nothing" hx-trigger="load delay:3s" hx-swap="delete">
+<div class="alert alert-{{.Type}}" hx-on::trigger="this.remove()" hx-trigger="load delay:5s">
     <div class="alert-header">
-        <icon name="{{.Icon}}"></icon>
+        <div style="width: 40px; height: 40px;">
+            {{.Icon}}
+        </div>
         <h4>{{.Title}}</h4>
     </div>
     <p>{{.Message}}</p>

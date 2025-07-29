@@ -12,19 +12,18 @@ var AvailableFileTypes = []string{}
 
 func FillPages() {
 	Pages = []string{
-		"/",
 		"/login",
 		"/register",
 		"/verification",
 		"/settings",
 		"/upload",
-		"/search",
+		"/search/",
 	}
 
 	ProtectedPages = []string{
 		"/settings",
 		"/upload",
-		"/search",
+		"/search/",
 	}
 
 	data, err := os.ReadFile("../resources/catalog.json")
@@ -39,6 +38,10 @@ func FillPages() {
 }
 
 func IsPage(path string) bool {
+	if path == "/" {
+		return true
+	}
+
 	for _, page := range Pages {
 		if strings.HasPrefix(path, page) {
 			return true

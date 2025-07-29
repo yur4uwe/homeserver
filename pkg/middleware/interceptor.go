@@ -64,13 +64,6 @@ func Interceptor(next http.Handler) http.Handler {
 
 		reqCont.LogHistory.Log("[Interceptor] Response status code: " + fmt.Sprint(interceptor.statusCode))
 
-		if interceptor.statusCode >= 400 {
-			reqCont.LogHistory.ErrLog("[Interceptor] Response status code indicates an error: "+fmt.Sprint(interceptor.statusCode), "Interceptor:50")
-
-			utils.ErrorResponse(w, http.StatusText(interceptor.statusCode), interceptor.statusCode)
-			return
-		}
-
 		if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
 			if _, err := w.Write(interceptor.body.Bytes()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to write response: %v\n", err.Error())
@@ -84,7 +77,15 @@ func Interceptor(next http.Handler) http.Handler {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
 			tmpl := template.Must(template.ParseFiles("../static/index.html", "../static/layout.html"))
 
-			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+			if interceptor.statusCode < 400 {
+				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+			} else {
+				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
+				w.WriteHeader(interceptor.statusCode)
+			}
+
+			reqCont.LogHistory.Log("body diff:" + strings.ReplaceAll(interceptor.body.String(), "\n", "\\n"))
+			reqCont.LogHistory.Log("Page content: " + string(reqCont.PageContent.Content))
 
 			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
@@ -100,7 +101,12 @@ func Interceptor(next http.Handler) http.Handler {
 
 			tmpl := template.Must(template.ParseFiles("../static/layout.html"))
 
-			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+			if interceptor.statusCode < 400 {
+				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
+			} else {
+				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
+				w.WriteHeader(interceptor.statusCode)
+			}
 
 			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
