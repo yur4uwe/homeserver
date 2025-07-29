@@ -39,8 +39,27 @@
                 {{end}}
                 <td class="file-size">{{.Size}}</td>
                 <td class="file-actions">
-                    <div class="folder-icon">
+                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}" class="folder-icon">
                         <icon name="more"></icon>
+                    </label>
+                    <input type="checkbox" id="actions-menu-toggle-{{.Path}}-{{.Name}}" class="actions-menu-toggle"
+                        hidden>
+                    <div class="actions-menu-content">
+                        <ul>
+                            {{if not .IsFolder}}
+                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=open">
+                                Open
+                            </li>
+                            {{end}}
+                            <li
+                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=rename&is_folder={{.IsFolder}}">
+                                Rename
+                            </li>
+                            <li
+                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=delete&is_folder={{.IsFolder}}">
+                                Delete
+                            </li>
+                        </ul>
                     </div>
                 </td>
             </tr>

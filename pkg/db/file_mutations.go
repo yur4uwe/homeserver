@@ -56,12 +56,23 @@ func (db *Database) SaveFile(
 
 func (db *Database) DeleteFile(ctx context.Context, filePath string, requester *User) error {
 	filename := strings.Split(filepath.Base(filePath), ".")[0]
-	file_ext := strings.Split(filepath.Base(filePath), ".")[1]
+	file_ext := ""
+	splitName := strings.Split(filepath.Base(filePath), ".")
+	if len(splitName) > 1 {
+		file_ext = splitName[1]
+	}
 	if filename == "." || filename == "/" {
 		return fmt.Errorf("invalid file path: %s", filePath)
 	}
 
-	path := BuildFilePath(requester.Username, filename, file_ext)
+	file_path_slice := strings.Split(filePath, "/")
+	if len(file_path_slice) < 2 {
+		return fmt.Errorf("invalid file path: %s", filePath)
+	}
+
+	file_path_slice = file_path_slice[:len(file_path_slice)-1]
+
+	path := BuildFilePath(strings.Join(file_path_slice, "/"), filename, file_ext)
 
 	if err := os.Remove(path); err != nil {
 		return fmt.Errorf("error deleting file from disk: %v", err)

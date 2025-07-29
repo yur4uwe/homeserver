@@ -11,6 +11,29 @@ document.getElementById('search-input').addEventListener('input', function () {
     });
 });
 
+document.addEventListener('click', function (event) {
+    // Find all open action menus
+    const openMenus = document.querySelectorAll('.actions-menu-toggle:checked');
+
+    openMenus.forEach(menu => {
+        const menuContent = menu.nextElementSibling; // The .actions-menu-content element
+
+        // Check if the click happened outside the menu content
+        if (!menuContent.contains(event.target) && event.target !== menu) {
+            menu.checked = false; // Uncheck the checkbox to close the menu
+        }
+    });
+});
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        const openMenus = document.querySelectorAll('.actions-menu-toggle:checked');
+        openMenus.forEach(menu => {
+            menu.checked = false; // Uncheck all open menus
+        });
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
     const searchResults = document.querySelectorAll('.search-result');
 

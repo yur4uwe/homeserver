@@ -39,8 +39,13 @@ func FileToSearchEntry(file *db.UserFile) templates.SearchEntry {
 		IsFolder: false,
 	}
 
+	if entry.Path != "" {
+		entry.URIPath = ParseQuerySlice(strings.Split(entry.Path, "/"))
+		entry.Path += "/"
+		entry.URIPath += "/"
+	}
+
 	entry.URIName = url.QueryEscape(entry.Name)
-	entry.URIPath = ParseQuerySlice(strings.Split(entry.Path, "/"))
 
 	extension := file.Extension
 	if globals.IsFileTypeAvailable(extension) {

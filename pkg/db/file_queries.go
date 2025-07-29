@@ -118,3 +118,20 @@ func (db *Database) ExtractAllFiles(ctx context.Context) ([]*UserFile, error) {
 
 	return files, nil
 }
+
+func (db *Database) GetFile(ctx context.Context, filePath string, requester *User) (*UserFile, error) {
+	query := fmt.Sprintf(`
+		SELECT %s, %s, %s, %s, %s, %s, %s, %s
+		FROM user_files
+		WHERE path = $1 AND owner_id = $2
+	`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt)
+
+	row := db.pool.QueryRow(ctx, query, filePath, requester.ID)
+
+	file := &UserFile{}
+	if err := row.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
+		return nil, fmt.Errorf("error retrieving file: %v", err)
+	}
+
+	return file, nil
+}

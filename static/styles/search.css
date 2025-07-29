@@ -113,13 +113,19 @@ tbody td, thead th {
     object-fit: contain;
 }
 
-.file-type>div, .file-actions>div {
+.file-type>*, .file-actions>* {
     margin: auto;
 }
 
 .folder-icon {
+    display: block;
     width: 20px;
     height: 20px;
+    border-radius: 99px;
+}
+
+.folder-icon:hover {
+    background-color: rgba(0, 0, 0, 0.253);
 }
 
 .file-icon {
@@ -129,4 +135,34 @@ tbody td, thead th {
 
 .empty-results {
     height: 100%;
+}
+
+.actions-menu-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid var(--light-border);
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.actions-menu-toggle:checked~.actions-menu-content {
+    display: block;
+}
+
+.actions-menu-content>ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.actions-menu-content>ul>li {
+    text-align: left;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--light-border);
+}
+
+.actions-menu-content>ul>li:hover {
+    background-color: var(--attention-color);
 }
