@@ -3,14 +3,15 @@ package db
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/schemas"
 	"strings"
 )
 
-func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFile, error) {
+func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*schemas.UserFile, error) {
 	rows, err := db.pool.Query(
 		ctx,
 		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,
-			FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt, UpdatedAt, Metadata, OwnerID,
+			schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt, schemas.UpdatedAt, schemas.Metadata, schemas.OwnerID,
 		),
 		userID,
 	)
@@ -19,9 +20,9 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFi
 	}
 	defer rows.Close()
 
-	var entries []*UserFile
+	var entries []*schemas.UserFile
 	for rows.Next() {
-		entry := &UserFile{}
+		entry := &schemas.UserFile{}
 		if err := rows.Scan(&entry.ID, &entry.Filename, &entry.Extension, &entry.Path, &entry.Size, &entry.ContentType, &entry.OwnerID, &entry.CreatedAt, &entry.UpdatedAt, &entry.Metadata); err != nil {
 			return nil, fmt.Errorf("error scanning user file entry: %v", err)
 		}
@@ -31,7 +32,7 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*UserFi
 	return entries, nil
 }
 
-func (db *Database) SearchFiles(ctx context.Context, query string, requester *User, directory []string) ([]*UserFile, error) {
+func (db *Database) SearchFiles(ctx context.Context, query string, requester *schemas.User, directory []string) ([]*schemas.UserFile, error) {
 	files, err := db.ExtractFilesFromDirectory(ctx, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user files: %v", err)
@@ -40,7 +41,7 @@ func (db *Database) SearchFiles(ctx context.Context, query string, requester *Us
 	return files, nil
 }
 
-func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, requester *User) (int, error) {
+func (db *Database) CreateFileEntry(ctx context.Context, file *schemas.UserFile, requester *schemas.User) (int, error) {
 	if file.Filename == "" || file.Size == 0 || file.ContentType == "" || requester == nil {
 		return -1, fmt.Errorf("invalid file entry data")
 	}
@@ -65,7 +66,7 @@ func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, request
 		INSERT INTO user_files (%s, %s, %s, %s, %s, %s, %s)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
-	`, Filename, Extension, Path, OwnerID, Size, ContentType, Directory)
+	`, schemas.Filename, schemas.Extension, schemas.Path, schemas.OwnerID, schemas.Size, schemas.ContentType, schemas.Directory)
 
 	err = db.pool.QueryRow(ctx, query, file.Filename, file.Extension, strings.Join(relative_path, "/"), requester.ID, file.Size, file.ContentType, file.Directory).Scan(&fileID)
 	if err != nil {
@@ -75,12 +76,12 @@ func (db *Database) CreateFileEntry(ctx context.Context, file *UserFile, request
 	return fileID, nil
 }
 
-func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory string, requester *User) ([]*UserFile, error) {
+func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory string, requester *schemas.User) ([]*schemas.UserFile, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
 		WHERE path = $1 AND owner_id = $2
-	`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt)
+	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt)
 
 	rows, err := db.pool.Query(ctx, query, directory, requester.ID)
 	if err != nil {
@@ -88,9 +89,9 @@ func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory str
 	}
 	defer rows.Close()
 
-	var files []*UserFile
+	var files []*schemas.UserFile
 	for rows.Next() {
-		file := &UserFile{}
+		file := &schemas.UserFile{}
 		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning file entry: %v", err)
 		}
@@ -100,16 +101,21 @@ func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory str
 	return files, nil
 }
 
-func (db *Database) ExtractAllFiles(ctx context.Context) ([]*UserFile, error) {
-	rows, err := db.pool.Query(ctx, fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s FROM user_files`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID))
+func (db *Database) ExtractAllFiles(ctx context.Context) ([]*schemas.UserFile, error) {
+	rows, err := db.pool.Query(
+		ctx,
+		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s FROM user_files`,
+			schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID,
+		),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error querying all files: %v", err)
 	}
 	defer rows.Close()
 
-	var files []*UserFile
+	var files []*schemas.UserFile
 	for rows.Next() {
-		file := &UserFile{}
+		file := &schemas.UserFile{}
 		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID); err != nil {
 			return nil, fmt.Errorf("error scanning file entry: %v", err)
 		}
@@ -119,16 +125,16 @@ func (db *Database) ExtractAllFiles(ctx context.Context) ([]*UserFile, error) {
 	return files, nil
 }
 
-func (db *Database) GetFile(ctx context.Context, filePath string, requester *User) (*UserFile, error) {
+func (db *Database) GetFile(ctx context.Context, filePath string, requester *schemas.User) (*schemas.UserFile, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
 		WHERE path = $1 AND owner_id = $2
-	`, FileID, Filename, Extension, Path, Size, ContentType, OwnerID, CreatedAt)
+	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt)
 
 	row := db.pool.QueryRow(ctx, query, filePath, requester.ID)
 
-	file := &UserFile{}
+	file := &schemas.UserFile{}
 	if err := row.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
 		return nil, fmt.Errorf("error retrieving file: %v", err)
 	}

@@ -57,6 +57,10 @@ var (
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 			);
+
+			CREATE INDEX IF NOT EXISTS user_files_filename_trgm_idx
+        	ON user_files
+        	USING gin (filename gin_trgm_ops);
 		`,
 	}
 	DBFoldersTable = &DBTable{

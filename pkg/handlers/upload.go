@@ -3,8 +3,10 @@ package handlers
 import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/schemas"
 	"homeserver/pkg/utils"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -50,7 +52,7 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			path_str = reqCont.Requester.Username
 		}
 
-		new_file := &db.UserFile{
+		new_file := &schemas.UserFile{
 			Filename:    file_sig[0],
 			Path:        path_str,
 			Extension:   file_sig[1],
@@ -93,7 +95,13 @@ func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestCo
 			return
 		}
 
-		if err := connection.DeleteFile(r.Context(), filePath, reqCont.Requester); err != nil {
+		file := schemas.NewUserFileBuilder().
+			WithPath(filePath).
+			WithOwnerID(reqCont.Requester.ID).
+			WithFilename(strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))).
+			WithExtension(filepath.Ext(filePath)[1:])
+
+		if _, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
 			utils.ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return

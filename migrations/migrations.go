@@ -1,6 +1,7 @@
 package main
 
 import (
+	"homeserver/migrations/database"
 	"homeserver/pkg/db"
 	"log"
 
@@ -18,11 +19,15 @@ func main() {
 	}
 	defer connection.Close()
 
-	// if err := CreateFolderStructure(connection); err != nil {
+	// if err := database.CreateFolderStructure(connection); err != nil {
 	// 	log.Fatalf("Error creating folder structure: %v", err)
 	// }
 
-	if err := SeparateExtensionsFromNames(connection); err != nil {
-		log.Fatalf("Error separating extensions from names: %v", err)
+	// if err := database.SeparateExtensionsFromNames(connection); err != nil {
+	// 	log.Fatalf("Error separating extensions from names: %v", err)
+	// }
+
+	if err := database.ResetFolderStructure(connection); err != nil {
+		log.Fatalf("Error resetting folder structure: %v", err)
 	}
 }

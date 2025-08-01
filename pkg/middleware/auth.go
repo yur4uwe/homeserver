@@ -8,7 +8,6 @@ import (
 	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -46,15 +45,7 @@ func AuthMiddleware(connection *db.Database) func(http.Handler) http.Handler {
 			}
 
 			if globals.IsProtectedPath(r.URL.Path) && reqCont.AuthToken == "" {
-				referer_slice := strings.Split(r.Referer(), "/")
-
-				if len(referer_slice) > 3 && referer_slice[3] != "login" {
-					http.Redirect(w, r, "/login", http.StatusSeeOther)
-					return
-				}
-
-				w.Header().Set("HX-Trigger", "no-swap")
-				w.WriteHeader(http.StatusUnauthorized)
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
 

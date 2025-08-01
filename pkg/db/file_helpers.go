@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
 	"os"
 	"strings"
-
-	"homeserver/pkg/globals"
 )
 
 func EnsureFolderExists(ctx context.Context, connection *Database, relativePath []string, ownerID int) error {
@@ -33,7 +33,7 @@ func EnsureFolderExists(ctx context.Context, connection *Database, relativePath 
 			parentID = &id
 		}
 
-		new_folder := &UserFolder{
+		new_folder := &schemas.UserFolder{
 			Name:    segment,
 			Parent:  parentID,
 			Path:    strings.Join(relativePath[:i], "/"),
@@ -69,7 +69,7 @@ func PreventDuplicateFileName(filePath string) (string, error) {
 	counter := 1
 
 	newName := name
-	newPath := BuildFilePath(relativePathStr, newName, ext)
+	newPath := globals.BuildFilePath(relativePathStr, newName, ext)
 
 	for {
 		if _, err := os.Stat(newPath); os.IsNotExist(err) {
@@ -77,24 +77,8 @@ func PreventDuplicateFileName(filePath string) (string, error) {
 		}
 
 		newName = fmt.Sprintf("%s_%d", name, counter)
-		newPath = BuildFilePath(relativePathStr, newName, ext)
+		newPath = globals.BuildFilePath(relativePathStr, newName, ext)
 
 		counter++
 	}
-}
-
-func BuildFilePath(relative_path, filename, extension string) string {
-	storage_path := os.Getenv(globals.EnvStoragePath)
-	if storage_path[len(storage_path)-1] != '/' {
-		panic("Storage path must end with a slash")
-	}
-
-	var file_path string
-	if relative_path != "" {
-		file_path = fmt.Sprintf("%s/%s", relative_path, filename)
-	} else {
-		file_path = filename
-	}
-
-	return fmt.Sprintf("%s%s.%s", storage_path, file_path, extension)
 }

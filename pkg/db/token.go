@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
 	"os"
 )
 
@@ -24,8 +25,8 @@ func (db *Database) CreateToken(ctx context.Context, userID int, token string) e
 	return nil
 }
 
-func (db *Database) QueryToken(ctx context.Context, token string) (*User, error) {
-	var user User
+func (db *Database) QueryToken(ctx context.Context, token string) (*schemas.User, error) {
+	var user schemas.User
 	err := db.pool.QueryRow(ctx, `
         SELECT id, username, password, email, auth_token, created_at, email_verified
         FROM users

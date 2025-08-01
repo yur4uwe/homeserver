@@ -2,6 +2,7 @@ package globals
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -66,4 +67,20 @@ func IsFileTypeAvailable(fileType string) bool {
 		}
 	}
 	return false
+}
+
+func BuildFilePath(relative_path, filename, extension string) string {
+	storage_path := os.Getenv(EnvStoragePath)
+	if storage_path[len(storage_path)-1] != '/' {
+		panic("Storage path must end with a slash")
+	}
+
+	var file_path string
+	if relative_path != "" {
+		file_path = fmt.Sprintf("%s/%s", relative_path, filename)
+	} else {
+		file_path = filename
+	}
+
+	return fmt.Sprintf("%s%s.%s", storage_path, file_path, extension)
 }

@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
 	"strings"
 
 	"io"
@@ -13,11 +15,11 @@ import (
 
 func (db *Database) SaveFile(
 	ctx context.Context,
-	header *UserFile,
+	header *schemas.UserFile,
 	file *multipart.File,
-	requester *User,
+	requester *schemas.User,
 ) (int, string, error) {
-	filePath := BuildFilePath(header.Path, header.Filename, header.Extension)
+	filePath := globals.BuildFilePath(header.Path, header.Filename, header.Extension)
 
 	path_slice := strings.Split(header.Path, "/")
 	if err := EnsureFolderExists(ctx, db, path_slice, requester.ID); err != nil {
@@ -54,47 +56,40 @@ func (db *Database) SaveFile(
 	return fileID, header.Filename + "." + header.Extension, nil
 }
 
-func (db *Database) DeleteFile(ctx context.Context, filePath string, requester *User) error {
-	filename := strings.Split(filepath.Base(filePath), ".")[0]
-	file_ext := ""
-	splitName := strings.Split(filepath.Base(filePath), ".")
-	if len(splitName) > 1 {
-		file_ext = splitName[1]
-	}
-	if filename == "." || filename == "/" {
-		return fmt.Errorf("invalid file path: %s", filePath)
-	}
+func (db *Database) DeleteFile(ctx context.Context, file *schemas.UserFile, user_name string) (int, error) {
+	file.HasValidFilename().HasValidExtension().HasValidPath(user_name).HasValidOwnerID()
 
-	file_path_slice := strings.Split(filePath, "/")
+	file_path_slice := strings.Split(file.Path, "/")
 	if len(file_path_slice) < 2 {
-		return fmt.Errorf("invalid file path: %s", filePath)
+		return 0, fmt.Errorf("invalid file path: %s", file.Path)
 	}
 
 	file_path_slice = file_path_slice[:len(file_path_slice)-1]
 
-	path := BuildFilePath(strings.Join(file_path_slice, "/"), filename, file_ext)
+	path := globals.BuildFilePath(strings.Join(file_path_slice, "/"), file.Filename, file.Extension)
 
 	if err := os.Remove(path); err != nil {
-		return fmt.Errorf("error deleting file from disk: %v", err)
+		return 0, fmt.Errorf("error deleting file from disk: %v", err)
 	}
 
-	tag, err := db.pool.Exec(ctx, `DELETE FROM user_files WHERE filename = $1 AND owner_id = $2`, filename, requester.ID)
+	var id int
+	err := db.pool.QueryRow(
+		ctx,
+		`DELETE FROM user_files WHERE filename = $1 AND owner_id = $2 RETURNING id`,
+		file.Filename, file.OwnerID,
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("error deleting file metadata: %v", err)
+		return 0, fmt.Errorf("error deleting file metadata: %v", err)
 	}
 
-	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("no file found to delete: %s", filePath)
-	}
-
-	return nil
+	return id, nil
 }
 
-func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *User) (string, error) {
+func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *schemas.User) (string, error) {
 	oldRelFilePath := requester.Username + "/" + oldPath
 	newRelFilePath := requester.Username + "/" + newPath
 
-	oldAbsFilePath := BuildFilePath(requester.Username, strings.Split(oldPath, ".")[0], strings.Split(oldPath, ".")[1])
+	oldAbsFilePath := globals.BuildFilePath(requester.Username, strings.Split(oldPath, ".")[0], strings.Split(oldPath, ".")[1])
 
 	newAbsFilePath, err := PreventDuplicateFileName(newRelFilePath)
 	if err != nil {
@@ -130,7 +125,7 @@ func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath stri
 	return newRelFilePath, nil
 }
 
-func (db *Database) UpdateFileEntry(ctx context.Context, file *UserFile) error {
+func (db *Database) UpdateFileEntry(ctx context.Context, file *schemas.UserFile) error {
 	if file.Filename == "" || file.Size == 0 || file.ContentType == "" {
 		return fmt.Errorf("invalid file entry data")
 	}

@@ -87,9 +87,6 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
 			}
 
-			reqCont.LogHistory.Log("body diff:" + strings.ReplaceAll(interceptor.body.String(), "\n", "\\n"))
-			reqCont.LogHistory.Log("Page content: " + string(reqCont.PageContent.Content))
-
 			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
 				utils.ErrorResponse(w, "Failed to render page", http.StatusInternalServerError)

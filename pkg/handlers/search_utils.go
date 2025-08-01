@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
 	"homeserver/pkg/templates"
 	"math"
 	"net/url"
@@ -31,12 +31,14 @@ func ParseSize(size int64) string {
 	return fmt.Sprintf("%.2f %s", size_float/math.Pow(1024, float64(i)), size_units[i])
 }
 
-func FileToSearchEntry(file *db.UserFile) templates.SearchEntry {
+func FileToSearchEntry(file *schemas.UserFile) templates.SearchEntry {
 	entry := templates.SearchEntry{
-		Name:     file.Filename,
-		Path:     strings.Join(strings.Split(file.Path, "/")[1:], "/"),
-		Size:     ParseSize(file.Size),
-		IsFolder: false,
+		ID:        file.ID,
+		Name:      file.Filename,
+		Path:      strings.Join(strings.Split(file.Path, "/")[1:], "/"),
+		Size:      ParseSize(file.Size),
+		Extension: "." + file.Extension,
+		IsFolder:  false,
 	}
 
 	if entry.Path != "" {
@@ -57,8 +59,9 @@ func FileToSearchEntry(file *db.UserFile) templates.SearchEntry {
 	return entry
 }
 
-func FolderToSearchEntry(folder *db.UserFolder) templates.SearchEntry {
+func FolderToSearchEntry(folder *schemas.UserFolder) templates.SearchEntry {
 	entry := templates.SearchEntry{
+		ID:       folder.ID,
 		Name:     folder.Name,
 		Path:     strings.Join(strings.Split(folder.Path, "/")[1:], "/"),
 		Size:     "",
@@ -76,7 +79,7 @@ func FolderToSearchEntry(folder *db.UserFolder) templates.SearchEntry {
 	return entry
 }
 
-func TransformEntries(file_entries []*db.UserFile, folder_entries []*db.UserFolder) []templates.SearchEntry {
+func TransformEntries(file_entries []*schemas.UserFile, folder_entries []*schemas.UserFolder) []templates.SearchEntry {
 	var entries []templates.SearchEntry
 
 	for _, file := range file_entries {

@@ -1,10 +1,11 @@
-package main
+package database
 
 import (
 	"context"
 	"fmt"
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
 	"os"
 	"strings"
 )
@@ -42,7 +43,7 @@ func CreateFolderStructure(connection *db.Database) error {
 					parentID = &id
 				}
 
-				folder := &db.UserFolder{
+				folder := &schemas.UserFolder{
 					Name:    folder_name,
 					Parent:  parentID,
 					Path:    strings.Join(path_to_file[:i], "/"),

@@ -27,36 +27,39 @@
             {{range .Entries}}
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
                 .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}" hx-trigger="dblclick" {{end}}
-                data-path="{{.Path}}" data-name="{{.Name}}">
+                data-path="{{.Path}}" data-name="{{.Name}}" hx-on::delete-success-{{if
+                .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="alert('Deleted {{if .IsFolder}}folder{{else}}file{{end}}: {{.Name}}{{if .Extension}}{{.Extension}}{{end}}');">
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
                         <icon name="{{.Type}}"></icon>
                     </div>
                 </td>
-                <td class="file-name">{{.Name}}</td>
+                <td class="file-name">
+                    {{.Name}}{{if .Extension}}{{.Extension}}{{end}}
+                </td>
                 {{if $.QueryResults}}
                 <td class="file-path">{{.Path}}</td>
                 {{end}}
                 <td class="file-size">{{.Size}}</td>
                 <td class="file-actions">
-                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}" class="folder-icon">
+                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}" class="folder-icon">
                         <icon name="more"></icon>
                     </label>
-                    <input type="checkbox" id="actions-menu-toggle-{{.Path}}-{{.Name}}" class="actions-menu-toggle"
-                        hidden>
-                    <div class="actions-menu-content">
+                    <input type="checkbox" id="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}"
+                        class="actions-menu-toggle" hidden>
+                    <div class="actions-menu-content" hx-push-url="false">
                         <ul>
                             {{if not .IsFolder}}
-                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=open">
+                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=open">
                                 Open
                             </li>
                             {{end}}
                             <li
-                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=rename&is_folder={{.IsFolder}}">
+                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=rename&is_folder={{.IsFolder}}">
                                 Rename
                             </li>
                             <li
-                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}?action=delete&is_folder={{.IsFolder}}">
+                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=delete&is_folder={{.IsFolder}}">
                                 Delete
                             </li>
                         </ul>
