@@ -3,32 +3,13 @@ package middleware
 import (
 	"fmt"
 	"homeserver/pkg/utils"
-	"log"
 	"net/http"
 	"strings"
-	"time"
 )
-
-type LogHistory struct {
-	Entries []string
-}
-
-func (lh *LogHistory) Log(entry string) {
-	lh.Entries = append(lh.Entries, entry)
-}
-
-func (lh *LogHistory) ErrLog(entry, at string) {
-	lh.Entries = append(lh.Entries, "[Err at "+at+"] "+entry)
-}
-
-func (lh *LogHistory) UnloadLogs(header string) {
-	logs := strings.Join(lh.Entries, "\n") + "\n\n"
-	log.Println("\n\n" + header + logs)
-}
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+		start := Now()
 
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
@@ -44,7 +25,7 @@ func Logger(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		duration := time.Since(start)
+		duration := Since(start)
 
 		header := fmt.Sprintf("Request: %s %s took %v\n", r.Method, url, duration)
 

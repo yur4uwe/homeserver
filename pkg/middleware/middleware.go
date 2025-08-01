@@ -4,45 +4,22 @@ import (
 	"context"
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/parser"
-	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/templates"
-	"homeserver/pkg/utils"
-	"html/template"
 	"net/http"
 )
 
-type contextKey string
-
-const ReqContKey contextKey = "add_req_context"
-
-type AdditionalRequestContext struct {
-	LogHistory    *LogHistory
-	ToRestorePage bool
-	RerenderBody  bool
-	AuthToken     string
-	Requester     *user_schema.User
-	PageContent   *templates.LayoutPageData
-}
-
 func contextConstructor() *AdditionalRequestContext {
-	return &AdditionalRequestContext{
-		LogHistory:    &LogHistory{Entries: []string{}},
-		ToRestorePage: false,
-		RerenderBody:  false,
-		AuthToken:     "",
-		Requester:     nil,
-		PageContent: &templates.LayoutPageData{
-			Footer: template.HTML(utils.Must(parser.ParseTemplateToString("../static/templates/footer.html", nil)).(string)),
-		},
+	if defaultContext == nil {
+		initDefaultContext()
 	}
+	clone := *defaultContext
+	return &clone
 }
 
 func ToRestorePage(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
-			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 

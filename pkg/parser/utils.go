@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	osReadFile         = os.ReadFile         // For testing purposes
-	templateMust       = template.Must       // For testing purposes
-	templateParseFiles = template.ParseFiles // For testing purposes
+	osReadFile = os.ReadFile         // For testing purposes
+	Must       = template.Must       // For testing purposes
+	ParseFiles = template.ParseFiles // For testing purposes
 )
 
 func LoadIcon(icon_name string) string {

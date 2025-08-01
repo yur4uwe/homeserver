@@ -55,7 +55,7 @@ func TestNewAlert(t *testing.T) {
 	mockTemplate.On("ParseFiles", []string{"../static/templates/modal.html"}).Return(template.Must(template.New("mock").Parse("Mock Template: {{.Title}} - {{.Message}}")), nil)
 
 	// Replace templateParseFiles with the mock
-	cleanup := test_utils.MockFunction(&templateParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanup := test_utils.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 	defer cleanup()
 
 	t.Run("TestNewAlertSuccess", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestNewAlert(t *testing.T) {
 		mockTemplate.On("ParseFiles", []string{"../static/templates/missing-template.html"}).Return(nil, errors.New("template not found"))
 
 		assert.Panics(t, func() {
-			templateParseFiles("../static/templates/missing-template.html")
+			ParseFiles("../static/templates/missing-template.html")
 		}, "NewAlert should panic when the template file is not found")
 	})
 }

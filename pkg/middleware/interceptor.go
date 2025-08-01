@@ -1,58 +1,18 @@
 package middleware
 
 import (
-	"bytes"
 	"fmt"
-	"homeserver/pkg/parser"
-	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
-	"strings"
 )
-
-type WriterWithIcons struct {
-	http.ResponseWriter
-}
-
-func (w *WriterWithIcons) Write(b []byte) (int, error) {
-	if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
-		return w.ResponseWriter.Write(b)
-	}
-
-	b = InterceptIcons(b)
-
-	return w.ResponseWriter.Write(b)
-}
-
-type responseInterceptor struct {
-	statusCode int
-	body       *bytes.Buffer
-	http.ResponseWriter
-}
-
-func InterceptorConstructor(w http.ResponseWriter) *responseInterceptor {
-	return &responseInterceptor{
-		ResponseWriter: w,
-		statusCode:     http.StatusOK,
-		body:           new(bytes.Buffer),
-	}
-}
-
-func (ri *responseInterceptor) WriteHeader(code int) {
-	ri.statusCode = code
-}
-
-func (ri *responseInterceptor) Write(b []byte) (int, error) {
-	return ri.body.Write(b)
-}
 
 func Interceptor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in interceptor middleware\n")
-			utils.ErrorResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error", http.StatusInternalServerError) // Use the global variable for mocking
 			return
 		}
 
@@ -77,7 +37,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 		if reqCont.ToRestorePage {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
-			tmpl := template.Must(template.ParseFiles("../static/index.html", "../static/layout.html"))
+			tmpl := template.Must(ParseFiles("../static/index.html", "../static/layout.html")) // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
@@ -87,7 +47,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
-				utils.ErrorResponse(w, "Failed to render page", http.StatusInternalServerError)
+				ErrorResponse(w, "Failed to render page", http.StatusInternalServerError) // Use the global variable for mocking
 			}
 			return
 		}
@@ -97,7 +57,7 @@ func Interceptor(next http.Handler) http.Handler {
 			w.Header().Set("HX-Retarget", "body")
 			w.Header().Set("HX-Reswap", "innerHTML")
 
-			tmpl := template.Must(template.ParseFiles("../static/layout.html"))
+			tmpl := template.Must(ParseFiles("../static/layout.html")) // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
@@ -107,56 +67,11 @@ func Interceptor(next http.Handler) http.Handler {
 
 			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
-				utils.ErrorResponse(w, "Failed to render page", http.StatusInternalServerError)
+				ErrorResponse(w, "Failed to render page", http.StatusInternalServerError) // Use the global variable for mocking
 			}
 			return
 		}
 
 		w.Write(interceptor.body.Bytes())
 	})
-}
-
-func InterceptIcons(b []byte) []byte {
-	str := string(b)
-
-	for i := 0; i <= len(str)-7; i++ {
-		if str[i:i+6] != "<icon " {
-			continue
-		}
-
-		cut_str := str[i:]
-
-		end_index := strings.Index(cut_str, "</icon>")
-		if end_index == -1 {
-			fmt.Fprintf(os.Stderr, "Malformed icon tag in response\n")
-			continue
-		}
-
-		end_index += len("</icon>")
-
-		cut_str = cut_str[:end_index]
-
-		name_start_idx := strings.Index(cut_str, "\"")
-		if name_start_idx == -1 {
-			fmt.Fprintf(os.Stderr, "Missing name attribute in icon tag\n")
-			continue
-		}
-
-		name_end_idx := strings.Index(cut_str[name_start_idx+1:], "\"")
-		if name_end_idx == -1 {
-			fmt.Fprintf(os.Stderr, "Malformed icon tag in response\n")
-			continue
-		}
-
-		name_end_idx += name_start_idx + 1
-
-		iconName := cut_str[name_start_idx+1 : name_end_idx]
-
-		iconSVG := parser.LoadIcon(iconName)
-
-		str = str[:i] + iconSVG + str[i+end_index:]
-		i += len(iconSVG) - 1
-	}
-
-	return []byte(str)
 }

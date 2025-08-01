@@ -6,7 +6,7 @@ import (
 )
 
 func ParseTemplateToString(template_filepath string, template_data interface{}) (string, error) {
-	tmpl := templateMust(templateParseFiles(template_filepath))
+	tmpl := Must(ParseFiles(template_filepath))
 
 	var buf strings.Builder
 	if err := tmpl.Execute(&buf, template_data); err != nil {
