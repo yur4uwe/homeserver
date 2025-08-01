@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/folder_schema"
 	"os"
 	"strings"
 )
@@ -33,7 +33,7 @@ func EnsureFolderExists(ctx context.Context, connection *Database, relativePath 
 			parentID = &id
 		}
 
-		new_folder := &schemas.UserFolder{
+		new_folder := &folder_schema.UserFolder{
 			Name:    segment,
 			Parent:  parentID,
 			Path:    strings.Join(relativePath[:i], "/"),

@@ -3,7 +3,8 @@ package handlers
 import (
 	"fmt"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/file_schema"
+	"homeserver/pkg/schemas/folder_schema"
 	"homeserver/pkg/templates"
 	"math"
 	"net/url"
@@ -31,7 +32,7 @@ func ParseSize(size int64) string {
 	return fmt.Sprintf("%.2f %s", size_float/math.Pow(1024, float64(i)), size_units[i])
 }
 
-func FileToSearchEntry(file *schemas.UserFile) templates.SearchEntry {
+func FileToSearchEntry(file *file_schema.UserFile) templates.SearchEntry {
 	entry := templates.SearchEntry{
 		ID:        file.ID,
 		Name:      file.Filename,
@@ -59,7 +60,7 @@ func FileToSearchEntry(file *schemas.UserFile) templates.SearchEntry {
 	return entry
 }
 
-func FolderToSearchEntry(folder *schemas.UserFolder) templates.SearchEntry {
+func FolderToSearchEntry(folder *folder_schema.UserFolder) templates.SearchEntry {
 	entry := templates.SearchEntry{
 		ID:       folder.ID,
 		Name:     folder.Name,
@@ -79,7 +80,7 @@ func FolderToSearchEntry(folder *schemas.UserFolder) templates.SearchEntry {
 	return entry
 }
 
-func TransformEntries(file_entries []*schemas.UserFile, folder_entries []*schemas.UserFolder) []templates.SearchEntry {
+func TransformEntries(file_entries []*file_schema.UserFile, folder_entries []*folder_schema.UserFolder) []templates.SearchEntry {
 	var entries []templates.SearchEntry
 
 	for _, file := range file_entries {

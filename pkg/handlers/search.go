@@ -11,12 +11,12 @@ import (
 
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
 )
 
-func BrowseHandler(ctx context.Context, connection *db.Database, directory []string, requester *schemas.User) (*templates.SearchPageData, error) {
+func BrowseHandler(ctx context.Context, connection *db.Database, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
 	user_relative_directory := directory[1:]
 
 	data := &templates.SearchPageData{
@@ -52,7 +52,7 @@ func BrowseHandler(ctx context.Context, connection *db.Database, directory []str
 	return data, nil
 }
 
-func FileSearchHandler(ctx context.Context, connection *db.Database, query string, directory []string, requester *schemas.User) (*templates.SearchPageData, error) {
+func FileSearchHandler(ctx context.Context, connection *db.Database, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
 	search_results, err := connection.SearchFiles(ctx, query, requester, directory)
 	if err != nil {
 		return nil, fmt.Errorf("error searching files: %v", err)

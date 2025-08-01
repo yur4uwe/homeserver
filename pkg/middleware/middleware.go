@@ -5,7 +5,7 @@ import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
 	"html/template"
@@ -21,7 +21,7 @@ type AdditionalRequestContext struct {
 	ToRestorePage bool
 	RerenderBody  bool
 	AuthToken     string
-	Requester     *schemas.User
+	Requester     *user_schema.User
 	PageContent   *templates.LayoutPageData
 }
 

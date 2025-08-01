@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/folder_schema"
+	"homeserver/pkg/schemas/user_schema"
 	"os"
 	"strings"
 )
 
 // CreateFolderEntry creates a new folder entry in the database and ensures the folder structure exists on disk.
 // WRITES TO DISK
-func (db *Database) CreateFolderEntry(ctx context.Context, folder *schemas.UserFolder) error {
+func (db *Database) CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder) error {
 	_, err := db.pool.Exec(
 		ctx,
 		`INSERT INTO user_folders (name, parent, path, owner_id, created_at) VALUES ($1, $2, $3, $4, NOW())`,
@@ -32,7 +34,7 @@ func (db *Database) CreateFolderEntry(ctx context.Context, folder *schemas.UserF
 	return nil
 }
 
-func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*schemas.UserFolder, error) {
+func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error) {
 	rows, err := db.pool.Query(
 		ctx,
 		`SELECT id, name, parent, owner_id, created_at FROM user_folders WHERE owner_id = $1`,
@@ -43,9 +45,9 @@ func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*sche
 	}
 	defer rows.Close()
 
-	var entries []*schemas.UserFolder
+	var entries []*folder_schema.UserFolder
 	for rows.Next() {
-		entry := &schemas.UserFolder{}
+		entry := &folder_schema.UserFolder{}
 		if err := rows.Scan(&entry.ID, &entry.Name, &entry.Parent, &entry.OwnerID, &entry.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning user folder entry: %v", err)
 		}
@@ -88,7 +90,7 @@ func (db *Database) FolderExists(ctx context.Context, folderName string, ownerID
 	return exists, nil
 }
 
-func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *schemas.User) ([]*schemas.UserFolder, error) {
+func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s
 		FROM user_folders
@@ -101,9 +103,9 @@ func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory [
 	}
 	defer rows.Close()
 
-	var folders []*schemas.UserFolder
+	var folders []*folder_schema.UserFolder
 	for rows.Next() {
-		folder := &schemas.UserFolder{}
+		folder := &folder_schema.UserFolder{}
 		if err := rows.Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID, &folder.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning folder entry: %v", err)
 		}
@@ -113,7 +115,7 @@ func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory [
 	return folders, nil
 }
 
-func (db *Database) DeleteFolder(ctx context.Context, folder *schemas.UserFolder) error {
+func (db *Database) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder) error {
 	db.pool.Exec(
 		ctx,
 		`DELETE FROM user_folders WHERE id = $1 AND owner_id = $2`,

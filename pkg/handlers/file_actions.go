@@ -2,19 +2,20 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
-	"net/http"
-	"strings"
 )
 
 func DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection *db.Database, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string, is_folder bool) {
 	filePath := strings.Join(append(relativePath, fileName), "/")
 
-	file := schemas.NewUserFileBuilder().
+	file := file_schema.NewUserFileBuilder().
 		WithFilename(fileName).
 		WithPath(filePath).
 		WithOwnerID(reqCont.Requester.ID)

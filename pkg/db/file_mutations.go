@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/file_schema"
+	"homeserver/pkg/schemas/user_schema"
 	"strings"
 
 	"io"
@@ -15,9 +16,9 @@ import (
 
 func (db *Database) SaveFile(
 	ctx context.Context,
-	header *schemas.UserFile,
+	header *file_schema.UserFile,
 	file *multipart.File,
-	requester *schemas.User,
+	requester *user_schema.User,
 ) (int, string, error) {
 	filePath := globals.BuildFilePath(header.Path, header.Filename, header.Extension)
 
@@ -56,8 +57,7 @@ func (db *Database) SaveFile(
 	return fileID, header.Filename + "." + header.Extension, nil
 }
 
-func (db *Database) DeleteFile(ctx context.Context, file *schemas.UserFile, user_name string) (int, error) {
-	file.HasValidFilename().HasValidExtension().HasValidPath(user_name).HasValidOwnerID()
+func (db *Database) DeleteFile(ctx context.Context, file *file_schema.UserFile, user_name string) (int, error) {
 
 	file_path_slice := strings.Split(file.Path, "/")
 	if len(file_path_slice) < 2 {
@@ -85,7 +85,7 @@ func (db *Database) DeleteFile(ctx context.Context, file *schemas.UserFile, user
 	return id, nil
 }
 
-func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *schemas.User) (string, error) {
+func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error) {
 	oldRelFilePath := requester.Username + "/" + oldPath
 	newRelFilePath := requester.Username + "/" + newPath
 
@@ -125,7 +125,7 @@ func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath stri
 	return newRelFilePath, nil
 }
 
-func (db *Database) UpdateFileEntry(ctx context.Context, file *schemas.UserFile) error {
+func (db *Database) UpdateFileEntry(ctx context.Context, file *file_schema.UserFile) error {
 	if file.Filename == "" || file.Size == 0 || file.ContentType == "" {
 		return fmt.Errorf("invalid file entry data")
 	}

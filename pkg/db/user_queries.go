@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/folder_schema"
+	"homeserver/pkg/schemas/user_schema"
 )
 
-func (db *Database) CreateUserEntry(ctx context.Context, user *schemas.User) error {
+func (db *Database) CreateUserEntry(ctx context.Context, user *user_schema.User) error {
 	_, err := db.pool.Exec(
 		ctx,
 		`INSERT INTO users (username, password, email, auth_token, created_at, email_verified) VALUES ($1, $2, $3, $4, NOW(), $5)`,
@@ -23,7 +24,7 @@ func (db *Database) CreateUserEntry(ctx context.Context, user *schemas.User) err
 	return nil
 }
 
-func (db *Database) ExtractUserEntries(ctx context.Context) ([]*schemas.User, error) {
+func (db *Database) ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error) {
 	rows, err := db.pool.Query(
 		ctx,
 		`SELECT id, username, password, email, auth_token, created_at, email_verified FROM users`,
@@ -33,9 +34,9 @@ func (db *Database) ExtractUserEntries(ctx context.Context) ([]*schemas.User, er
 	}
 	defer rows.Close()
 
-	var entries []*schemas.User
+	var entries []*user_schema.User
 	for rows.Next() {
-		entry := &schemas.User{}
+		entry := &user_schema.User{}
 		if err := rows.Scan(&entry.ID, &entry.Username, &entry.Password, &entry.Email, &entry.AuthToken, &entry.CreatedAt, &entry.EmailVerified); err != nil {
 			return nil, fmt.Errorf("error scanning user entry: %v", err)
 		}
@@ -45,7 +46,7 @@ func (db *Database) ExtractUserEntries(ctx context.Context) ([]*schemas.User, er
 	return entries, nil
 }
 
-func (db *Database) CheckUserFolder(ctx context.Context, user *schemas.User) error {
+func (db *Database) CheckUserFolder(ctx context.Context, user *user_schema.User) error {
 	var exists bool
 	err := db.pool.QueryRow(
 		ctx,
@@ -57,7 +58,7 @@ func (db *Database) CheckUserFolder(ctx context.Context, user *schemas.User) err
 	}
 
 	if !exists {
-		folder := &schemas.UserFolder{
+		folder := &folder_schema.UserFolder{
 			Name:    user.Username,
 			Parent:  nil,
 			OwnerID: user.ID,

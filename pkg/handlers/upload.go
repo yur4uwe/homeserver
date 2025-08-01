@@ -3,7 +3,7 @@ package handlers
 import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas"
+	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
 	"net/http"
 	"path/filepath"
@@ -25,7 +25,7 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 
 		var file_sig []string
 
-		file, header, err := r.FormFile("file")
+		multipart, header, err := r.FormFile("file")
 		if err != nil {
 			select {
 			case <-done:
@@ -40,7 +40,7 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 				return
 			}
 		}
-		defer file.Close()
+		defer multipart.Close()
 
 		path_str := r.FormValue("folder")
 		if path_str != "" {
@@ -52,16 +52,15 @@ func downloadFile(connection *db.Database, reqCont *middleware.AdditionalRequest
 			path_str = reqCont.Requester.Username
 		}
 
-		new_file := &schemas.UserFile{
-			Filename:    file_sig[0],
-			Path:        path_str,
-			Extension:   file_sig[1],
-			Size:        header.Size,
-			ContentType: header.Header.Get("Content-Type"),
-			OwnerID:     reqCont.Requester.ID,
-		}
+		new_file := file_schema.NewUserFileBuilder().
+			WithFilename(file_sig[0]).
+			WithPath(path_str).
+			WithExtension(file_sig[1]).
+			WithSize(header.Size).
+			WithContentType(header.Header.Get("Content-Type")).
+			WithOwnerID(reqCont.Requester.ID)
 
-		_, saved_name, err := connection.SaveFile(r.Context(), new_file, &file, reqCont.Requester)
+		_, saved_name, err := connection.SaveFile(r.Context(), new_file, &multipart, reqCont.Requester)
 		if err != nil {
 			select {
 			case <-done:
@@ -95,7 +94,7 @@ func deleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestCo
 			return
 		}
 
-		file := schemas.NewUserFileBuilder().
+		file := file_schema.NewUserFileBuilder().
 			WithPath(filePath).
 			WithOwnerID(reqCont.Requester.ID).
 			WithFilename(strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))).
