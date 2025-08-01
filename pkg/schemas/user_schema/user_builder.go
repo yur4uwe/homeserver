@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func NewUserBuilder() *User {
-	return &User{
+var (
+	defaultUser = User{
 		ID:            0,
 		Username:      "",
 		Password:      "",
@@ -15,6 +15,11 @@ func NewUserBuilder() *User {
 		CreatedAt:     time.Now(),
 		EmailVerified: false,
 	}
+)
+
+func NewUserBuilder() *User {
+	clone := defaultUser
+	return &clone
 }
 
 func (u *User) WithID(id int) *User {
