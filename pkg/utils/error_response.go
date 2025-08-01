@@ -6,6 +6,12 @@ import (
 	"net/http"
 )
 
+type AlertGenerator func(title, iconName, message, status string) string
+
+var (
+	alertGenerator AlertGenerator = parser.NewAlert
+)
+
 const (
 	AlertSuccess = "success"
 	AlertError   = "error"
@@ -16,7 +22,7 @@ const (
 func ErrorResponse(w http.ResponseWriter, message string, status int) {
 	fmt.Println("Error response:", message, "Status code:", status)
 
-	alert := parser.NewAlert("Error", "x", message, AlertError)
+	alert := alertGenerator("Error", "x", message, AlertError)
 
 	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
