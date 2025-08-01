@@ -5,13 +5,18 @@ import (
 	"homeserver/pkg/templates"
 	"html/template"
 	"os"
-	"strings"
+)
+
+var (
+	osReadFile         = os.ReadFile         // For testing purposes
+	templateMust       = template.Must       // For testing purposes
+	templateParseFiles = template.ParseFiles // For testing purposes
 )
 
 func LoadIcon(icon_name string) string {
 	icon_path := fmt.Sprintf("../static/assets/%s.svg", icon_name)
 
-	icon_data, err := os.ReadFile(icon_path)
+	icon_data, err := osReadFile(icon_path)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load icon %s: %v\n", icon_name, err))
 	}
@@ -28,13 +33,10 @@ func NewAlert(title, iconName, message, status string) string {
 		Message: message,
 	}
 
-	tmpl := template.Must(template.ParseFiles("../static/templates/modal.html"))
-
-	var buf strings.Builder
-	if err := tmpl.Execute(&buf, alert); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to execute template: %v\n", err)
-		return ""
+	str, err := ParseTemplateToString("../static/templates/modal.html", alert)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse alert template: %v\n", err))
 	}
 
-	return buf.String()
+	return str
 }
