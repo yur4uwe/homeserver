@@ -33,7 +33,7 @@ func contextConstructor() *AdditionalRequestContext {
 		AuthToken:     "",
 		Requester:     nil,
 		PageContent: &templates.LayoutPageData{
-			Footer: template.HTML(parser.MustAsString(parser.ParseFile("../static/fragments/footer.html"))),
+			Footer: template.HTML(utils.Must(parser.ParseTemplateToString("../static/templates/footer.html", nil)).(string)),
 		},
 	}
 }

@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"golang.org/x/net/html"
 )
 
 type WriterWithIcons struct {
@@ -114,18 +112,7 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		body_node, err := parser.ParseString(interceptor.body.String())
-		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to parse response body: "+err.Error()+"\nBody: "+interceptor.body.String(), "Interceptor:65")
-			utils.ErrorResponse(w, "Failed to parse response body", http.StatusInternalServerError)
-			return
-		}
-
-		if err := html.Render(wr, body_node); err != nil {
-			reqCont.LogHistory.ErrLog("Failed to render HTML response: "+err.Error(), "Interceptor:86")
-			utils.ErrorResponse(w, "Failed to write response", http.StatusInternalServerError)
-			return
-		}
+		w.Write(interceptor.body.Bytes())
 	})
 }
 
