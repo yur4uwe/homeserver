@@ -72,6 +72,6 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		w.Write(interceptor.body.Bytes())
+		wr.Write(interceptor.body.Bytes())
 	})
 }
