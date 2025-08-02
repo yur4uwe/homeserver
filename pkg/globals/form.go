@@ -4,16 +4,6 @@ import (
 	"net/http"
 )
 
-const (
-	EnvPort          = "PORT"
-	EnvDbURL         = "DB_URL"
-	EnvStoragePath   = "STORAGE_PATH"
-	EnvEmailPassword = "EMAIL_PASSWORD"
-	EnvEmailHost     = "EMAIL_HOST"
-	EnvEmailPort     = "EMAIL_PORT"
-	EnvEmailUser     = "EMAIL_USER"
-)
-
 type LoginForm struct {
 	Identificator string `json:"identificator"`
 	Password      string `json:"password"`

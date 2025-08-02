@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+const (
+	EnvPort          = "PORT"
+	EnvDbURL         = "DB_URL"
+	EnvStoragePath   = "STORAGE_PATH"
+	EnvEmailPassword = "EMAIL_PASSWORD"
+	EnvEmailHost     = "EMAIL_HOST"
+	EnvEmailPort     = "EMAIL_PORT"
+	EnvEmailUser     = "EMAIL_USER"
+)
+
 var Pages []string
 var ProtectedPages []string
 var AvailableFileTypes = []string{}
@@ -44,10 +54,17 @@ func IsPage(path string) bool {
 	}
 
 	for _, page := range Pages {
-		if strings.HasPrefix(path, page) {
+		if page[len(page)-1] == '/' && len(page) > 1 && strings.HasPrefix(path, page) {
+			fmt.Println("Matched path:", path, "with prefix:", page)
+			return true
+		}
+
+		if path == page {
+			fmt.Println("Matched exact path:", path, "with page:", page)
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -73,6 +90,10 @@ func BuildFilePath(relative_path, filename, extension string) string {
 	storage_path := os.Getenv(EnvStoragePath)
 	if storage_path[len(storage_path)-1] != '/' {
 		panic("Storage path must end with a slash")
+	}
+
+	if len(relative_path) > 0 && (relative_path[len(relative_path)-1] == '/' || relative_path[0] == '/') {
+		panic("Relative path must not start or end with a slash")
 	}
 
 	var file_path string

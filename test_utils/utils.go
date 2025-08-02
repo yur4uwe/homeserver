@@ -23,3 +23,24 @@ func MockFunction(originalFuncPtr interface{}, mockFunc interface{}, cleanup fun
 		cleanup()
 	}
 }
+
+func MockGlobalVar(globalVarPtr interface{}, mockValue interface{}, cleanup func()) func() {
+	// Validate that globalVarPtr is a pointer to a variable
+	globalValue := reflect.ValueOf(globalVarPtr)
+	if globalValue.Kind() != reflect.Ptr {
+		panic("globalVarPtr must be a pointer to a variable")
+	}
+
+	// Save the original value
+	originalValue := globalValue.Elem()
+
+	// Set the mock value
+	mockValueReflect := reflect.ValueOf(mockValue)
+	globalValue.Elem().Set(mockValueReflect)
+
+	// Return a cleanup function to restore the original value
+	return func() {
+		globalValue.Elem().Set(originalValue)
+		cleanup()
+	}
+}
