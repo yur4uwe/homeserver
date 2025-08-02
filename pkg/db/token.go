@@ -26,6 +26,10 @@ func (db *Database) CreateToken(ctx context.Context, userID int, token string) e
 }
 
 func (db *Database) QueryToken(ctx context.Context, token string) (*user_schema.User, error) {
+	if token == "" {
+		return nil, fmt.Errorf("token is empty")
+	}
+
 	var user user_schema.User
 	err := db.pool.QueryRow(ctx, `
         SELECT id, username, password, email, auth_token, created_at, email_verified

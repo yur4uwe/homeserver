@@ -4,7 +4,6 @@ import (
 	"context"
 	"homeserver/pkg/templates"
 	"homeserver/test_utils"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,25 +12,29 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func mockHandler(contentType string, statusCode int, body string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", contentType)
+		w.WriteHeader(statusCode)
+		w.Write([]byte(body))
+	}
+}
+
 func TestInterceptor(t *testing.T) {
 	mockLogHistory := new(MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
-	mockLogHistory.On("ErrLog", mock.Anything, mock.Anything).Return()
 
 	mockParseFiles := new(MockParseFiles)
-	mockParseFiles.On("ParseFiles", mock.Anything).Return(template.Must(template.New("").Parse("<html><body>{{.Content}}</body></html>")), nil)
+	mockParseFiles.On("ParseFiles", mock.Anything, mock.Anything).
+		Return(mockIndexTemplate)
+	mockParseFiles.On("ParseFiles", mock.Anything).
+		Return(mockTemplate)
 
 	cleanupParseFiles := test_utils.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
 	defer cleanupParseFiles()
 
-	mockParseAsString := new(mockParseAsString)
-	mockParseAsString.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("Mocked String", nil)
-
-	parseAsStringCleanup := test_utils.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
-	defer parseAsStringCleanup()
-
 	mockErrorResponse := new(MockErrorResponse)
-	mockErrorResponse.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return("something")
+	mockErrorResponse.On("ErrorResponse", mock.Anything, "Internal Server Error", http.StatusInternalServerError).Return()
 
 	errorResponseCleanup := test_utils.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
 	defer errorResponseCleanup()
@@ -44,11 +47,7 @@ func TestInterceptor(t *testing.T) {
 	}
 
 	t.Run("Handles non-HTML content type", func(t *testing.T) {
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"message": "success"}`))
-		})
+		handler := mockHandler("application/json", http.StatusOK, `{"message": "success"}`)
 
 		interceptor := Interceptor(handler)
 
@@ -66,11 +65,7 @@ func TestInterceptor(t *testing.T) {
 	})
 
 	t.Run("Handles HTML content type without flags", func(t *testing.T) {
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("<html><body>Hello, World!</body></html>"))
-		})
+		handler := mockHandler("text/html; charset=utf-8", http.StatusOK, "<html><body>Hello, World!</body></html>")
 
 		interceptor := Interceptor(handler)
 
@@ -90,11 +85,7 @@ func TestInterceptor(t *testing.T) {
 	t.Run("Handles ToRestorePage flag", func(t *testing.T) {
 		mockContext.ToRestorePage = true
 
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("<div>Content</div>"))
-		})
+		handler := mockHandler("text/html; charset=utf-8", http.StatusOK, "<div>Restored Content</div>")
 
 		interceptor := Interceptor(handler)
 
@@ -113,11 +104,7 @@ func TestInterceptor(t *testing.T) {
 		mockContext.ToRestorePage = false
 		mockContext.RerenderBody = true
 
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("<div>Content</div>"))
-		})
+		handler := mockHandler("text/html; charset=utf-8", http.StatusOK, "<div>Content</div>")
 
 		interceptor := Interceptor(handler)
 
@@ -134,8 +121,38 @@ func TestInterceptor(t *testing.T) {
 		mockLogHistory.AssertCalled(t, "Log", "[Interceptor] RerenderBody is true, rendering body")
 	})
 
-	mockErrorResponse.AssertNotCalled(t, "ErrorResponse", mock.Anything, mock.Anything, mock.Anything)
+	t.Run("Handles missing request context", func(t *testing.T) {
+		handler := mockHandler("text/html; charset=utf-8", http.StatusOK, "<div>Content</div>")
+
+		interceptor := Interceptor(handler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+
+		interceptor.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code, "Response status code should be 500 Internal Server Error")
+		assert.Contains(t, w.Body.String(), "Internal Server Error", "Response body should be 'Internal Server Error'")
+
+		mockErrorResponse.AssertCalled(t, "ErrorResponse", w, "Internal Server Error", http.StatusInternalServerError)
+	})
+
+	t.Run("Handles error response", func(t *testing.T) {
+		handler := mockHandler("text/html; charset=utf-8", http.StatusInternalServerError, "<div>Error occurred</div>")
+
+		interceptor := Interceptor(handler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+
+		req = req.WithContext(context.WithValue(req.Context(), ReqContKey, mockContext))
+
+		interceptor.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code, "Response status code should be 500 Internal Server Error")
+	})
+
 	mockLogHistory.AssertExpectations(t)
 	mockParseFiles.AssertExpectations(t)
-	mockParseAsString.AssertExpectations(t)
+	mockErrorResponse.AssertExpectations(t)
 }

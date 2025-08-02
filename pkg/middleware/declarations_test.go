@@ -2,19 +2,25 @@ package middleware
 
 import (
 	"context"
+	"homeserver/pkg/schemas/user_schema"
 	"html/template"
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
 )
 
+var (
+	mockTemplate      = template.Must(template.New("").Parse("<html><body>{{.Content}}</body></html>"))
+	mockIndexTemplate = template.Must(template.New("index.html").Parse("<html><body>{{.Content}}</body></html>"))
+)
+
 type MockParseFiles struct {
 	mock.Mock
 }
 
-func (m *MockParseFiles) ParseFiles(filenames ...string) (*template.Template, error) {
+func (m *MockParseFiles) ParseFiles(filenames ...string) *template.Template {
 	args := m.Called(filenames)
-	return args.Get(0).(*template.Template), args.Error(1)
+	return args.Get(0).(*template.Template)
 }
 
 type MockLogHistory struct {
@@ -37,9 +43,12 @@ type MockDB struct {
 	mock.Mock
 }
 
-func (m *MockDB) QueryToken(ctx context.Context, token string) (string, error) {
+func (m *MockDB) QueryToken(ctx context.Context, token string) (*user_schema.User, error) {
 	args := m.Called(ctx, token)
-	return args.String(0), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
 type MockMust struct {
@@ -54,11 +63,11 @@ func (m *MockMust) Must(value interface{}, err error) interface{} {
 	return args.Get(0)
 }
 
-type mockParseAsString struct {
+type MockParseAsString struct {
 	mock.Mock
 }
 
-func (m *mockParseAsString) ParseTemplateToString(templatePath string, data interface{}) (string, error) {
+func (m *MockParseAsString) ParseTemplateToString(templatePath string, data interface{}) (string, error) {
 	args := m.Called(templatePath, data)
 	return args.String(0), args.Error(1)
 }
@@ -68,8 +77,16 @@ type MockErrorResponse struct {
 }
 
 func (m *MockErrorResponse) ErrorResponse(w http.ResponseWriter, message string, statusCode int) {
-	args := m.Called(w, message, statusCode)
-	if args.Get(0) != nil {
-		http.Error(w, message, statusCode)
-	}
+	m.Called(w, message, statusCode)
+
+	http.Error(w, message, statusCode)
+}
+
+type MockIsProtectedPath struct {
+	mock.Mock
+}
+
+func (m *MockIsProtectedPath) IsProtectedPath(path string) bool {
+	args := m.Called(path)
+	return args.Bool(0)
 }

@@ -4,10 +4,15 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas/user_schema"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type DatabaseInterface interface {
+	QueryToken(ctx context.Context, token string) (*user_schema.User, error)
+}
 
 type Database struct {
 	pool *pgxpool.Pool

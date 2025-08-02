@@ -37,7 +37,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 		if reqCont.ToRestorePage {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
-			tmpl := template.Must(ParseFiles("../static/index.html", "../static/layout.html")) // Use the global variable for mocking
+			tmpl := ParseFiles("../static/index.html", "../static/layout.html") // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
@@ -57,7 +57,7 @@ func Interceptor(next http.Handler) http.Handler {
 			w.Header().Set("HX-Retarget", "body")
 			w.Header().Set("HX-Reswap", "innerHTML")
 
-			tmpl := template.Must(ParseFiles("../static/layout.html")) // Use the global variable for mocking
+			tmpl := ParseFiles("../static/layout.html") // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())

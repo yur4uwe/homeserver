@@ -4,15 +4,19 @@ import (
 	"context"
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/templates"
 	"net/http"
 )
 
 func contextConstructor() *AdditionalRequestContext {
-	if defaultContext == nil {
-		initDefaultContext()
+	return &AdditionalRequestContext{
+		LogHistory:    &LogHistory{Entries: []string{}},
+		ToRestorePage: false,
+		RerenderBody:  false,
+		AuthToken:     "",
+		Requester:     nil,
+		PageContent:   &templates.LayoutPageData{},
 	}
-	clone := *defaultContext
-	return &clone
 }
 
 func ToRestorePage(next http.Handler) http.Handler {

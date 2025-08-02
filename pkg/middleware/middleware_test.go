@@ -18,7 +18,7 @@ func TestMiddlewareSuite(t *testing.T) {
 	mustCleanup := test_utils.MockFunction(&Must, mockMust.Must, func() {})
 	defer mustCleanup()
 
-	mockParse := new(mockParseAsString)
+	mockParse := new(MockParseAsString)
 	mockParse.On("ParseTemplateToString", "../static/fragments/footer.html", nil).Return("Mocked Footer", nil)
 
 	parseCleanup := test_utils.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
@@ -29,8 +29,6 @@ func TestMiddlewareSuite(t *testing.T) {
 
 	errorResponseCleanup := test_utils.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
 	defer errorResponseCleanup()
-
-	initDefaultContext()
 
 	t.Run("TestContextConstructor", func(t *testing.T) {
 		ctx := contextConstructor()
@@ -79,5 +77,26 @@ func TestMiddlewareSuite(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
 		assert.Equal(t, "HX-History-Restore-Request, HX-Request", w.Header().Get("Vary"), "Vary header should be set correctly")
+	})
+
+	t.Run("TestToRestorePage with no context", func(t *testing.T) {
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
+			assert.False(t, ok, "Request context should not be of type AdditionalRequestContext")
+			assert.Nil(t, reqCont, "Request context should be nil")
+			w.WriteHeader(http.StatusOK)
+		})
+
+		wrappedHandler := ToRestorePage(handler)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("HX-History-Restore-Request", "true")
+
+		w := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code, "Response status code should be 500 Internal Server Error")
+		assert.NotEqual(t, "HX-History-Restore-Request, HX-Request", w.Header().Get("Vary"), "Vary header shouldn't be set")
 	})
 }

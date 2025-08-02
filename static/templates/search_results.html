@@ -64,16 +64,16 @@
                     <div class="actions-menu-content" hx-push-url="false">
                         <ul>
                             {{if not .IsFolder}}
-                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=open">
+                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}">
                                 Open
                             </li>
                             {{end}}
                             <li
-                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=rename&is_folder={{.IsFolder}}">
+                                hx-patch="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?is_folder={{.IsFolder}}">
                                 Rename
                             </li>
                             <li
-                                hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?action=delete&is_folder={{.IsFolder}}">
+                                hx-delete="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?is_folder={{.IsFolder}}">
                                 Delete
                             </li>
                         </ul>

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"homeserver/pkg/globals"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
@@ -13,15 +14,24 @@ import (
 	"time"
 )
 
+func MustParseFiles(filenames ...string) *template.Template {
+	tmpl, err := template.ParseFiles(filenames...)
+	if err != nil {
+		log.Fatalf("Failed to parse template files: %v", err)
+	}
+	return tmpl
+}
+
 // Global variables for mocking
 var (
-	ParseFiles            = template.ParseFiles
+	ParseFiles            = MustParseFiles
 	IconsInjector         = utils.IconsInjector
 	Must                  = utils.Must
 	ParseTemplateToString = parser.ParseTemplateToString
 	ErrorResponse         = utils.ErrorResponse
 	Now                   = time.Now
 	Since                 = time.Since
+	IsProtectedPath       = globals.IsProtectedPath
 )
 
 // Context key for storing AdditionalRequestContext in request context
@@ -65,19 +75,13 @@ type AdditionalRequestContext struct {
 }
 
 // Default context initialization
-var defaultContext *AdditionalRequestContext
-
-func initDefaultContext() {
-	defaultContext = &AdditionalRequestContext{
-		LogHistory:    &LogHistory{Entries: []string{}},
-		ToRestorePage: false,
-		RerenderBody:  false,
-		AuthToken:     "",
-		Requester:     nil,
-		PageContent: &templates.LayoutPageData{
-			Footer: template.HTML(Must(ParseTemplateToString("../static/fragments/footer.html", nil)).(string)),
-		},
-	}
+var defaultContext = &AdditionalRequestContext{
+	LogHistory:    &LogHistory{Entries: []string{}},
+	ToRestorePage: false,
+	RerenderBody:  false,
+	AuthToken:     "",
+	Requester:     nil,
+	PageContent:   &templates.LayoutPageData{},
 }
 
 // Response interceptor for capturing response details

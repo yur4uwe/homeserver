@@ -86,7 +86,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			Name:     "authTokenHS",
 			Value:    newToken,
 			Path:     "/",
-			Expires:  time.Now().Add(24 * time.Hour),
+			Expires:  time.Now().Add(5 * time.Minute),
 			HttpOnly: true,
 		})
 

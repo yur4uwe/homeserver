@@ -17,12 +17,6 @@ func FileActionsRouter(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		action := r.URL.Query().Get("action")
-		if action == "" {
-			utils.ErrorResponse(w, "Action parameter is required", http.StatusBadRequest)
-			return
-		}
-
 		isFolder := r.URL.Query().Get("is_folder") == "true"
 		desiredName := r.URL.Query().Get("desired_name")
 
@@ -30,17 +24,17 @@ func FileActionsRouter(connection *db.Database) http.HandlerFunc {
 		relativePath := path[:len(path)-1]
 		fileName := path[len(path)-1]
 
-		reqCont.LogHistory.Log(fmt.Sprintf("FileActionsRouter called: action=%s, is_folder=%t, relativePath=%v, file_name=%s", action, isFolder, relativePath, fileName))
+		reqCont.LogHistory.Log(fmt.Sprintf("FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s", r.Method, isFolder, relativePath, fileName))
 
-		switch action {
-		case "delete":
+		switch r.Method {
+		case http.MethodDelete:
 			DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName, isFolder)
-		case "rename":
+		case http.MethodPatch:
 			RenameFileHandler(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
-		case "open":
+		case http.MethodGet:
 			OpenFileHandler(w, r, connection, reqCont, relativePath, fileName)
 		default:
-			utils.ErrorResponse(w, fmt.Sprintf("Unknown action: %s", action), http.StatusBadRequest)
+			utils.ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
 
 		// alert := parser.NewAlert(
