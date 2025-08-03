@@ -3,12 +3,8 @@
     {{ if .IsLoggedIn }}
     <div id="header-actions-container">
         <input type="checkbox" id="toggle-actions" class="hidden-checkbox">
-        <label for="toggle-actions">
-            <svg viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 7H17M1 13H17M1 1H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-            </svg>
-        </label>
+        <label for="toggle-actions" hx-target="this" hx-push-url="false" hx-trigger="load"
+            hx-get="/static/assets/menu.svg" hx-swap="innerHTML"></label>
         <div id="actions" hx-push-url="true" hx-target="#main-content">
             <button class="button" hx-get="/">Home</button>
             <button class="button" hx-get="/upload">Upload</button>

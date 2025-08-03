@@ -4,17 +4,20 @@
         <h2>Choose the action</h2>
         <p>Select action you want to perform</p>
     </div>
-    <ul hx-push-url="true" hx-target="#main-content" class="nav">
-        <li hx-get="/upload" class="nav-pill">
-            <icon name="upload"></icon>
+    <ul hx-target="#main-content" class="nav">
+        <li hx-get="/upload" hx-push-url="true" class="nav-pill">
+            <div hx-trigger="load" hx-push-url="false" hx-target="this" hx-get="/static/assets/upload.svg"
+                hx-swap="outerHTML"></div>
             Upload
         </li>
-        <li hx-get="/search/?redirect=true" class="nav-pill">
-            <icon name="search"></icon>
+        <li hx-get="/search/?redirect=true" hx-push-url="true" class="nav-pill">
+            <div hx-trigger="load" hx-push-url="false" hx-target="this" hx-get="/static/assets/search.svg"
+                hx-swap="outerHTML"></div>
             Find
         </li>
-        <li hx-get="/settings" class="nav-pill">
-            <icon name="settings"></icon>
+        <li hx-get="/settings" hx-push-url="true" class="nav-pill">
+            <div hx-trigger="load" hx-push-url="false" hx-target="this" hx-get="/static/assets/settings.svg"
+                hx-swap="outerHTML"></div>
             Settings
         </li>
     </ul>

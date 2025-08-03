@@ -106,18 +106,3 @@ func (ri *responseInterceptor) WriteHeader(code int) {
 func (ri *responseInterceptor) Write(b []byte) (int, error) {
 	return ri.body.Write(b)
 }
-
-// WriterWithIcons injects icons into HTML responses
-type WriterWithIcons struct {
-	http.ResponseWriter
-}
-
-func (w *WriterWithIcons) Write(b []byte) (int, error) {
-	if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
-		return w.ResponseWriter.Write(b)
-	}
-
-	b = IconsInjector(b)
-
-	return w.ResponseWriter.Write(b)
-}

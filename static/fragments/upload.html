@@ -6,19 +6,19 @@
                 Choose a file to upload
                 <div class="upload-actions">
                     <label for="upload-type-menu">
-                        <div style="width: 25px; height: 25px;">
-                            <icon name="upload"></icon>
+                        <div style="width: 25px; height: 25px;" hx-trigger="load" hx-get="/static/assets/upload.svg"
+                            hx-swap="innerHTML">
                         </div>
                         <input type="checkbox" id="upload-type-menu" hidden checked>
                         <div id="upload-actions">
                             <label for="file">
-                                <icon name="file"></icon>
+                                <div hx-get="/static/assets/file.svg" hx-trigger="load" hx-swap="outerHTML"></div>
                                 Upload Files
                             </label>
                             <input type="file" id="file" hx-encoding="multipart/form-data" name="file" required hidden
                                 multiple>
                             <label for="folder">
-                                <icon name="folder"></icon>
+                                <div hx-get="/static/assets/folder.svg" hx-trigger="load" hx-swap="outerHTML"></div>
                                 Upload Folder
                             </label>
                             <input type="file" id="folder" hx-encoding="multipart/form-data" name="folder" required
@@ -30,7 +30,7 @@
             <div id="form-body">
                 <div class="empty">
                     <div style="width: 110px; height: 95px;">
-                        <icon name="folder-open"></icon>
+                        <div hx-trigger="load" hx-get="/static/assets/folder-open.svg" hx-swap="outerHTML"></div>
                     </div>
                     <p class="no-files">No file chosen</p>
                 </div>

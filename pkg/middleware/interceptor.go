@@ -33,8 +33,6 @@ func Interceptor(next http.Handler) http.Handler {
 			return
 		}
 
-		wr := &WriterWithIcons{ResponseWriter: w}
-
 		if reqCont.ToRestorePage {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
 			tmpl := ParseFiles("../static/index.html", "../static/layout.html") // Use the global variable for mocking
@@ -45,7 +43,7 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
 			}
 
-			if err := tmpl.ExecuteTemplate(wr, "index.html", reqCont.PageContent); err != nil {
+			if err := tmpl.ExecuteTemplate(w, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
 				ErrorResponse(w, "Failed to render page", http.StatusInternalServerError) // Use the global variable for mocking
 			}
@@ -65,13 +63,13 @@ func Interceptor(next http.Handler) http.Handler {
 				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
 			}
 
-			if err := tmpl.Execute(wr, reqCont.PageContent); err != nil {
+			if err := tmpl.Execute(w, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")
 				ErrorResponse(w, "Failed to render page", http.StatusInternalServerError) // Use the global variable for mocking
 			}
 			return
 		}
 
-		wr.Write(interceptor.body.Bytes())
+		w.Write(interceptor.body.Bytes())
 	})
 }

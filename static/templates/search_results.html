@@ -19,7 +19,8 @@
             <tr>
                 <th class="directory-header">
                     <div hx-get="/search/{{.Parent}}">
-                        <icon name="arrow-left"></icon>
+                        <div hx-trigger="load" hx-target="this" hx-push-url="false"
+                            hx-get="/static/assets/arrow-left.svg" hx-swap="outerHTML"></div>
                     </div>
                 </th>
                 <th colspan="{{if .QueryResults}}4{{else}}3{{end}}">
@@ -45,7 +46,9 @@
                 .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="alert('Deleted {{if .IsFolder}}folder{{else}}file{{end}}: {{.Name}}{{if .Extension}}{{.Extension}}{{end}}');">
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
-                        <icon name="{{.Type}}"></icon>
+                        <div hx-trigger="load" hx-target="this" hx-push-url="false"
+                            hx-get="/static/assets/{{.Type}}.svg" hx-swap="outerHTML">
+                        </div>
                     </div>
                 </td>
                 <td class="file-name">
@@ -57,7 +60,9 @@
                 <td class="file-size">{{.Size}}</td>
                 <td class="file-actions">
                     <label for="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}" class="folder-icon">
-                        <icon name="more"></icon>
+                        <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/more.svg"
+                            hx-swap="outerHTML">
+                        </div>
                     </label>
                     <input type="checkbox" id="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}"
                         class="actions-menu-toggle" hidden>

@@ -2,3 +2,5 @@
 *storage*/
 coverage/*
 .vscode/
+bin/
+app.min.js

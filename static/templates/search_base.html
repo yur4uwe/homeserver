@@ -1,11 +1,12 @@
-<div class="search-container" hx-target="#search-results" hx-select="#search-results" hx-swap="outerHTML">
+<div class="search-container" hx-target="#search-results" hx-swap="outerHTML">
     <div class="header-container">
         <h2>Find the file you want</h2>
         <fieldset>
             <legend>Search</legend>
             <div class="search-input-container">
                 <div style="width: 25px; height: 25px;">
-                    <icon name="search"></icon>
+                    <div hx-trigger="load" hx-target="this" hx-get="/static/assets/search.svg" hx-swap="outerHTML">
+                    </div>
                 </div>
                 <input type="text" name="query" id="search-input" placeholder="Search files..." value="{{.Query}}"
                     hx-get="/search/" hx-swap="outerHTML" hx-trigger="keyup changed delay:500ms">

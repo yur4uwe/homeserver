@@ -3,7 +3,9 @@
     <form class="login-form" hx-post="/api/v1/login" hx-target="#main-content" hx-target-error="#error-resp">
         <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
             <div class="back-arrow-icon" style="width: 20px; height: 20px;">
-                <icon name="arrow-left"></icon>
+                <div hx-target="this" hx-push-url="false" hx-trigger="load" hx-get="/static/assets/arrow-left.svg"
+                    hx-swap="outerHTML">
+                </div>
             </div>
             <p>
                 Back To Welcome
