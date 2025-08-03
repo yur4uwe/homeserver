@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load("../.env"); err != nil {
+	if err := godotenv.Load("../.env", "../.env.test"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
@@ -19,6 +19,14 @@ func main() {
 
 	if err := setup.CheckStoragePath(); err != nil {
 		log.Fatalf("Storage path setup error: %v", err)
+	}
+
+	if err := setup.CheckTestVariables(); err != nil {
+		log.Fatalf("Test environment setup error: %v", err)
+	}
+
+	if err := setup.CheckTestStoragePath(); err != nil {
+		log.Fatalf("Test storage path setup error: %v", err)
 	}
 
 	connection, err := db.NewDatabase()
