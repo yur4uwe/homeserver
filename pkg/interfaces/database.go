@@ -16,7 +16,12 @@ type DatabaseInterface interface {
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error)
+
+	// Table Management
+	CreateTable(ctx context.Context, table *globals.DBTable) error
+	TableExists(ctx context.Context, tableName string) (bool, error)
 	ClearEntries(ctx context.Context) (string, error)
+	DropTable(ctx context.Context, tableName string) error
 
 	// File Queries
 	ExtractUserFiles(ctx context.Context, userID int) ([]*file_schema.UserFile, error)

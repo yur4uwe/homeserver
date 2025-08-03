@@ -34,6 +34,17 @@ func (m *MockDB) Exec(ctx context.Context, sql string, args ...interface{}) (pgc
 	return argsMock.Get(0).(pgconn.CommandTag), argsMock.Error(1)
 }
 
+// Table Management
+func (m *MockDB) CreateTable(ctx context.Context, table *globals.DBTable) error {
+	args := m.Called(ctx, table)
+	return args.Error(0)
+}
+
+func (m *MockDB) TableExists(ctx context.Context, tableName string) (bool, error) {
+	args := m.Called(ctx, tableName)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockDB) ClearEntries(ctx context.Context) (string, error) {
 	args := m.Called(ctx)
 	return args.String(0), args.Error(1)
@@ -204,4 +215,9 @@ func (m *MockDB) QueryEmail(ctx context.Context, email string) (int, error) {
 func (m *MockDB) QueryPassword(ctx context.Context, password string) (int, error) {
 	args := m.Called(ctx, password)
 	return args.Int(0), args.Error(1)
+}
+
+func (m *MockDB) DropTable(ctx context.Context, tableName string) error {
+	args := m.Called(ctx, tableName)
+	return args.Error(0)
 }

@@ -75,3 +75,7 @@ func (db *Database) Query(ctx context.Context, sql string, args ...interface{}) 
 func (db *Database) ClearEntries(ctx context.Context) (string, error) {
 	return tables.ClearEntries(ctx, db)
 }
+
+func (db *Database) DropTable(ctx context.Context, tableName string) error {
+	return tables.DropTable(ctx, db, tableName)
+}

@@ -3,21 +3,21 @@ package setup
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"os"
 )
 
-var required_db_tables = []*globals.DBTable{
+var RequiredDBTables = []*globals.DBTable{
 	globals.DBUsersTable,
 	globals.DBFoldersTable,
 	globals.DBFilesTable,
 }
 
-func CheckDatabaseTables(connection *db.Database) error {
+func CheckDatabaseTables(connection interfaces.DatabaseInterface) error {
 	ctx := context.Background()
 
-	for _, table := range required_db_tables {
+	for _, table := range RequiredDBTables {
 		exists, err := connection.TableExists(ctx, table.Name)
 		if err != nil {
 			return fmt.Errorf("error checking table %s: %v", table.Name, err)
@@ -34,7 +34,7 @@ func CheckDatabaseTables(connection *db.Database) error {
 	return nil
 }
 
-func CheckUserFolders(connection *db.Database) error {
+func CheckUserFolders(connection interfaces.DatabaseInterface) error {
 	ctx := context.Background()
 
 	storage_path := os.Getenv(globals.EnvStoragePath)

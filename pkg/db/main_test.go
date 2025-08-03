@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Test connection to the database before running tests
 var connection *Database
 
 func TestMain(m *testing.M) {

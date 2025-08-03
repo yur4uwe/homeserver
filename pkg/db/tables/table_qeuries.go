@@ -47,3 +47,8 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 
 	return "All entries cleared successfully", nil
 }
+
+func DropTable(ctx context.Context, db interfaces.DatabaseInterface, table_name string) error {
+	_, err := db.Exec(ctx, `DROP TABLE IF EXISTS $1`, table_name)
+	return err
+}
