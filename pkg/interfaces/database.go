@@ -48,10 +48,9 @@ type DatabaseInterface interface {
 	DeleteToken(ctx context.Context, token_str string) error
 
 	// User Queries
-	CreateUserEntry(ctx context.Context, user *user_schema.User) error
+	CreateUserEntry(ctx context.Context, user *user_schema.User) (*user_schema.User, error)
 	ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error)
 	CheckUserFolder(ctx context.Context, user *user_schema.User) error
-	CreateUser(ctx context.Context, username, email, password string) (int, error)
 	QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error)
 	QueryUsername(ctx context.Context, username string) (int, error)
 	QueryEmail(ctx context.Context, email string) (int, error)

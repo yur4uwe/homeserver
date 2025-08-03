@@ -12,6 +12,7 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
+	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
 )
@@ -146,7 +147,12 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		userId, err := connection.CreateUser(r.Context(), form.Username, form.Email, form.Password)
+		user := user_schema.NewUserBuilder().
+			WithUsername(form.Username).
+			WithEmail(form.Email).
+			WithPassword(form.Password)
+
+		inserted_user, err := connection.CreateUserEntry(r.Context(), user)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
 			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -160,7 +166,7 @@ func RegisterHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		err = connection.CreateToken(r.Context(), userId, verification_token)
+		err = connection.CreateToken(r.Context(), inserted_user.ID, verification_token)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
 			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

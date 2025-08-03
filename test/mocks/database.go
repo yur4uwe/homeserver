@@ -166,9 +166,9 @@ func (m *MockDB) DeleteToken(ctx context.Context, token_str string) error {
 }
 
 // User Queries
-func (m *MockDB) CreateUserEntry(ctx context.Context, user *user_schema.User) error {
+func (m *MockDB) CreateUserEntry(ctx context.Context, user *user_schema.User) (*user_schema.User, error) {
 	args := m.Called(ctx, user)
-	return args.Error(0)
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
 func (m *MockDB) ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error) {

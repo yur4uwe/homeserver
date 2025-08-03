@@ -7,7 +7,7 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 )
 
-func (db *Database) CreateUserEntry(ctx context.Context, user_data *user_schema.User) error {
+func (db *Database) CreateUserEntry(ctx context.Context, user_data *user_schema.User) (*user_schema.User, error) {
 	return user.CreateUserEntry(ctx, db, user_data)
 }
 
@@ -17,10 +17,6 @@ func (db *Database) ExtractUserEntries(ctx context.Context) ([]*user_schema.User
 
 func (db *Database) CheckUserFolder(ctx context.Context, user_data *user_schema.User) error {
 	return user.CheckUserFolder(ctx, db, user_data)
-}
-
-func (db *Database) CreateUser(ctx context.Context, username, email, password string) (int, error) {
-	return user.CreateUser(ctx, db, username, email, password)
 }
 
 func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error) {

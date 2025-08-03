@@ -9,22 +9,6 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 )
 
-func CreateUserEntry(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) error {
-	_, err := db.Exec(
-		ctx,
-		`INSERT INTO users (username, password, email, auth_token, created_at, email_verified) VALUES ($1, $2, $3, $4, NOW(), $5)`,
-		user.Username,
-		user.Password,
-		user.Email,
-		user.AuthToken,
-		user.EmailVerified,
-	)
-	if err != nil {
-		return fmt.Errorf("error creating user entry: %v", err)
-	}
-	return nil
-}
-
 func ExtractUserEntries(ctx context.Context, db interfaces.DatabaseInterface) ([]*user_schema.User, error) {
 	rows, err := db.Query(
 		ctx,
@@ -71,15 +55,6 @@ func CheckUserFolder(ctx context.Context, db interfaces.DatabaseInterface, user 
 	}
 
 	return nil
-}
-
-func CreateUser(ctx context.Context, db interfaces.DatabaseInterface, username, email, password string) (int, error) {
-	var userID int
-	err := db.QueryRow(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id`, username, email, password).Scan(&userID)
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
 }
 
 func QueryUserOnLogin(ctx context.Context, db interfaces.DatabaseInterface, form globals.LoginForm) (int, bool, error) {
