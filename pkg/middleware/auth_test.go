@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
-	"homeserver/test_utils"
+	"homeserver/test"
+	"homeserver/test/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestAuthMiddleware(t *testing.T) {
-	mockDB := new(MockDB)
+	mockDB := new(mocks.MockDB)
 	mockDB.On("QueryToken", mock.Anything, "").Return(nil, fmt.Errorf("token not found"))
 	mockDB.On("QueryToken", mock.Anything, "validToken").Return(user_schema.NewUserBuilder(), nil)
 
@@ -33,13 +34,13 @@ func TestAuthMiddleware(t *testing.T) {
 	mockProtectedPath.On("IsProtectedPath", "/protected").Return(true)
 	mockProtectedPath.On("IsProtectedPath", "/").Return(false)
 
-	cleanupParseAsString := test_utils.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
+	cleanupParseAsString := test.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
 	defer cleanupParseAsString()
 
-	cleanupErrorResponse := test_utils.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
+	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
 	defer cleanupErrorResponse()
 
-	cleanupIsProtectedPath := test_utils.MockFunction(&IsProtectedPath, mockProtectedPath.IsProtectedPath, func() {})
+	cleanupIsProtectedPath := test.MockFunction(&IsProtectedPath, mockProtectedPath.IsProtectedPath, func() {})
 	defer cleanupIsProtectedPath()
 
 	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -117,8 +118,8 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("Handles template parsing error", func(t *testing.T) {
 		mockErrorParseAsString := new(MockParseAsString)
 		mockErrorParseAsString.On("ParseTemplateToString", "../static/templates/header.html", mock.Anything).Return("", fmt.Errorf("template error"))
-		cleanupParseAsString := test_utils.MockFunction(&ParseTemplateToString, mockErrorParseAsString.ParseTemplateToString, func() {
-			test_utils.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
+		cleanupParseAsString := test.MockFunction(&ParseTemplateToString, mockErrorParseAsString.ParseTemplateToString, func() {
+			test.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
 		})
 		defer cleanupParseAsString()
 

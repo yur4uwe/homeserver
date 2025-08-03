@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"context"
-	"homeserver/pkg/schemas/user_schema"
 	"html/template"
 	"net/http"
 
@@ -37,18 +35,6 @@ func (m *MockLogHistory) ErrLog(entry, at string) {
 
 func (m *MockLogHistory) UnloadLogs(header string) {
 	m.Called(header)
-}
-
-type MockDB struct {
-	mock.Mock
-}
-
-func (m *MockDB) QueryToken(ctx context.Context, token string) (*user_schema.User, error) {
-	args := m.Called(ctx, token)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
 type MockMust struct {

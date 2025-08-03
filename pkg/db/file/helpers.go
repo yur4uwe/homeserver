@@ -1,21 +1,22 @@
-package db
+package file
 
 import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas/folder_schema"
 	"os"
 	"strings"
 )
 
-func EnsureFolderExists(ctx context.Context, connection *Database, relativePath []string, ownerID int) error {
+func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, relativePath []string, ownerID int) error {
 	for i, segment := range relativePath {
 		if segment == "" {
 			continue
 		}
 
-		exists, err := connection.FolderExists(ctx, segment, ownerID, strings.Join(relativePath[:i], "/"))
+		exists, err := db.FolderExists(ctx, segment, ownerID, strings.Join(relativePath[:i], "/"))
 		if err != nil {
 			return fmt.Errorf("error checking if folder exists: %v", err)
 		}
@@ -26,7 +27,7 @@ func EnsureFolderExists(ctx context.Context, connection *Database, relativePath 
 
 		var parentID *int = nil
 		if i > 0 {
-			id, err := connection.QueryFolderByName(ctx, relativePath[i-1], ownerID, strings.Join(relativePath[:i-1], "/"))
+			id, err := db.QueryFolderByName(ctx, relativePath[i-1], ownerID, strings.Join(relativePath[:i-1], "/"))
 			if err != nil {
 				return fmt.Errorf("error querying folder by name: %v", err)
 			}
@@ -40,7 +41,7 @@ func EnsureFolderExists(ctx context.Context, connection *Database, relativePath 
 			OwnerID: ownerID,
 		}
 
-		if err := connection.CreateFolderEntry(ctx, new_folder); err != nil {
+		if err := db.CreateFolderEntry(ctx, new_folder); err != nil {
 			return fmt.Errorf("error creating folder entry: %v", err)
 		}
 	}

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"homeserver/test_utils"
+	"homeserver/test"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +28,7 @@ func TestErrorResponse(t *testing.T) {
 	mockAlert.On("GenerateAlert", "Error", "x", "Bad Request", AlertError).Return("Mock Alert: Bad Request")
 	mockAlert.On("GenerateAlert", "Error", "x", "Internal Server Error", AlertError).Return("Mock Alert: Internal Server Error")
 
-	cleanup := test_utils.MockFunction(&alertGenerator, mockAlert.GenerateAlert, func() {})
+	cleanup := test.MockFunction(&alertGenerator, mockAlert.GenerateAlert, func() {})
 	defer cleanup()
 
 	tests := []struct {

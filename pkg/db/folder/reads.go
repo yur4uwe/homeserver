@@ -1,41 +1,17 @@
-package db
+package folder
 
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/folder_schema"
 	"homeserver/pkg/schemas/user_schema"
-	"os"
 	"strings"
 )
 
-// CreateFolderEntry creates a new folder entry in the database and ensures the folder structure exists on disk.
-// WRITES TO DISK
-func (db *Database) CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder) error {
-	_, err := db.pool.Exec(
-		ctx,
-		`INSERT INTO user_folders (name, parent, path, owner_id, created_at) VALUES ($1, $2, $3, $4, NOW())`,
-		folder.Name,
-		folder.Parent,
-		folder.Path,
-		folder.OwnerID,
-	)
-	if err != nil {
-		return fmt.Errorf("error creating folder entry: %v", err)
-	}
-
-	err = os.MkdirAll(fmt.Sprintf("%s%s", os.Getenv(globals.EnvStoragePath), folder.Path), os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("error creating folder structure: %v", err)
-	}
-
-	return nil
-}
-
-func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error) {
-	rows, err := db.pool.Query(
+func ExtractUserFolders(ctx context.Context, db interfaces.DatabaseInterface, userID int) ([]*folder_schema.UserFolder, error) {
+	rows, err := db.Query(
 		ctx,
 		`SELECT id, name, parent, owner_id, created_at FROM user_folders WHERE owner_id = $1`,
 		userID,
@@ -57,14 +33,14 @@ func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*fold
 	return entries, nil
 }
 
-func (db *Database) QueryFolderByName(ctx context.Context, folderName string, ownerID int, path_to_folder string) (int, error) {
+func QueryFolderByName(ctx context.Context, db interfaces.DatabaseInterface, folderName string, ownerID int, pathToFolder string) (int, error) {
 	var folderID int
-	err := db.pool.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`SELECT id FROM user_folders WHERE name = $1 AND owner_id = $2 AND path = $3`,
 		folderName,
 		ownerID,
-		path_to_folder,
+		pathToFolder,
 	).Scan(&folderID)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
@@ -75,14 +51,14 @@ func (db *Database) QueryFolderByName(ctx context.Context, folderName string, ow
 	return folderID, nil
 }
 
-func (db *Database) FolderExists(ctx context.Context, folderName string, ownerID int, path_to_folder string) (bool, error) {
+func FolderExists(ctx context.Context, db interfaces.DatabaseInterface, folderName string, ownerID int, pathToFolder string) (bool, error) {
 	var exists bool
-	err := db.pool.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`SELECT EXISTS (SELECT 1 FROM user_folders WHERE name = $1 AND owner_id = $2 AND path = $3)`,
 		folderName,
 		ownerID,
-		path_to_folder,
+		pathToFolder,
 	).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("error checking if folder exists: %v", err)
@@ -90,14 +66,14 @@ func (db *Database) FolderExists(ctx context.Context, folderName string, ownerID
 	return exists, nil
 }
 
-func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error) {
+func ExtractFoldersFromDirectory(ctx context.Context, db interfaces.DatabaseInterface, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s
 		FROM user_folders
 		WHERE path = $1 AND owner_id = $2
 	`, schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID, schemas.CreatedAt)
 
-	rows, err := db.pool.Query(ctx, query, strings.Join(directory, "/"), requester.ID)
+	rows, err := db.Query(ctx, query, strings.Join(directory, "/"), requester.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying folders in directory: %v", err)
 	}
@@ -113,19 +89,4 @@ func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory [
 	}
 
 	return folders, nil
-}
-
-func (db *Database) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder) error {
-	db.pool.Exec(
-		ctx,
-		`DELETE FROM user_folders WHERE id = $1 AND owner_id = $2`,
-		folder.ID,
-		folder.OwnerID,
-	)
-
-	if err := os.RemoveAll(folder.AbsolutePath()); err != nil {
-		return fmt.Errorf("error removing folder %s from disk: %v", folder.Name, err)
-	}
-
-	return nil
 }

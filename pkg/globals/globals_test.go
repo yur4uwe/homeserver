@@ -4,22 +4,22 @@ import (
 	"os"
 	"testing"
 
-	"homeserver/test_utils"
+	"homeserver/test"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobals(t *testing.T) {
 	mockPages := []string{"/login", "/search/", "/"}
-	cleanupPages := test_utils.MockGlobalVar(&Pages, mockPages, func() {})
+	cleanupPages := test.MockGlobalVar(&Pages, mockPages, func() {})
 	defer cleanupPages()
 
 	mockProtectedPages := []string{"/settings", "/upload"}
-	cleanupProtectedPages := test_utils.MockGlobalVar(&ProtectedPages, mockProtectedPages, func() {})
+	cleanupProtectedPages := test.MockGlobalVar(&ProtectedPages, mockProtectedPages, func() {})
 	defer cleanupProtectedPages()
 
 	mockAvailableFileTypes := []string{"jpg", "png", "txt"}
-	cleanupAvailableFileTypes := test_utils.MockGlobalVar(&AvailableFileTypes, mockAvailableFileTypes, func() {})
+	cleanupAvailableFileTypes := test.MockGlobalVar(&AvailableFileTypes, mockAvailableFileTypes, func() {})
 	defer cleanupAvailableFileTypes()
 
 	t.Run("IsPage returns true for valid pages", func(t *testing.T) {

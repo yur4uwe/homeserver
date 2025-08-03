@@ -1,15 +1,16 @@
-package db
+package user
 
 import (
 	"context"
 	"fmt"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas/folder_schema"
 	"homeserver/pkg/schemas/user_schema"
 )
 
-func (db *Database) CreateUserEntry(ctx context.Context, user *user_schema.User) error {
-	_, err := db.pool.Exec(
+func CreateUserEntry(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) error {
+	_, err := db.Exec(
 		ctx,
 		`INSERT INTO users (username, password, email, auth_token, created_at, email_verified) VALUES ($1, $2, $3, $4, NOW(), $5)`,
 		user.Username,
@@ -24,8 +25,8 @@ func (db *Database) CreateUserEntry(ctx context.Context, user *user_schema.User)
 	return nil
 }
 
-func (db *Database) ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error) {
-	rows, err := db.pool.Query(
+func ExtractUserEntries(ctx context.Context, db interfaces.DatabaseInterface) ([]*user_schema.User, error) {
+	rows, err := db.Query(
 		ctx,
 		`SELECT id, username, password, email, auth_token, created_at, email_verified FROM users`,
 	)
@@ -46,9 +47,9 @@ func (db *Database) ExtractUserEntries(ctx context.Context) ([]*user_schema.User
 	return entries, nil
 }
 
-func (db *Database) CheckUserFolder(ctx context.Context, user *user_schema.User) error {
+func CheckUserFolder(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) error {
 	var exists bool
-	err := db.pool.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`SELECT EXISTS (SELECT id FROM user_folders WHERE owner_id = $1)`,
 		user.ID,
@@ -72,19 +73,19 @@ func (db *Database) CheckUserFolder(ctx context.Context, user *user_schema.User)
 	return nil
 }
 
-func (db *Database) CreateUser(ctx context.Context, username, email, password string) (int, error) {
+func CreateUser(ctx context.Context, db interfaces.DatabaseInterface, username, email, password string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id`, username, email, password).Scan(&userID)
+	err := db.QueryRow(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id`, username, email, password).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
 	return userID, nil
 }
 
-func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error) {
+func QueryUserOnLogin(ctx context.Context, db interfaces.DatabaseInterface, form globals.LoginForm) (int, bool, error) {
 	var userID int
 	var email_verified bool
-	err := db.pool.QueryRow(ctx, `SELECT id, email_verified FROM users WHERE (username = $1 OR email = $1) AND password = $2`, form.Identificator, form.Password).
+	err := db.QueryRow(ctx, `SELECT id, email_verified FROM users WHERE (username = $1 OR email = $1) AND password = $2`, form.Identificator, form.Password).
 		Scan(&userID, &email_verified)
 	if err != nil {
 		return 0, false, err
@@ -92,27 +93,27 @@ func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm
 	return userID, email_verified, nil
 }
 
-func (db *Database) QueryUsername(ctx context.Context, username string) (int, error) {
+func QueryUsername(ctx context.Context, db interfaces.DatabaseInterface, username string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE username = $1`, username).Scan(&userID)
+	err := db.QueryRow(ctx, `SELECT id FROM users WHERE username = $1`, username).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error querying username: %v", err)
 	}
 	return userID, nil
 }
 
-func (db *Database) QueryEmail(ctx context.Context, email string) (int, error) {
+func QueryEmail(ctx context.Context, db interfaces.DatabaseInterface, email string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&userID)
+	err := db.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error querying email: %v", err)
 	}
 	return userID, nil
 }
 
-func (db *Database) QueryPassword(ctx context.Context, password string) (int, error) {
+func QueryPassword(ctx context.Context, db interfaces.DatabaseInterface, password string) (int, error) {
 	var userID int
-	err := db.pool.QueryRow(ctx, `SELECT id FROM users WHERE password = $1`, password).Scan(&userID)
+	err := db.QueryRow(ctx, `SELECT id FROM users WHERE password = $1`, password).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("error querying password: %v", err)
 	}

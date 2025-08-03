@@ -3,19 +3,24 @@ package db
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/db/tables"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas/user_schema"
 	"os"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DatabaseInterface interface {
-	QueryToken(ctx context.Context, token string) (*user_schema.User, error)
+type QueryExecutor interface {
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, arguments ...interface{}) pgx.Row
+	Query(ctx context.Context, sql string, arguments ...interface{}) (pgx.Rows, error)
+	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 type Database struct {
-	pool *pgxpool.Pool
+	pool QueryExecutor
 }
 
 func NewDatabase() (*Database, error) {
@@ -31,7 +36,7 @@ func NewDatabase() (*Database, error) {
 }
 
 func (db *Database) Close() {
-	db.pool.Close()
+	db.pool.(*pgxpool.Pool).Close()
 	fmt.Println("Database connection closed.")
 }
 
@@ -53,4 +58,20 @@ func (db *Database) CreateTable(ctx context.Context, table *globals.DBTable) err
 
 	fmt.Printf("Table %s created successfully.\n", table.Name)
 	return nil
+}
+
+func (db *Database) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+	return db.pool.Exec(ctx, sql, args...)
+}
+
+func (db *Database) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	return db.pool.QueryRow(ctx, sql, args...)
+}
+
+func (db *Database) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+	return db.pool.Query(ctx, sql, args...)
+}
+
+func (db *Database) ClearEntries(ctx context.Context) (string, error) {
+	return tables.ClearEntries(ctx, db)
 }

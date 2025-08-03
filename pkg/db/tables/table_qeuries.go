@@ -1,12 +1,13 @@
-package db
+package tables
 
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/interfaces"
 	"os"
 )
 
-func (db *Database) ClearEntries(ctx context.Context) (string, error) {
+func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string, error) {
 	users, err := db.ExtractUserEntries(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error extracting user entries: %v", err)

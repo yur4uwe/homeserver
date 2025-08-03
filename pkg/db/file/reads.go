@@ -1,16 +1,17 @@
-package db
+package file
 
 import (
 	"context"
 	"fmt"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/user_schema"
 	"strings"
 )
 
-func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*file_schema.UserFile, error) {
-	rows, err := db.pool.Query(
+func ExtractUserFiles(ctx context.Context, db interfaces.DatabaseInterface, userID int) ([]*file_schema.UserFile, error) {
+	rows, err := db.Query(
 		ctx,
 		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,
 			schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt, schemas.UpdatedAt, schemas.Metadata, schemas.OwnerID,
@@ -34,8 +35,8 @@ func (db *Database) ExtractUserFiles(ctx context.Context, userID int) ([]*file_s
 	return entries, nil
 }
 
-func (db *Database) SearchFiles(ctx context.Context, query string, requester *user_schema.User, directory []string) ([]*file_schema.UserFile, error) {
-	files, err := db.ExtractFilesFromDirectory(ctx, strings.Join(directory, "/"), requester)
+func SearchFiles(ctx context.Context, db interfaces.DatabaseInterface, query string, requester *user_schema.User, directory []string) ([]*file_schema.UserFile, error) {
+	files, err := ExtractFilesFromDirectory(ctx, db, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user files: %v", err)
 	}
@@ -43,49 +44,14 @@ func (db *Database) SearchFiles(ctx context.Context, query string, requester *us
 	return files, nil
 }
 
-func (db *Database) CreateFileEntry(ctx context.Context, file *file_schema.UserFile, requester *user_schema.User) (int, error) {
-	if file.Filename == "" || file.Size == 0 || file.ContentType == "" || requester == nil {
-		return -1, fmt.Errorf("invalid file entry data")
-	}
-
-	if strings.Contains(file.Path, "..") || strings.Contains(file.Path, "//") || strings.Contains(file.Path, "\\") {
-		return -1, fmt.Errorf("invalid file path: %s", file.Path)
-	}
-
-	relative_path := strings.Split(file.Path, "/")
-	if len(relative_path) == 0 || relative_path[0] == "" {
-		relative_path = []string{requester.Username}
-	}
-
-	id, err := db.QueryFolderByName(ctx, relative_path[len(relative_path)-1], requester.ID, strings.Join(relative_path[:len(relative_path)-1], "/"))
-	if err != nil {
-		return -1, fmt.Errorf("error querying folder by name: %v", err)
-	}
-	file.Directory = id
-
-	var fileID int
-	query := fmt.Sprintf(`
-		INSERT INTO user_files (%s, %s, %s, %s, %s, %s, %s)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id
-	`, schemas.Filename, schemas.Extension, schemas.Path, schemas.OwnerID, schemas.Size, schemas.ContentType, schemas.Directory)
-
-	err = db.pool.QueryRow(ctx, query, file.Filename, file.Extension, strings.Join(relative_path, "/"), requester.ID, file.Size, file.ContentType, file.Directory).Scan(&fileID)
-	if err != nil {
-		return -1, fmt.Errorf("error inserting file metadata: %v", err)
-	}
-
-	return fileID, nil
-}
-
-func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory string, requester *user_schema.User) ([]*file_schema.UserFile, error) {
+func ExtractFilesFromDirectory(ctx context.Context, db interfaces.DatabaseInterface, directory string, requester *user_schema.User) ([]*file_schema.UserFile, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
 		WHERE path = $1 AND owner_id = $2
 	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt)
 
-	rows, err := db.pool.Query(ctx, query, directory, requester.ID)
+	rows, err := db.Query(ctx, query, directory, requester.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying files in directory: %v", err)
 	}
@@ -103,8 +69,8 @@ func (db *Database) ExtractFilesFromDirectory(ctx context.Context, directory str
 	return files, nil
 }
 
-func (db *Database) ExtractAllFiles(ctx context.Context) ([]*file_schema.UserFile, error) {
-	rows, err := db.pool.Query(
+func ExtractAllFiles(ctx context.Context, db interfaces.DatabaseInterface) ([]*file_schema.UserFile, error) {
+	rows, err := db.Query(
 		ctx,
 		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s FROM user_files`,
 			schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID,
@@ -127,14 +93,14 @@ func (db *Database) ExtractAllFiles(ctx context.Context) ([]*file_schema.UserFil
 	return files, nil
 }
 
-func (db *Database) GetFile(ctx context.Context, filePath string, requester *user_schema.User) (*file_schema.UserFile, error) {
+func GetFile(ctx context.Context, db interfaces.DatabaseInterface, filePath string, requester *user_schema.User) (*file_schema.UserFile, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
 		WHERE path = $1 AND owner_id = $2
 	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt)
 
-	row := db.pool.QueryRow(ctx, query, filePath, requester.ID)
+	row := db.QueryRow(ctx, query, filePath, requester.ID)
 
 	file := &file_schema.UserFile{}
 	if err := row.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {

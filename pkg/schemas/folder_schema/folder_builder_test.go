@@ -2,7 +2,7 @@ package folder_schema
 
 import (
 	"homeserver/pkg/globals"
-	"homeserver/test_utils"
+	"homeserver/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ func TestFolderBuilderSuite(t *testing.T) {
 	mockGetEnv := new(MockGetEnv)
 	mockGetEnv.On("GetEnv", globals.EnvStoragePath).Return("storage/")
 
-	cleanup := test_utils.MockFunction(&getStoragePath, mockGetEnv.GetEnv, func() {})
+	cleanup := test.MockFunction(&getStoragePath, mockGetEnv.GetEnv, func() {})
 	defer cleanup()
 
 	t.Run("TestNewUserFolderBuilder", func(t *testing.T) {
