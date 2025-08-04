@@ -2,113 +2,145 @@ package file_schema
 
 import (
 	"fmt"
+	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
+	"slices"
 	"strings"
 )
 
-func CheckFileID(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
+func (uf *UserFile) ShouldHaveFields(ownerName string, fields ...string) error {
+	if len(fields) == 0 {
+		return fmt.Errorf(schemas.NoFieldsSpecifiedError)
 	}
+
+	var errorMessages []string
+
+	for _, field := range fields {
+		if !slices.Contains(globals.DBFilesTable.Fields, field) {
+			errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFileFieldError, field))
+			continue
+		}
+
+		switch field {
+		case schemas.FileID:
+			if err := CheckFileID(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("FileID: %v", err))
+			}
+		case schemas.Filename:
+			if err := CheckFilename(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Filename: %v", err))
+			}
+		case schemas.Extension:
+			if err := CheckExtension(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Extension: %v", err))
+			}
+		case schemas.Path:
+			if err := CheckPath(ownerName)(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
+			}
+		case schemas.Directory:
+			if err := CheckDirectory(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Directory: %v", err))
+			}
+		case schemas.Size:
+			if err := CheckSize(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Size: %v", err))
+			}
+		case schemas.ContentType:
+			if err := CheckContentType(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("ContentType: %v", err))
+			}
+		case schemas.OwnerID:
+			if err := CheckOwnerID(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+			}
+		case schemas.Metadata:
+			if err := CheckMetadata(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Metadata: %v", err))
+			}
+		}
+	}
+
+	if len(errorMessages) > 0 {
+		return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+	}
+
+	return nil
+}
+
+func CheckFileID(uf *UserFile) error {
 	if uf.ID == 0 {
-		return uf, fmt.Errorf("file ID is invalid: ID must be greater than 0")
+		return fmt.Errorf(schemas.InvalidFileIDError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckFilename(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckFilename(uf *UserFile) error {
 	if uf.Filename == "" {
-		return uf, fmt.Errorf("filename is invalid: filename cannot be empty")
+		return fmt.Errorf(schemas.InvalidFilenameError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckExtension(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckExtension(uf *UserFile) error {
 	if uf.Extension == "" {
-		return uf, fmt.Errorf("extension is invalid: extension cannot be empty")
+		return fmt.Errorf(schemas.InvalidExtensionError)
 	}
 	if strings.HasPrefix(uf.Extension, ".") {
-		return uf, fmt.Errorf("extension is invalid: extension cannot start with a dot")
+		return fmt.Errorf(schemas.InvalidExtensionError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckPath(ownerName string) func(uf *UserFile, err error) (*UserFile, error) {
-	return func(uf *UserFile, err error) (*UserFile, error) {
-		if err != nil {
-			return uf, err
-		}
+func CheckPath(ownerName string) func(uf *UserFile) error {
+	return func(uf *UserFile) error {
 		if uf.Path == "" {
-			return uf, fmt.Errorf("path is invalid: path cannot be empty")
+			return fmt.Errorf(schemas.InvalidFolderPathError)
 		}
 		if strings.HasPrefix(uf.Path, "/") {
-			return uf, fmt.Errorf("path is invalid: path cannot start with a slash")
+			return fmt.Errorf(schemas.InvalidFilePathError)
 		}
 		if strings.HasSuffix(uf.Path, "/") {
-			return uf, fmt.Errorf("path is invalid: path cannot end with a slash")
+			return fmt.Errorf(schemas.InvalidFilePathEndError)
 		}
 		if !strings.HasPrefix(uf.Path, ownerName) {
-			return uf, fmt.Errorf("path is invalid: path must start with the owner's name '%s'", ownerName)
+			return fmt.Errorf(schemas.InvalidFilePathOwnerError, ownerName)
 		}
-		return uf, nil
+		return nil
 	}
-
 }
 
-func CheckDirectory(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckDirectory(uf *UserFile) error {
 	if uf.Directory == 0 {
-		return uf, fmt.Errorf("directory is invalid: directory ID must be greater than 0")
+		return fmt.Errorf(schemas.InvalidDirectoryError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckSize(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckSize(uf *UserFile) error {
 	if uf.Size <= 0 {
-		return uf, fmt.Errorf("size is invalid: file size must be greater than 0")
+		return fmt.Errorf(schemas.InvalidFileSizeError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckContentType(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckContentType(uf *UserFile) error {
 	if uf.ContentType == "" {
-		return uf, fmt.Errorf("content type is invalid: content type cannot be empty")
+		return fmt.Errorf(schemas.InvalidContentTypeError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckOwnerID(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckOwnerID(uf *UserFile) error {
 	if uf.OwnerID == 0 {
-		return uf, fmt.Errorf("owner ID is invalid: owner ID must be greater than 0")
+		return fmt.Errorf(schemas.InvalidFileOwnerIDError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckMetadata(uf *UserFile, err error) (*UserFile, error) {
-	if err != nil {
-		return uf, err
+func CheckMetadata(uf *UserFile) error {
+	if uf.Metadata == nil || *uf.Metadata == "" {
+		return fmt.Errorf(schemas.InvalidFileMetadataError)
 	}
-	if uf.Metadata == nil {
-		return uf, fmt.Errorf("metadata is invalid: metadata cannot be nil")
-	}
-	if *uf.Metadata == "" {
-		return uf, fmt.Errorf("metadata is invalid: metadata cannot be empty")
-	}
-	return uf, nil
+	return nil
 }

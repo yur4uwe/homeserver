@@ -2,66 +2,98 @@ package folder_schema
 
 import (
 	"fmt"
+	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
+	"slices"
 	"strings"
 )
 
-func CheckFolderID(uf *UserFolder, err error) (*UserFolder, error) {
-	if err != nil {
-		return uf, err
+func (uf *UserFolder) ShouldHaveFields(ownerName string, fields ...string) error {
+	if len(fields) == 0 {
+		return fmt.Errorf(schemas.NoFieldsSpecifiedError)
 	}
-	if uf.ID == 0 {
-		return uf, fmt.Errorf("folder ID is invalid: ID must be greater than 0")
-	}
-	return uf, nil
-}
 
-func CheckFolderName(uf *UserFolder, err error) (*UserFolder, error) {
-	if err != nil {
-		return uf, err
-	}
-	if uf.Name == "" {
-		return uf, fmt.Errorf("folder name is invalid: name cannot be empty")
-	}
-	return uf, nil
-}
+	var errorMessages []string
 
-func CheckFolderPath(ownerName string) func(uf *UserFolder, err error) (*UserFolder, error) {
-	return func(uf *UserFolder, err error) (*UserFolder, error) {
-		if err != nil {
-			return uf, err
+	for _, field := range fields {
+		if !slices.Contains(globals.DBFoldersTable.Fields, field) {
+			errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFolderFieldError, field))
+			continue
 		}
+
+		switch field {
+		case schemas.FolderID:
+			if err := CheckFolderID(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("FolderID: %v", err))
+			}
+		case schemas.FolderName:
+			if err := CheckFolderName(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("FolderName: %v", err))
+			}
+		case schemas.Path:
+			if err := CheckFolderPath(ownerName)(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
+			}
+		case schemas.FolderParent:
+			if err := CheckParent(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("FolderParent: %v", err))
+			}
+		case schemas.OwnerID:
+			if err := CheckFolderOwnerID(uf); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+			}
+		}
+	}
+
+	if len(errorMessages) > 0 {
+		return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+	}
+
+	return nil
+}
+
+func CheckFolderID(uf *UserFolder) error {
+	if uf.ID == 0 {
+		return fmt.Errorf(schemas.InvalidFolderIDError)
+	}
+	return nil
+}
+
+func CheckFolderName(uf *UserFolder) error {
+	if uf.Name == "" {
+		return fmt.Errorf(schemas.InvalidFolderNameError)
+	}
+	return nil
+}
+
+func CheckFolderPath(ownerName string) func(uf *UserFolder) error {
+	return func(uf *UserFolder) error {
 		if uf.Path == "" {
-			return uf, fmt.Errorf("path is invalid: path cannot be empty")
+			return fmt.Errorf(schemas.InvalidFolderPathError)
 		}
 		if strings.HasPrefix(uf.Path, "/") {
-			return uf, fmt.Errorf("path is invalid: path cannot start with a slash")
+			return fmt.Errorf(schemas.InvalidFolderPathStartError)
 		}
 		if strings.HasSuffix(uf.Path, "/") {
-			return uf, fmt.Errorf("path is invalid: path cannot end with a slash")
+			return fmt.Errorf(schemas.InvalidFolderPathEndError)
 		}
 		if !strings.HasPrefix(uf.Path, ownerName) {
-			return uf, fmt.Errorf("path is invalid: path must start with the owner's name '%s'", ownerName)
+			return fmt.Errorf(schemas.InvalidFolderPathOwnerError, ownerName)
 		}
-		return uf, nil
+		return nil
 	}
 }
 
-func CheckParent(uf *UserFolder, err error) (*UserFolder, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckParent(uf *UserFolder) error {
 	if uf.Parent != nil && *uf.Parent <= 0 {
-		return uf, fmt.Errorf("parent is invalid: parent ID must be greater than 0")
+		return fmt.Errorf(schemas.InvalidFolderParentError)
 	}
-	return uf, nil
+	return nil
 }
 
-func CheckFolderOwnerID(uf *UserFolder, err error) (*UserFolder, error) {
-	if err != nil {
-		return uf, err
-	}
+func CheckFolderOwnerID(uf *UserFolder) error {
 	if uf.OwnerID == 0 {
-		return uf, fmt.Errorf("owner ID is invalid: owner ID must be greater than 0")
+		return fmt.Errorf(schemas.InvalidFolderOwnerIDError)
 	}
-	return uf, nil
+	return nil
 }

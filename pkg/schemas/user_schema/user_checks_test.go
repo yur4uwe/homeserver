@@ -1,74 +1,112 @@
 package user_schema
 
 import (
+	"fmt"
+	"homeserver/pkg/schemas"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUserChecksSuite(t *testing.T) {
-	t.Run("TestHasID", func(t *testing.T) {
+	t.Run("TestCheckUserID", func(t *testing.T) {
 		user := &User{ID: 1}
-		result, err := HasID(user, nil)
-		assert.NoError(t, err, "HasID should not return an error for valid ID")
-		assert.Equal(t, user, result, "HasID should return the same user object")
+		err := CheckUserID(user)
+		assert.NoError(t, err, "CheckUserID should not return an error for valid ID")
 
 		user = &User{ID: 0}
-		_, err = HasID(user, nil)
-		assert.Error(t, err, "HasID should return an error for invalid ID")
-		assert.EqualError(t, err, "user ID is invalid", "Error message should match")
+		err = CheckUserID(user)
+		assert.Error(t, err, "CheckUserID should return an error for invalid ID")
+		assert.EqualError(t, err, "user ID must be greater than 0", "Error message should match")
 	})
 
-	t.Run("TestHasValidUsername", func(t *testing.T) {
+	t.Run("TestCheckUsername", func(t *testing.T) {
 		user := &User{Username: "john_doe"}
-		result, err := HasValidUsername(user, nil)
-		assert.NoError(t, err, "HasValidUsername should not return an error for valid username")
-		assert.Equal(t, user, result, "HasValidUsername should return the same user object")
+		err := CheckUsername(user)
+		assert.NoError(t, err, "CheckUsername should not return an error for valid username")
 
 		user = &User{Username: ""}
-		_, err = HasValidUsername(user, nil)
-		assert.Error(t, err, "HasValidUsername should return an error for empty username")
-		assert.EqualError(t, err, "username is invalid", "Error message should match")
+		err = CheckUsername(user)
+		assert.Error(t, err, "CheckUsername should return an error for empty username")
+		assert.EqualError(t, err, "username cannot be empty", "Error message should match")
 	})
 
-	t.Run("TestHasValidEmail", func(t *testing.T) {
+	t.Run("TestCheckEmail", func(t *testing.T) {
 		user := &User{Email: "john@example.com"}
-		result, err := HasValidEmail(user, nil)
-		assert.NoError(t, err, "HasValidEmail should not return an error for valid email")
-		assert.Equal(t, user, result, "HasValidEmail should return the same user object")
+		err := CheckEmail(user)
+		assert.NoError(t, err, "CheckEmail should not return an error for valid email")
 
 		user = &User{Email: ""}
-		_, err = HasValidEmail(user, nil)
-		assert.Error(t, err, "HasValidEmail should return an error for empty email")
-		assert.EqualError(t, err, "email is invalid", "Error message should match")
+		err = CheckEmail(user)
+		assert.Error(t, err, "CheckEmail should return an error for empty email")
+		assert.EqualError(t, err, "email cannot be empty", "Error message should match")
 
 		user = &User{Email: "invalid_email"}
-		_, err = HasValidEmail(user, nil)
-		assert.Error(t, err, "HasValidEmail should return an error for invalid email")
-		assert.EqualError(t, err, "email is invalid", "Error message should match")
+		err = CheckEmail(user)
+		assert.Error(t, err, "CheckEmail should return an error for invalid email")
+		assert.EqualError(t, err, "email must contain '@'", "Error message should match")
 	})
 
-	t.Run("TestHasEmailVerified", func(t *testing.T) {
+	t.Run("TestCheckEmailVerified", func(t *testing.T) {
 		user := &User{EmailVerified: true}
-		result, err := HasEmailVerified(user, nil)
-		assert.NoError(t, err, "HasEmailVerified should not return an error for verified email")
-		assert.Equal(t, user, result, "HasEmailVerified should return the same user object")
+		err := CheckEmailVerified(user)
+		assert.NoError(t, err, "CheckEmailVerified should not return an error for verified email")
 
 		user = &User{EmailVerified: false}
-		_, err = HasEmailVerified(user, nil)
-		assert.Error(t, err, "HasEmailVerified should return an error for unverified email")
+		err = CheckEmailVerified(user)
+		assert.Error(t, err, "CheckEmailVerified should return an error for unverified email")
 		assert.EqualError(t, err, "email is not verified", "Error message should match")
 	})
 
-	t.Run("TestHasValidPassword", func(t *testing.T) {
+	t.Run("TestCheckPassword", func(t *testing.T) {
 		user := &User{Password: "secure_password"}
-		result, err := HasValidPassword(user, nil)
-		assert.NoError(t, err, "HasValidPassword should not return an error for valid password")
-		assert.Equal(t, user, result, "HasValidPassword should return the same user object")
+		err := CheckPassword(user)
+		assert.NoError(t, err, "CheckPassword should not return an error for valid password")
 
 		user = &User{Password: ""}
-		result, err = HasValidPassword(user, nil)
-		assert.NoError(t, err, "HasValidPassword does not currently validate password presence")
-		assert.Equal(t, user, result, "HasValidPassword should return the same user object")
+		err = CheckPassword(user)
+		assert.Error(t, err, "CheckPassword should return an error for empty password")
+		assert.EqualError(t, err, "password cannot be empty", "Error message should match")
+	})
+
+	t.Run("TestShouldHaveFields", func(t *testing.T) {
+		user := &User{
+			ID:            0,
+			Username:      "",
+			Email:         "invalid_email",
+			EmailVerified: false,
+			Password:      "",
+		}
+
+		err := user.ShouldHaveFields(schemas.UserID, schemas.Username, schemas.Email, schemas.EmailVerified, schemas.Password)
+		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
+		assert.EqualError(t, err,
+			fmt.Sprintf("%sUserID: %s\nUsername: %s\nEmail: %s\nEmailVerified: %s\nPassword: %s",
+				schemas.ValidationErrorPrefix,
+				schemas.InvalidUserIDError,
+				schemas.InvalidUsernameError,
+				schemas.InvalidEmailFormatError,
+				schemas.InvalidEmailVerifiedError,
+				schemas.InvalidPasswordError,
+			),
+			"Error message should match",
+		)
+
+		user = &User{
+			ID:            1,
+			Username:      "john_doe",
+			Email:         "john@example.com",
+			EmailVerified: true,
+			Password:      "secure_password",
+		}
+
+		err = user.ShouldHaveFields(schemas.UserID, schemas.Username, schemas.Email, schemas.EmailVerified, schemas.Password)
+		assert.NoError(t, err, "ShouldHaveFields should not return an error for valid fields")
+
+		err = user.ShouldHaveFields()
+		assert.Error(t, err, "ShouldHaveFields should return an error when no fields are specified")
+
+		err = user.ShouldHaveFields("invalid_field")
+		assert.Error(t, err, "ShouldHaveFields should return an error for invalid field")
 	})
 }

@@ -2,52 +2,90 @@ package user_schema
 
 import (
 	"fmt"
+	"homeserver/pkg/globals"
+	"homeserver/pkg/schemas"
+	"slices"
 	"strings"
 )
 
-func HasID(u *User, err error) (*User, error) {
-	if err != nil {
-		return u, err
+func (u *User) ShouldHaveFields(fields ...string) error {
+	if len(fields) == 0 {
+		return fmt.Errorf(schemas.NoFieldsSpecifiedError)
 	}
+
+	var errorMessages []string
+
+	for _, field := range fields {
+		if !slices.Contains(globals.DBUsersTable.Fields, field) {
+			errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidUserFieldError, field))
+			continue
+		}
+
+		switch field {
+		case schemas.UserID:
+			if err := CheckUserID(u); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("UserID: %v", err))
+			}
+		case schemas.Username:
+			if err := CheckUsername(u); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Username: %v", err))
+			}
+		case schemas.Email:
+			if err := CheckEmail(u); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Email: %v", err))
+			}
+		case schemas.EmailVerified:
+			if err := CheckEmailVerified(u); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("EmailVerified: %v", err))
+			}
+		case schemas.Password:
+			if err := CheckPassword(u); err != nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("Password: %v", err))
+			}
+		}
+	}
+
+	if len(errorMessages) > 0 {
+		return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+	}
+
+	return nil
+}
+
+func CheckUserID(u *User) error {
 	if u.ID <= 0 {
-		return u, fmt.Errorf("user ID is invalid")
+		return fmt.Errorf(schemas.InvalidUserIDError)
 	}
-	return u, nil
+	return nil
 }
 
-func HasValidUsername(u *User, err error) (*User, error) {
-	if err != nil {
-		return u, err
-	}
+func CheckUsername(u *User) error {
 	if u.Username == "" {
-		return u, fmt.Errorf("username is invalid")
+		return fmt.Errorf(schemas.InvalidUsernameError)
 	}
-	return u, nil
+	return nil
 }
 
-func HasValidEmail(u *User, err error) (*User, error) {
-	if err != nil {
-		return u, err
+func CheckEmail(u *User) error {
+	if u.Email == "" {
+		return fmt.Errorf(schemas.InvalidEmailError)
 	}
-	if u.Email == "" || !strings.Contains(u.Email, "@") {
-		return u, fmt.Errorf("email is invalid")
+	if !strings.Contains(u.Email, "@") {
+		return fmt.Errorf(schemas.InvalidEmailFormatError)
 	}
-	return u, nil
+	return nil
 }
 
-func HasEmailVerified(u *User, err error) (*User, error) {
-	if err != nil {
-		return u, err
-	}
+func CheckEmailVerified(u *User) error {
 	if !u.EmailVerified {
-		return u, fmt.Errorf("email is not verified")
+		return fmt.Errorf(schemas.InvalidEmailVerifiedError)
 	}
-	return u, nil
+	return nil
 }
 
-func HasValidPassword(u *User, err error) (*User, error) {
-	if err != nil {
-		return u, err
+func CheckPassword(u *User) error {
+	if u.Password == "" {
+		return fmt.Errorf(schemas.InvalidPasswordError)
 	}
-	return u, nil
+	return nil
 }

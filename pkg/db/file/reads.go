@@ -11,6 +11,10 @@ import (
 )
 
 func ExtractUserFiles(ctx context.Context, db interfaces.DatabaseInterface, userID int) ([]*file_schema.UserFile, error) {
+	if userID <= 0 {
+		return nil, fmt.Errorf("invalid user ID: %d", userID)
+	}
+
 	rows, err := db.Query(
 		ctx,
 		fmt.Sprintf(`SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM user_files WHERE %s = $1`,

@@ -63,13 +63,7 @@ func SaveFile(
 }
 
 func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, requester *user_schema.User) (int, error) {
-	if file.Filename == "" || file.Size == 0 || file.ContentType == "" || requester == nil {
-		return -1, fmt.Errorf("invalid file entry data")
-	}
-
-	if strings.Contains(file.Path, "..") || strings.Contains(file.Path, "//") || strings.Contains(file.Path, "\\") {
-		return -1, fmt.Errorf("invalid file path: %s", file.Path)
-	}
+	file.ShouldHaveFields(requester.Username, schemas.Filename, schemas.Extension, schemas.Path, schemas.OwnerID, schemas.Size, schemas.ContentType)
 
 	relativePath := strings.Split(file.Path, "/")
 	if len(relativePath) == 0 || relativePath[0] == "" {
@@ -100,6 +94,11 @@ func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 // UPDATE
 
 func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath string, newPath string, requester *user_schema.User) (string, error) {
+	err := requester.ShouldHaveFields(schemas.Username)
+	if err != nil {
+		return "", fmt.Errorf("error validating requester: %v", err)
+	}
+
 	oldRelFilePath := requester.Username + "/" + oldPath
 	newRelFilePath := requester.Username + "/" + newPath
 

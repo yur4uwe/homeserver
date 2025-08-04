@@ -38,7 +38,7 @@ func TestFileMethods(t *testing.T) {
 		file := &file_schema.UserFile{
 			Filename:    "testfile",
 			Extension:   "txt",
-			Path:        "testuser/files",
+			Path:        "testuser",
 			Size:        1024,
 			ContentType: "text/plain",
 		}
@@ -64,8 +64,8 @@ func TestFileMethods(t *testing.T) {
 		assert.NotNil(t, EndTransaction)
 		defer EndTransaction()
 
-		oldPath := "testuser/files/testfile.txt"
-		newPath := "testuser/files/renamedfile.txt"
+		oldPath := "testfile.txt"
+		newPath := "renamedfile.txt"
 
 		renamedPath, err := connection.RenameFile(context.Background(), oldPath, newPath, requester)
 		assert.NoError(t, err, "Failed to rename file")
@@ -81,7 +81,7 @@ func TestFileMethods(t *testing.T) {
 			ID:          1,
 			Filename:    "updatedfile",
 			Extension:   "txt",
-			Path:        "testuser/files",
+			Path:        "testuser",
 			Size:        2048,
 			ContentType: "text/plain",
 		}

@@ -36,6 +36,11 @@ func (db *Database) DeleteFile(ctx context.Context, file_data *file_schema.UserF
 	return file.DeleteFile(ctx, db, file_data, userName)
 }
 
+// oldPath is the current path of the file, newPath is the desired new path.
+// It returns the new path on success.
+// oldPath and newPath should include the filename and extension but not the user directory.
+// For example, if the file is located at "testuser/testfile.txt", oldPath
+// should be "testfile.txt" and newPath should be "renamedfile.txt".
 func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error) {
 	return file.RenameFile(ctx, db, oldPath, newPath, requester)
 }
