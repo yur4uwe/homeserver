@@ -49,7 +49,7 @@ func CheckUserFolder(ctx context.Context, db interfaces.DatabaseInterface, user 
 			OwnerID: user.ID,
 		}
 
-		if err := db.CreateFolderEntry(ctx, folder); err != nil {
+		if err := db.CreateFolderEntry(ctx, folder, user.Username); err != nil {
 			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
 		}
 	}

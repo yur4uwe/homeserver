@@ -8,48 +8,50 @@ import (
 	"strings"
 )
 
-func (uf *UserFolder) ShouldHaveFields(ownerName string, fields ...string) error {
-	if len(fields) == 0 {
-		return fmt.Errorf(schemas.NoFieldsSpecifiedError)
-	}
-
-	var errorMessages []string
-
-	for _, field := range fields {
-		if !slices.Contains(globals.DBFoldersTable.Fields, field) {
-			errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFolderFieldError, field))
-			continue
+func (uf *UserFolder) ShouldHaveFields(ownerName string) func(...string) error {
+	return func(fields ...string) error {
+		if len(fields) == 0 {
+			return fmt.Errorf(schemas.NoFieldsSpecifiedError)
 		}
 
-		switch field {
-		case schemas.FolderID:
-			if err := CheckFolderID(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("FolderID: %v", err))
+		var errorMessages []string
+
+		for _, field := range fields {
+			if !slices.Contains(globals.DBFoldersTable.Fields, field) {
+				errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFolderFieldError, field))
+				continue
 			}
-		case schemas.FolderName:
-			if err := CheckFolderName(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("FolderName: %v", err))
-			}
-		case schemas.Path:
-			if err := CheckFolderPath(ownerName)(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
-			}
-		case schemas.FolderParent:
-			if err := CheckParent(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("FolderParent: %v", err))
-			}
-		case schemas.OwnerID:
-			if err := CheckFolderOwnerID(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+
+			switch field {
+			case schemas.FolderID:
+				if err := CheckFolderID(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("FolderID: %v", err))
+				}
+			case schemas.FolderName:
+				if err := CheckFolderName(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("FolderName: %v", err))
+				}
+			case schemas.Path:
+				if err := CheckFolderPath(ownerName)(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
+				}
+			case schemas.FolderParent:
+				if err := CheckParent(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("FolderParent: %v", err))
+				}
+			case schemas.OwnerID:
+				if err := CheckFolderOwnerID(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+				}
 			}
 		}
-	}
 
-	if len(errorMessages) > 0 {
-		return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
-	}
+		if len(errorMessages) > 0 {
+			return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+		}
 
-	return nil
+		return nil
+	}
 }
 
 func CheckFolderID(uf *UserFolder) error {

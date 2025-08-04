@@ -8,64 +8,66 @@ import (
 	"strings"
 )
 
-func (uf *UserFile) ShouldHaveFields(ownerName string, fields ...string) error {
-	if len(fields) == 0 {
-		return fmt.Errorf(schemas.NoFieldsSpecifiedError)
-	}
-
-	var errorMessages []string
-
-	for _, field := range fields {
-		if !slices.Contains(globals.DBFilesTable.Fields, field) {
-			errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFileFieldError, field))
-			continue
+func (uf *UserFile) ShouldHaveFields(ownerName string) func(...string) error {
+	return func(fields ...string) error {
+		if len(fields) == 0 {
+			return fmt.Errorf(schemas.NoFieldsSpecifiedError)
 		}
 
-		switch field {
-		case schemas.FileID:
-			if err := CheckFileID(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("FileID: %v", err))
+		var errorMessages []string
+
+		for _, field := range fields {
+			if !slices.Contains(globals.DBFilesTable.Fields, field) {
+				errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFileFieldError, field))
+				continue
 			}
-		case schemas.Filename:
-			if err := CheckFilename(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Filename: %v", err))
-			}
-		case schemas.Extension:
-			if err := CheckExtension(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Extension: %v", err))
-			}
-		case schemas.Path:
-			if err := CheckPath(ownerName)(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
-			}
-		case schemas.Directory:
-			if err := CheckDirectory(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Directory: %v", err))
-			}
-		case schemas.Size:
-			if err := CheckSize(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Size: %v", err))
-			}
-		case schemas.ContentType:
-			if err := CheckContentType(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("ContentType: %v", err))
-			}
-		case schemas.OwnerID:
-			if err := CheckOwnerID(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
-			}
-		case schemas.Metadata:
-			if err := CheckMetadata(uf); err != nil {
-				errorMessages = append(errorMessages, fmt.Sprintf("Metadata: %v", err))
+
+			switch field {
+			case schemas.FileID:
+				if err := CheckFileID(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("FileID: %v", err))
+				}
+			case schemas.Filename:
+				if err := CheckFilename(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Filename: %v", err))
+				}
+			case schemas.Extension:
+				if err := CheckExtension(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Extension: %v", err))
+				}
+			case schemas.Path:
+				if err := CheckPath(ownerName)(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
+				}
+			case schemas.Directory:
+				if err := CheckDirectory(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Directory: %v", err))
+				}
+			case schemas.Size:
+				if err := CheckSize(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Size: %v", err))
+				}
+			case schemas.ContentType:
+				if err := CheckContentType(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("ContentType: %v", err))
+				}
+			case schemas.OwnerID:
+				if err := CheckOwnerID(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+				}
+			case schemas.Metadata:
+				if err := CheckMetadata(uf); err != nil {
+					errorMessages = append(errorMessages, fmt.Sprintf("Metadata: %v", err))
+				}
 			}
 		}
-	}
 
-	if len(errorMessages) > 0 {
-		return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
-	}
+		if len(errorMessages) > 0 {
+			return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+		}
 
-	return nil
+		return nil
+	}
 }
 
 func CheckFileID(uf *UserFile) error {

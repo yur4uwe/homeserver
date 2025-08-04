@@ -6,17 +6,22 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas/folder_schema"
+	"homeserver/pkg/schemas/user_schema"
 	"os"
 	"strings"
 )
 
-func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, relativePath []string, ownerID int) error {
+var (
+	Stat = os.Stat
+)
+
+func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, relativePath []string, owner *user_schema.User) error {
 	for i, segment := range relativePath {
 		if segment == "" {
 			continue
 		}
 
-		exists, err := db.FolderExists(ctx, segment, ownerID, strings.Join(relativePath[:i], "/"))
+		exists, err := db.FolderExists(ctx, segment, owner.ID, strings.Join(relativePath[:i], "/"))
 		if err != nil {
 			return fmt.Errorf("error checking if folder exists: %v", err)
 		}
@@ -27,21 +32,23 @@ func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, re
 
 		var parentID *int = nil
 		if i > 0 {
-			id, err := db.QueryFolderByName(ctx, relativePath[i-1], ownerID, strings.Join(relativePath[:i-1], "/"))
+			id, err := db.QueryFolderByName(ctx, relativePath[i-1], owner.ID, strings.Join(relativePath[:i-1], "/"))
 			if err != nil {
 				return fmt.Errorf("error querying folder by name: %v", err)
 			}
 			parentID = &id
 		}
 
+		fmt.Println("Creating folder:", segment, "under parent ID:", parentID, "for segment:", i)
+
 		new_folder := &folder_schema.UserFolder{
 			Name:    segment,
 			Parent:  parentID,
 			Path:    strings.Join(relativePath[:i], "/"),
-			OwnerID: ownerID,
+			OwnerID: owner.ID,
 		}
 
-		if err := db.CreateFolderEntry(ctx, new_folder); err != nil {
+		if err := db.CreateFolderEntry(ctx, new_folder, owner.Username); err != nil {
 			return fmt.Errorf("error creating folder entry: %v", err)
 		}
 	}
@@ -73,7 +80,7 @@ func PreventDuplicateFileName(filePath string) (string, error) {
 	newPath := globals.BuildFilePath(relativePathStr, newName, ext)
 
 	for {
-		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+		if _, err := Stat(newPath); os.IsNotExist(err) {
 			return newPath, nil
 		}
 

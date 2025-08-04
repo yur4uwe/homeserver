@@ -74,9 +74,12 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection *db.Da
 }
 
 func OpenFileHandler(w http.ResponseWriter, r *http.Request, connection *db.Database, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
-	filePath := strings.Join(append(relativePath, fileName), "/")
+	file := file_schema.NewUserFileBuilder().
+		WithFilename(strings.Split(fileName, ".")[0]).
+		WithPath(strings.Join(relativePath, "/")).
+		WithOwnerID(reqCont.Requester.ID)
 
-	file, err := connection.GetFile(r.Context(), filePath, reqCont.Requester)
+	file, err := connection.GetFile(r.Context(), file, reqCont.Requester)
 	if err != nil {
 		utils.ErrorResponse(w, fmt.Sprintf("Error opening file: %v", err), http.StatusInternalServerError)
 		return

@@ -7,8 +7,12 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 )
 
-func (db *Database) CreateFolderEntry(ctx context.Context, folder_data *folder_schema.UserFolder) error {
-	return folder.CreateFolderEntry(ctx, db, folder_data)
+func (db *Database) CreateFolderEntry(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) error {
+	return folder.CreateFolderEntry(ctx, db, folder_data, ownerName)
+}
+
+func (db *Database) CreateRootFolderEntry(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) error {
+	return folder.CreateRootFolderEntry(ctx, db, folder_data, ownerName)
 }
 
 func (db *Database) ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error) {
@@ -27,14 +31,14 @@ func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory [
 	return folder.ExtractFoldersFromDirectory(ctx, db, directory, requester)
 }
 
-func (db *Database) DeleteFolder(ctx context.Context, folder_data *folder_schema.UserFolder) error {
-	return folder.DeleteFolder(ctx, db, folder_data)
+func (db *Database) DeleteFolder(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) error {
+	return folder.DeleteFolder(ctx, db, folder_data, ownerName)
 }
 
-func (db *Database) UpdateFolder(ctx context.Context, folder_data *folder_schema.UserFolder) (int, error) {
-	return folder.UpdateFolder(ctx, db, folder_data)
+func (db *Database) UpdateFolder(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) (int, error) {
+	return folder.UpdateFolder(ctx, db, folder_data, ownerName)
 }
 
-func (db *Database) RenameFolder(ctx context.Context, folder_data *folder_schema.UserFolder, newName string) error {
-	return folder.RenameFolder(ctx, db, folder_data, newName)
+func (db *Database) RenameFolder(ctx context.Context, folder_data *folder_schema.UserFolder, newName, ownerName string) error {
+	return folder.RenameFolder(ctx, db, folder_data, newName, ownerName)
 }

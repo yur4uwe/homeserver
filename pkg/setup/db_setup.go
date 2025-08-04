@@ -26,7 +26,9 @@ func CheckDatabaseTables(connection interfaces.DatabaseInterface) error {
 		fmt.Printf("Checking table %s: exists=%v\n", table.Name, exists)
 
 		if !exists {
-			connection.CreateTable(ctx, table)
+			if err := connection.CreateTable(ctx, table); err != nil {
+				return fmt.Errorf("error creating table %s: %v", table.Name, err)
+			}
 		}
 	}
 
@@ -64,5 +66,46 @@ func CheckUserFolders(connection interfaces.DatabaseInterface) error {
 	}
 
 	fmt.Println("All user folders have been created.")
+	return nil
+}
+
+func CheckDatabaseExtensions(connection interfaces.DatabaseInterface) error {
+	if _, err := connection.Exec(context.Background(), "CREATE EXTENSION IF NOT EXISTS pg_trgm;"); err != nil {
+		return fmt.Errorf("error creating extension: %v", err)
+	}
+
+	return nil
+}
+
+func CheckTableIndices(connection interfaces.DatabaseInterface) error {
+	if _, err := connection.Exec(context.Background(),
+		`CREATE INDEX IF NOT EXISTS user_files_filename_trgm_idx 
+		ON user_files 
+		USING gin (filename gin_trgm_ops);`,
+	); err != nil {
+		return fmt.Errorf("error creating index on user_files table: %v", err)
+	}
+
+	return nil
+}
+
+func DatabaseSetup(connection interfaces.DatabaseInterface) error {
+	if err := CheckDatabaseExtensions(connection); err != nil {
+		return fmt.Errorf("database extension setup failed: %v", err)
+	}
+
+	if err := CheckDatabaseTables(connection); err != nil {
+		return fmt.Errorf("database setup failed: %v", err)
+	}
+
+	if err := CheckTableIndices(connection); err != nil {
+		return fmt.Errorf("table index setup failed: %v", err)
+	}
+
+	if err := CheckUserFolders(connection); err != nil {
+		return fmt.Errorf("user folder setup failed: %v", err)
+	}
+
+	fmt.Println("Database and user folders are set up successfully.")
 	return nil
 }

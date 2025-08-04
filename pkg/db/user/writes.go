@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/interfaces"
+	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/user_schema"
 )
 
 // CREATE
 
 func CreateUserEntry(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) (*user_schema.User, error) {
+	if err := user.ShouldHaveFields(schemas.Username, schemas.Password, schemas.Email); err != nil {
+		return nil, fmt.Errorf("invalid user data: %v", err)
+	}
+
 	var insertedUser user_schema.User
 
 	err := db.QueryRow(
@@ -41,3 +46,16 @@ func CreateUserEntry(ctx context.Context, db interfaces.DatabaseInterface, user 
 // UPDATE
 
 // DELETE
+
+func DeleteUser(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) error {
+	if err := user.ShouldHaveFields(schemas.UserID); err != nil {
+		return fmt.Errorf("invalid user data: %v", err)
+	}
+
+	_, err := db.Exec(ctx, `DELETE FROM users WHERE id = $1`, user.ID)
+	if err != nil {
+		return fmt.Errorf("error deleting user entry: %v", err)
+	}
+
+	return nil
+}

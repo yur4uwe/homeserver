@@ -35,7 +35,7 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 		}
 
 		for _, folder := range folders {
-			if err := db.DeleteFolder(ctx, folder); err != nil {
+			if err := db.DeleteFolder(ctx, folder, user.Username); err != nil {
 				return "", fmt.Errorf("error deleting folder %s for user %s: %v", folder.Name, user.Username, err)
 			}
 
@@ -49,6 +49,10 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 }
 
 func DropTable(ctx context.Context, db interfaces.DatabaseInterface, table_name string) error {
-	_, err := db.Exec(ctx, `DROP TABLE IF EXISTS $1`, table_name)
-	return err
+	query := fmt.Sprintf(`DROP TABLE IF EXISTS "%s" CASCADE;`, table_name)
+	_, err := db.Exec(ctx, query)
+	if err != nil {
+		return fmt.Errorf("error dropping table %s: %v", table_name, err)
+	}
+	return nil
 }

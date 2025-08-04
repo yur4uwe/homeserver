@@ -76,8 +76,8 @@ func (m *MockDB) ExtractAllFiles(ctx context.Context) ([]*file_schema.UserFile, 
 	return args.Get(0).([]*file_schema.UserFile), args.Error(1)
 }
 
-func (m *MockDB) GetFile(ctx context.Context, filePath string, requester *user_schema.User) (*file_schema.UserFile, error) {
-	args := m.Called(ctx, filePath, requester)
+func (m *MockDB) GetFile(ctx context.Context, file_data *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error) {
+	args := m.Called(ctx, file_data, requester)
 	return args.Get(0).(*file_schema.UserFile), args.Error(1)
 }
 
@@ -102,8 +102,8 @@ func (m *MockDB) SaveFile(ctx context.Context, header *file_schema.UserFile, fil
 }
 
 // Folder Queries
-func (m *MockDB) CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder) error {
-	args := m.Called(ctx, folder)
+func (m *MockDB) CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error {
+	args := m.Called(ctx, folder, ownerName)
 	return args.Error(0)
 }
 
@@ -127,23 +127,23 @@ func (m *MockDB) ExtractFoldersFromDirectory(ctx context.Context, directory []st
 	return args.Get(0).([]*folder_schema.UserFolder), args.Error(1)
 }
 
-func (m *MockDB) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder) error {
-	args := m.Called(ctx, folder)
+func (m *MockDB) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error {
+	args := m.Called(ctx, folder, ownerName)
 	return args.Error(0)
 }
 
-func (m *MockDB) EnsureFolderExists(ctx context.Context, relativePath []string, ownerID int) error {
-	args := m.Called(ctx, relativePath, ownerID)
+func (m *MockDB) EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error {
+	args := m.Called(ctx, relativePath, owner)
 	return args.Error(0)
 }
 
-func (m *MockDB) UpdateFolder(ctx context.Context, folder_data *folder_schema.UserFolder) (int, error) {
-	args := m.Called(ctx, folder_data)
+func (m *MockDB) UpdateFolder(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) (int, error) {
+	args := m.Called(ctx, folder_data, ownerName)
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockDB) RenameFolder(ctx context.Context, folder_data *folder_schema.UserFolder, newName string) error {
-	args := m.Called(ctx, folder_data, newName)
+func (m *MockDB) RenameFolder(ctx context.Context, folder_data *folder_schema.UserFolder, newName string, ownerName string) error {
+	args := m.Called(ctx, folder_data, newName, ownerName)
 	return args.Error(0)
 }
 

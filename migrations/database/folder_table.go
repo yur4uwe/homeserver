@@ -53,7 +53,7 @@ func CreateFolderStructure(connection *db.Database) error {
 				_, err := connection.QueryFolderByName(ctx, folder.Name, user.ID, folder.Path)
 				if err != nil {
 					if strings.Contains(err.Error(), "folder does not exist") {
-						if err := connection.CreateFolderEntry(ctx, folder); err != nil {
+						if err := connection.CreateFolderEntry(ctx, folder, user.Username); err != nil {
 							return fmt.Errorf("error creating folder %s for user %s: %v", folder.Name, user.Username, err)
 						}
 					} else {

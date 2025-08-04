@@ -11,6 +11,10 @@ func (db *Database) CreateUserEntry(ctx context.Context, user_data *user_schema.
 	return user.CreateUserEntry(ctx, db, user_data)
 }
 
+func (db *Database) DeleteUser(ctx context.Context, user_data *user_schema.User) error {
+	return user.DeleteUser(ctx, db, user_data)
+}
+
 func (db *Database) ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error) {
 	return user.ExtractUserEntries(ctx, db)
 }

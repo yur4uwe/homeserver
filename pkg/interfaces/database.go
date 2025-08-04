@@ -29,21 +29,21 @@ type DatabaseInterface interface {
 	CreateFileEntry(ctx context.Context, file *file_schema.UserFile, requester *user_schema.User) (int, error)
 	ExtractFilesFromDirectory(ctx context.Context, directory string, requester *user_schema.User) ([]*file_schema.UserFile, error)
 	ExtractAllFiles(ctx context.Context) ([]*file_schema.UserFile, error)
-	GetFile(ctx context.Context, filePath string, requester *user_schema.User) (*file_schema.UserFile, error)
+	GetFile(ctx context.Context, file_data *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error)
 	DeleteFile(ctx context.Context, file *file_schema.UserFile, userName string) (int, error)
 	RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error)
 	UpdateFileEntry(ctx context.Context, file *file_schema.UserFile) error
 
 	// Folder Queries
-	CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder) error
+	CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
 	ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error)
 	QueryFolderByName(ctx context.Context, folderName string, ownerID int, pathToFolder string) (int, error)
 	FolderExists(ctx context.Context, folderName string, ownerID int, pathToFolder string) (bool, error)
 	ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error)
-	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder) error
-	UpdateFolder(ctx context.Context, folder *folder_schema.UserFolder) (int, error)
-	RenameFolder(ctx context.Context, folder *folder_schema.UserFolder, newName string) error
-	EnsureFolderExists(ctx context.Context, relativePath []string, ownerID int) error
+	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
+	UpdateFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (int, error)
+	RenameFolder(ctx context.Context, folder *folder_schema.UserFolder, newName string, ownerName string) error
+	EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error
 
 	// Token Queries
 	CheckToken(ctx context.Context, token_str string) (int, error)

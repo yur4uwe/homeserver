@@ -152,7 +152,7 @@ func TestFileChecksSuite(t *testing.T) {
 			Metadata:    nil,
 		}
 
-		err := file.ShouldHaveFields("john_doe", schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Directory, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.Metadata)
+		err := file.ShouldHaveFields("john_doe")(schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Directory, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.Metadata)
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
 		assert.EqualError(t, err, schemas.ValidationErrorPrefix+"FileID: "+schemas.InvalidFileIDError+"\nFilename: "+schemas.InvalidFilenameError+"\nExtension: "+schemas.InvalidExtensionError+"\nPath: "+schemas.InvalidFilePathError+"\nDirectory: "+schemas.InvalidDirectoryError+"\nSize: "+schemas.InvalidFileSizeError+"\nContentType: "+schemas.InvalidContentTypeError+"\nOwnerID: "+schemas.InvalidFileOwnerIDError+"\nMetadata: "+schemas.InvalidFileMetadataError, "Error message should match")
 
@@ -168,14 +168,14 @@ func TestFileChecksSuite(t *testing.T) {
 			Metadata:    &metadata,
 		}
 
-		err = file.ShouldHaveFields("john_doe", schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Directory, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.Metadata)
+		err = file.ShouldHaveFields("john_doe")(schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Directory, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.Metadata)
 		assert.NoError(t, err, "ShouldHaveFields should not return an error for valid fields")
 
-		err = file.ShouldHaveFields("john_doe")
+		err = file.ShouldHaveFields("john_doe")()
 		assert.Error(t, err, "ShouldHaveFields should return an error when no fields are specified")
 		assert.EqualError(t, err, schemas.NoFieldsSpecifiedError, "Error message should match")
 
-		err = file.ShouldHaveFields("john_doe", "invalid_field")
+		err = file.ShouldHaveFields("john_doe")("invalid_field")
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid field")
 		assert.EqualError(t, err, schemas.ValidationErrorPrefix+"field 'invalid_field' is not a valid file field", "Error message should match")
 	})

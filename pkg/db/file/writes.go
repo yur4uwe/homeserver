@@ -16,6 +16,15 @@ import (
 	"path/filepath"
 )
 
+var (
+	MkdirAll  = os.MkdirAll
+	Rename    = os.Rename
+	RemoveAll = os.RemoveAll
+	Create    = os.Create
+	Remove    = os.Remove
+	Copy      = io.Copy
+)
+
 // CREATE
 
 func SaveFile(
@@ -28,11 +37,11 @@ func SaveFile(
 	filePath := globals.BuildFilePath(header.Path, header.Filename, header.Extension)
 
 	path_slice := strings.Split(header.Path, "/")
-	if err := db.EnsureFolderExists(ctx, path_slice, requester.ID); err != nil {
+	if err := db.EnsureFolderExists(ctx, path_slice, requester); err != nil {
 		return 0, "", fmt.Errorf("error ensuring parent folders exist: %v", err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+	if err := MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return 0, "", fmt.Errorf("error creating directory: %v", err)
 	}
 
@@ -43,13 +52,13 @@ func SaveFile(
 
 	header.Filename = strings.Split(filepath.Base(filePath), ".")[0]
 
-	outFile, err := os.Create(filePath)
+	outFile, err := Create(filePath)
 	if err != nil {
 		return 0, "", fmt.Errorf("error saving file to disk: %v", err)
 	}
 	defer outFile.Close()
 
-	_, err = io.Copy(outFile, *file)
+	_, err = Copy(outFile, *file)
 	if err != nil {
 		return 0, "", fmt.Errorf("error writing file to disk: %v", err)
 	}
@@ -63,7 +72,9 @@ func SaveFile(
 }
 
 func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, requester *user_schema.User) (int, error) {
-	file.ShouldHaveFields(requester.Username, schemas.Filename, schemas.Extension, schemas.Path, schemas.OwnerID, schemas.Size, schemas.ContentType)
+	if err := file.ShouldHaveFields(requester.Username)(schemas.Filename, schemas.Extension, schemas.Path, schemas.OwnerID, schemas.Size, schemas.ContentType); err != nil {
+		return -1, fmt.Errorf("invalid file data: %v", err)
+	}
 
 	relativePath := strings.Split(file.Path, "/")
 	if len(relativePath) == 0 || relativePath[0] == "" {
@@ -116,7 +127,7 @@ func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath st
 		return newRelFilePath, nil
 	}
 
-	if err := os.Rename(oldAbsFilePath, newAbsFilePath); err != nil {
+	if err := Rename(oldAbsFilePath, newAbsFilePath); err != nil {
 		return "", fmt.Errorf("error renaming file on disk: %v", err)
 	}
 
@@ -149,9 +160,13 @@ func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 		WHERE id = $6
 	`
 
-	_, err := db.Exec(ctx, query, file.Filename, file.Extension, file.Path, file.Size, file.ContentType, file.ID)
+	tag, err := db.Exec(ctx, query, file.Filename, file.Extension, file.Path, file.Size, file.ContentType, file.ID)
 	if err != nil {
 		return fmt.Errorf("error updating file entry: %v", err)
+	}
+
+	if tag.RowsAffected() < 1 {
+		return fmt.Errorf("no rows updated")
 	}
 
 	return nil
@@ -160,16 +175,13 @@ func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 // DELETE
 
 func DeleteFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, user_name string) (int, error) {
-	file_path_slice := strings.Split(file.Path, "/")
-	if len(file_path_slice) < 2 {
-		return 0, fmt.Errorf("invalid file path: %s", file.Path)
+	if err := file.ShouldHaveFields(user_name)(schemas.Filename, schemas.OwnerID, schemas.Path); err != nil {
+		return 0, fmt.Errorf("invalid file data: %v", err)
 	}
 
-	file_path_slice = file_path_slice[:len(file_path_slice)-1]
+	path := file.AbsolutePath()
 
-	path := globals.BuildFilePath(strings.Join(file_path_slice, "/"), file.Filename, file.Extension)
-
-	if err := os.Remove(path); err != nil {
+	if err := Remove(path); err != nil {
 		return 0, fmt.Errorf("error deleting file from disk: %v", err)
 	}
 

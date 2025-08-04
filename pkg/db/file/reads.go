@@ -97,19 +97,43 @@ func ExtractAllFiles(ctx context.Context, db interfaces.DatabaseInterface) ([]*f
 	return files, nil
 }
 
-func GetFile(ctx context.Context, db interfaces.DatabaseInterface, filePath string, requester *user_schema.User) (*file_schema.UserFile, error) {
+func GetFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error) {
+	if err := file.ShouldHaveFields(requester.Username)(schemas.Filename, schemas.Path); err != nil {
+		return nil, fmt.Errorf("invalid file data: %v", err)
+	}
+
+	fmt.Printf("Query parameters: Path=%s, Filename=%s, OwnerID=%d\n", file.Path, file.Filename, requester.ID)
+
+	rows, err := db.Query(ctx, fmt.Sprintf(`
+		SELECT %s, %s, %s, %s, %s, %s, %s, %s
+		FROM user_files
+	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt))
+
+	if err != nil {
+		return nil, fmt.Errorf("error querying file: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
+			return nil, fmt.Errorf("error scanning file entry: %v", err)
+		}
+
+		fmt.Printf("Retrieved file: ID=%d, Filename=%s, Path=%s\n", file.ID, file.Filename, file.Path)
+	}
+
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
-		WHERE path = $1 AND owner_id = $2
+		WHERE path = $1 AND filename = $2 AND owner_id = $3
 	`, schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt)
 
-	row := db.QueryRow(ctx, query, filePath, requester.ID)
+	row := db.QueryRow(ctx, query, file.Path, file.Filename, requester.ID)
 
-	file := &file_schema.UserFile{}
-	if err := row.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
-		return nil, fmt.Errorf("error retrieving file: %v", err)
+	res_file := &file_schema.UserFile{}
+	if err := row.Scan(&res_file.ID, &res_file.Filename, &res_file.Extension, &res_file.Path, &res_file.Size, &res_file.ContentType, &res_file.OwnerID, &res_file.CreatedAt); err != nil {
+		return nil, fmt.Errorf("error retrieving res_file: %v", err)
 	}
 
-	return file, nil
+	return res_file, nil
 }

@@ -94,7 +94,7 @@ func TestFolderChecksSuite(t *testing.T) {
 			OwnerID: 0,
 		}
 
-		err := folder.ShouldHaveFields("john_doe", schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID)
+		err := folder.ShouldHaveFields("john_doe")(schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID)
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
 		assert.EqualError(t, err, fmt.Sprintf("%sFolderID: %s\nFolderName: %s\nPath: %s\nFolderParent: %s\nOwnerID: %s", schemas.ValidationErrorPrefix, schemas.InvalidFolderIDError, schemas.InvalidFolderNameError, schemas.InvalidFolderPathStartError, schemas.InvalidFolderParentError, schemas.InvalidFolderOwnerIDError), "Error message should match")
 
@@ -108,14 +108,14 @@ func TestFolderChecksSuite(t *testing.T) {
 			OwnerID: 100,
 		}
 
-		err = folder.ShouldHaveFields("john_doe", schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID, schemas.FolderParent)
+		err = folder.ShouldHaveFields("john_doe")(schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID, schemas.FolderParent)
 		assert.NoError(t, err, "ShouldHaveFields should not return an error for valid fields")
 
-		err = folder.ShouldHaveFields("john_doe")
+		err = folder.ShouldHaveFields("john_doe")()
 		assert.Error(t, err, "ShouldHaveFields should return an error when no fields are specified")
 		assert.EqualError(t, err, "no fields specified for validation", "Error message should match")
 
-		err = folder.ShouldHaveFields("john_doe", "InvalidField")
+		err = folder.ShouldHaveFields("john_doe")("InvalidField")
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid field name")
 		assert.EqualError(t, err, schemas.ValidationErrorPrefix+fmt.Sprintf(schemas.InvalidFolderFieldError, "InvalidField"), "Error message should match")
 	})

@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/interfaces"
+	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/folder_schema"
 	"os"
 )
 
 // CREATE
 
-func CreateFolderEntry(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder) error {
+func CreateFolderEntry(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) error {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderName, schemas.OwnerID, schemas.Path); err != nil {
+		return fmt.Errorf("invalid folder data: %v", err)
+	}
+
 	_, err := db.Exec(
 		ctx,
 		`INSERT INTO user_folders (name, parent, path, owner_id, created_at) VALUES ($1, $2, $3, $4, NOW())`,
@@ -32,9 +37,41 @@ func CreateFolderEntry(ctx context.Context, db interfaces.DatabaseInterface, fol
 	return nil
 }
 
+func CreateRootFolderEntry(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) error {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderName, schemas.OwnerID); err != nil {
+		return fmt.Errorf("invalid folder data: %v", err)
+	}
+
+	if folder.Path != "" {
+		return fmt.Errorf("root folder should not have a path")
+	}
+
+	_, err := db.Exec(
+		ctx,
+		`INSERT INTO user_folders (name, path, owner_id, created_at) VALUES ($1, $2, $3, NOW())`,
+		folder.Name,
+		folder.Path,
+		folder.OwnerID,
+	)
+	if err != nil {
+		return fmt.Errorf("error creating root folder entry: %v", err)
+	}
+
+	err = os.MkdirAll(fmt.Sprintf("%s%s", os.Getenv(globals.EnvStoragePath), folder.Path), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating root folder structure: %v", err)
+	}
+
+	return nil
+}
+
 // UPDATE
 
-func RenameFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, newName string) error {
+func RenameFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, newName, ownerName string) error {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderID, schemas.OwnerID); err != nil {
+		return fmt.Errorf("invalid folder data: %v", err)
+	}
+
 	_, err := db.Exec(
 		ctx,
 		`UPDATE user_folders SET name = $1 WHERE id = $2 AND owner_id = $3`,
@@ -54,24 +91,16 @@ func RenameFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *
 	folder.Name = newName
 	folder.Path = newPath
 
-	if _, err := db.UpdateFolder(ctx, folder); err != nil {
+	if _, err := db.UpdateFolder(ctx, folder, ownerName); err != nil {
 		return fmt.Errorf("error updating folder in database: %v", err)
 	}
 
 	return nil
 }
 
-func UpdateFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder) (int, error) {
-	if folder.Name == "" {
-		return -1, fmt.Errorf("folder name cannot be empty")
-	}
-
-	if folder.OwnerID <= 0 {
-		return -1, fmt.Errorf("invalid owner ID")
-	}
-
-	if folder.Parent == nil {
-		panic("user root folder cannot be updated")
+func UpdateFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) (int, error) {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID); err != nil {
+		return -1, fmt.Errorf("invalid folder data: %v", err)
 	}
 
 	_, err := db.Exec(
@@ -92,10 +121,14 @@ func UpdateFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *
 
 // DELETE
 
-func DeleteFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder) error {
+func DeleteFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) error {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderID, schemas.OwnerID); err != nil {
+		return fmt.Errorf("invalid folder data: %v", err)
+	}
+
 	_, err := db.Exec(
 		ctx,
-		`DELETE FROM user_folders WHERE id = $1 AND owner_id = $2`,
+		`DELETE FROM user_folders WHERE id = $1 AND owner_id = $2 CASCADE`,
 		folder.ID,
 		folder.OwnerID,
 	)

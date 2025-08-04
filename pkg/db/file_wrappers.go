@@ -28,8 +28,8 @@ func (db *Database) ExtractAllFiles(ctx context.Context) ([]*file_schema.UserFil
 	return file.ExtractAllFiles(ctx, db)
 }
 
-func (db *Database) GetFile(ctx context.Context, filePath string, requester *user_schema.User) (*file_schema.UserFile, error) {
-	return file.GetFile(ctx, db, filePath, requester)
+func (db *Database) GetFile(ctx context.Context, file_data *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error) {
+	return file.GetFile(ctx, db, file_data, requester)
 }
 
 func (db *Database) DeleteFile(ctx context.Context, file_data *file_schema.UserFile, userName string) (int, error) {
@@ -53,6 +53,6 @@ func (db *Database) SaveFile(ctx context.Context, header *file_schema.UserFile, 
 	return file.SaveFile(ctx, db, header, fileData, requester)
 }
 
-func (db *Database) EnsureFolderExists(ctx context.Context, relativePath []string, ownerID int) error {
-	return file.EnsureFolderExists(ctx, db, relativePath, ownerID)
+func (db *Database) EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error {
+	return file.EnsureFolderExists(ctx, db, relativePath, owner)
 }

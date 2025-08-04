@@ -86,6 +86,7 @@ func IsFileTypeAvailable(fileType string) bool {
 	return false
 }
 
+// relative_path should have owner directory as the first element.
 func BuildFilePath(relative_path, filename, extension string) string {
 	storage_path := os.Getenv(EnvStoragePath)
 	if storage_path[len(storage_path)-1] != '/' {
