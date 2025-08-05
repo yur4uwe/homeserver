@@ -9,41 +9,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDatabaseFunctions(t *testing.T) {
+func setupTableTestEnvironment(t *testing.T) (*Database, func()) {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
-	t.Run("TableExists returns true for existing table", func(t *testing.T) {
-		con_copy := connection.Copy()
-		EndTransaction := con_copy.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
 
-		_, err := con_copy.pool.Exec(context.Background(), "CREATE TABLE test_table (id SERIAL PRIMARY KEY)")
-		assert.NoError(t, err)
+	return con_copy, EndTransaction
+}
 
-		exists, err := con_copy.TableExists(context.Background(), "test_table")
-		assert.NoError(t, err)
-		assert.True(t, exists)
-	})
+func cleanupTableTestEnvironment(t *testing.T, cleanupFunc func()) {
+	assert.NotNil(t, connection, "Database connection should not be nil")
+	cleanupFunc()
+}
 
-	t.Run("CreateTable creates a new table", func(t *testing.T) {
-		con_copy := connection.Copy()
-		assert.NotNil(t, con_copy, "Database connection should not be nil")
-		EndTransaction := con_copy.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+func TestTableExists(t *testing.T) {
+	con_copy, end_transaction := setupTableTestEnvironment(t)
+	defer cleanupTableTestEnvironment(t, end_transaction)
 
-		mockTable := &globals.DBTable{
-			Name:        "new_test_table",
-			SQLCreation: "CREATE TABLE new_test_table (id SERIAL PRIMARY KEY)",
-		}
+	_, err := con_copy.pool.Exec(context.Background(), "CREATE TABLE test_table (id SERIAL PRIMARY KEY)")
+	assert.NoError(t, err)
 
-		err := con_copy.CreateTable(context.Background(), mockTable)
-		assert.NoError(t, err)
+	exists, err := con_copy.TableExists(context.Background(), "test_table")
+	assert.NoError(t, err)
+	assert.True(t, exists)
+}
 
-		var exists bool
-		err = con_copy.pool.QueryRow(context.Background(), `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = $1)`, "new_test_table").Scan(&exists)
-		assert.NoError(t, err)
-		assert.True(t, exists)
-	})
+func TestCreateTable(t *testing.T) {
+	con_copy, end_transaction := setupTableTestEnvironment(t)
+	defer cleanupTableTestEnvironment(t, end_transaction)
+
+	mockTable := &globals.DBTable{
+		Name:        "new_test_table",
+		SQLCreation: "CREATE TABLE new_test_table (id SERIAL PRIMARY KEY)",
+	}
+
+	err := con_copy.CreateTable(context.Background(), mockTable)
+	assert.NoError(t, err)
+
+	var exists bool
+	err = con_copy.pool.QueryRow(context.Background(), `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = $1)`, "new_test_table").Scan(&exists)
+	assert.NoError(t, err)
+	assert.True(t, exists)
 }
