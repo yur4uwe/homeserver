@@ -149,9 +149,9 @@ func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath st
 	return newRelFilePath, nil
 }
 
-func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile) error {
-	if file.Filename == "" || file.Size == 0 || file.ContentType == "" {
-		return fmt.Errorf("invalid file entry data")
+func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, ownerName string) error {
+	if err := file.ShouldHaveFields(ownerName)(schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path, schemas.Size, schemas.ContentType); err != nil {
+		return fmt.Errorf("invalid file data: %v", err)
 	}
 
 	query := `

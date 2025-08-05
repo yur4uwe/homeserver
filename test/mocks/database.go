@@ -91,8 +91,8 @@ func (m *MockDB) RenameFile(ctx context.Context, oldPath string, newPath string,
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockDB) UpdateFileEntry(ctx context.Context, file *file_schema.UserFile) error {
-	args := m.Called(ctx, file)
+func (m *MockDB) UpdateFileEntry(ctx context.Context, file *file_schema.UserFile, ownerName string) error {
+	args := m.Called(ctx, file, ownerName)
 	return args.Error(0)
 }
 

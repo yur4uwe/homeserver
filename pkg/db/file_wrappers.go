@@ -45,8 +45,8 @@ func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath stri
 	return file.RenameFile(ctx, db, oldPath, newPath, requester)
 }
 
-func (db *Database) UpdateFileEntry(ctx context.Context, file_data *file_schema.UserFile) error {
-	return file.UpdateFileEntry(ctx, db, file_data)
+func (db *Database) UpdateFileEntry(ctx context.Context, file_data *file_schema.UserFile, ownerName string) error {
+	return file.UpdateFileEntry(ctx, db, file_data, ownerName)
 }
 
 func (db *Database) SaveFile(ctx context.Context, header *file_schema.UserFile, fileData *multipart.File, requester *user_schema.User) (int, string, error) {

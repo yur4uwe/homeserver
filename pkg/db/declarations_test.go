@@ -35,9 +35,21 @@ func (db *Database) UseTransaction() cleanupFunc {
 		return nil
 	}
 
-	cleanup := test.MockGlobalVar(&db.pool, tx, func() {})
+	cleanup := test.MockGlobalVar(&db.pool, tx, func() {
+		tx.Rollback(context.Background())
+	})
 
 	return cleanup
+}
+
+func (db *Database) Copy() *Database {
+	if db == nil {
+		panic("Database connection is nil")
+	}
+
+	return &Database{
+		pool: db.pool,
+	}
 }
 
 type MockOS struct {
@@ -70,6 +82,14 @@ func (m *MockOS) Create(name string) (*os.File, error) {
 func (m *MockOS) Remove(name string) error {
 	args := m.Called(name)
 	return args.Error(0)
+}
+
+func (m *MockOS) Stat(name string) (os.FileInfo, error) {
+	args := m.Called(name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(os.FileInfo), args.Error(1)
 }
 
 type MockIO struct {

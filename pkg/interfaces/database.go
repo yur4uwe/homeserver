@@ -32,7 +32,7 @@ type DatabaseInterface interface {
 	GetFile(ctx context.Context, file_data *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error)
 	DeleteFile(ctx context.Context, file *file_schema.UserFile, userName string) (int, error)
 	RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error)
-	UpdateFileEntry(ctx context.Context, file *file_schema.UserFile) error
+	UpdateFileEntry(ctx context.Context, file *file_schema.UserFile, ownerName string) error
 
 	// Folder Queries
 	CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error

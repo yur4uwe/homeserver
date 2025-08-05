@@ -83,6 +83,7 @@ func PreventDuplicateFileName(filePath string) (string, error) {
 		if _, err := Stat(newPath); os.IsNotExist(err) {
 			return newPath, nil
 		}
+		fmt.Printf("File %s already exists, trying to prevent duplicate...\n", newPath)
 
 		newName = fmt.Sprintf("%s_%d", name, counter)
 		newPath = globals.BuildFilePath(relativePathStr, newName, ext)

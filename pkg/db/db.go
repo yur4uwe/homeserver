@@ -50,13 +50,11 @@ func (db *Database) TableExists(ctx context.Context, tableName string) (bool, er
 }
 
 func (db *Database) CreateTable(ctx context.Context, table *globals.DBTable) error {
-	fmt.Printf("Creating table %s...\n", table.Name)
 	_, err := db.pool.Exec(ctx, table.SQLCreation)
 	if err != nil {
 		return fmt.Errorf("error creating table %s: %v", table.Name, err)
 	}
 
-	fmt.Printf("Table %s created successfully.\n", table.Name)
 	return nil
 }
 

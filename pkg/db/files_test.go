@@ -9,43 +9,44 @@ import (
 	"homeserver/pkg/setup"
 	"homeserver/test"
 	"mime/multipart"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestFileMethods(t *testing.T) {
+var mockRequester *user_schema.User
+var mockFolder *folder_schema.UserFolder
+var mockFile *file_schema.UserFile
+
+func setupTestEnvironment(t *testing.T) cleanupFunc {
+	assert.NotNil(t, connection, "Database connection should not be nil")
+
 	mockOS := new(MockOS)
 	mockOS.On("MkdirAll", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("Rename", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("RemoveAll", mock.Anything).Return(nil)
 	mockOS.On("Create", mock.Anything).Return(nil, nil)
 	mockOS.On("Remove", mock.Anything).Return(nil)
+	mockOS.On("Stat", mock.Anything).Return(nil, os.ErrNotExist)
 
 	cleanupMkdir := test.MockFunction(&file.MkdirAll, mockOS.MkdirAll, func() {})
-	defer cleanupMkdir()
 	cleanupRename := test.MockFunction(&file.Rename, mockOS.Rename, func() {})
-	defer cleanupRename()
 	cleanupRemoveAll := test.MockFunction(&file.RemoveAll, mockOS.RemoveAll, func() {})
-	defer cleanupRemoveAll()
 	cleanupCreate := test.MockFunction(&file.Create, mockOS.Create, func() {})
-	defer cleanupCreate()
 	cleanupRemove := test.MockFunction(&file.Remove, mockOS.Remove, func() {})
-	defer cleanupRemove()
+	cleanupStat := test.MockFunction(&file.Stat, mockOS.Stat, func() {})
 
 	mockIO := new(MockIO)
 	mockIO.On("Copy", mock.Anything, mock.Anything).Return(int64(0), nil)
 
 	cleanupCopy := test.MockFunction(&file.Copy, mockIO.Copy, func() {})
-	defer cleanupCopy()
 
-	assert.NotNil(t, connection, "Database connection should not be nil")
-
-	err := setup.DatabaseSetup(connection)
+	err := setup.DatabaseSetup(connection, false)
 	assert.NoError(t, err, "Failed to check database tables")
 
-	mockRequester := user_schema.NewUserBuilder().
+	mockRequester = user_schema.NewUserBuilder().
 		WithUsername("testuser").
 		WithEmail("testuser@example.com").
 		WithPassword("password123")
@@ -53,14 +54,14 @@ func TestFileMethods(t *testing.T) {
 	mockRequester, err = connection.CreateUserEntry(context.Background(), mockRequester)
 	assert.NoError(t, err, "Failed to create user entry")
 
-	mockFolder := folder_schema.NewUserFolderBuilder().
+	mockFolder = folder_schema.NewUserFolderBuilder().
 		WithName(mockRequester.Username).
 		WithOwnerID(mockRequester.ID)
 
 	err = connection.CreateRootFolderEntry(context.Background(), mockFolder, mockRequester.Username)
 	assert.NoError(t, err, "Failed to create folder entry")
 
-	mockFile := file_schema.NewUserFileBuilder().
+	mockFile = file_schema.NewUserFileBuilder().
 		WithFilename("testfile").
 		WithExtension("txt").
 		WithSize(1024).
@@ -71,160 +72,195 @@ func TestFileMethods(t *testing.T) {
 	mockFile.ID, err = connection.CreateFileEntry(context.Background(), mockFile, mockRequester)
 	assert.NoError(t, err, "Failed to create file entry")
 
-	defer func() {
-		for _, table := range setup.RequiredDBTables {
-			err := connection.DropTable(context.Background(), table.Name)
-			assert.NoError(t, err, "Failed to drop table %s", table.Name)
+	return func() {
+		cleanupMkdir()
+		cleanupRename()
+		cleanupRemoveAll()
+		cleanupCreate()
+		cleanupRemove()
+		cleanupCopy()
+		cleanupStat()
+	}
+}
+
+func cleanupTestEnvironment(t *testing.T, cleanupFunc cleanupFunc) {
+	for _, table := range setup.RequiredDBTables {
+		err := connection.DropTable(context.Background(), table.Name)
+		if err != nil {
+			t.Errorf("Failed to drop table %s: %v", table.Name, err)
 		}
-	}()
+	}
+	if cleanupFunc != nil {
+		cleanupFunc()
+	}
+}
 
-	t.Run("CreateFileEntry inserts a file entry", func(t *testing.T) {
-		assert.NotNil(t, connection, "Connection should not be nil")
+func TestCreateFileEntry(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		file := &file_schema.UserFile{
-			Filename:    "testfile",
-			Extension:   "txt",
-			Path:        "testuser",
-			Size:        1024,
-			ContentType: "text/plain",
-			OwnerID:     mockRequester.ID,
-		}
+	fileID, err := con_copy.CreateFileEntry(context.Background(), mockFile, mockRequester)
+	assert.NoError(t, err, "Failed to create file entry")
+	assert.Greater(t, fileID, 0, "File ID should be greater than 0")
+}
 
-		fileID, err := connection.CreateFileEntry(context.Background(), file, mockRequester)
-		assert.NoError(t, err, "Failed to create file entry")
-		assert.Greater(t, fileID, 0, "File ID should be greater than 0")
-	})
+func TestExtractUserFiles(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-	t.Run("ExtractUserFiles retrieves user files", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		files, err := connection.ExtractUserFiles(context.Background(), mockRequester.ID)
-		assert.NoError(t, err, "Failed to extract user files")
-		assert.NotEmpty(t, files, "Files should not be empty")
-		assert.Equal(t, "testfile", files[0].Filename, "Filename should match")
-	})
+	files, err := con_copy.ExtractUserFiles(context.Background(), mockRequester.ID)
+	assert.NoError(t, err, "Failed to extract user files")
+	assert.NotEmpty(t, files, "Files should not be empty")
+	assert.Equal(t, "testfile", files[0].Filename, "Filename should match")
+}
 
-	t.Run("RenameFile renames a file", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+func TestRenameFile(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-		oldPath := "testfile.txt"
-		newPath := "renamedfile.txt"
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		renamedPath, err := connection.RenameFile(context.Background(), oldPath, newPath, mockRequester)
-		assert.NoError(t, err, "Failed to rename file")
-		assert.Equal(t, mockRequester.Username+"/"+newPath, renamedPath, "Renamed path should match")
-	})
+	oldPath := "testfile.txt"
+	newPath := "renamedfile.txt"
 
-	t.Run("UpdateFileEntry updates file metadata", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	renamedPath, err := con_copy.RenameFile(context.Background(), oldPath, newPath, mockRequester)
+	assert.NoError(t, err, "Failed to rename file")
+	assert.Equal(t, mockRequester.Username+"/"+newPath, renamedPath, "Renamed path should match")
+}
 
-		file := &file_schema.UserFile{
-			ID:          1,
-			Filename:    "updatedfile",
-			Extension:   "txt",
-			Path:        "testuser",
-			Size:        2048,
-			ContentType: "text/plain",
-		}
+func TestUpdateFileEntry(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-		err := connection.UpdateFileEntry(context.Background(), file)
-		assert.NoError(t, err, "Failed to update file entry")
-	})
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-	t.Run("DeleteFile removes a file entry", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	file := &file_schema.UserFile{
+		ID:          1,
+		Filename:    "updatedfile",
+		Extension:   "txt",
+		Path:        "testuser",
+		Size:        2048,
+		ContentType: "text/plain",
+	}
 
-		file := &file_schema.UserFile{
-			ID:        1,
-			Filename:  "updatedfile",
-			Extension: "txt",
-			OwnerID:   mockRequester.ID,
-			Path:      mockRequester.Username,
-		}
+	err := con_copy.UpdateFileEntry(context.Background(), file, mockRequester.Username)
+	assert.NoError(t, err, "Failed to update file entry")
+}
 
-		deletedID, err := connection.DeleteFile(context.Background(), file, mockRequester.Username)
-		assert.NoError(t, err, "Failed to delete file entry")
-		assert.Equal(t, file.ID, deletedID, "Deleted file ID should match")
-	})
+func TestDeleteFile(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-	t.Run("GetFile retrieves a file entry", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		mockFile.Filename = "renamedfile"
+	deletedID, err := con_copy.DeleteFile(context.Background(), mockFile, mockRequester.Username)
+	assert.NoError(t, err, "Failed to delete file entry")
+	assert.Equal(t, mockFile.ID, deletedID, "Deleted file ID should match")
+}
 
-		file, err := connection.GetFile(context.Background(), mockFile, mockRequester)
-		assert.NoError(t, err, "Failed to retrieve file entry")
-		assert.Equal(t, mockFile.Filename, file.Filename, "Filename should match")
-	})
+func TestGetFile(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-	t.Run("ExtractAllFiles retrieves all files independently of users", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		files, err := connection.ExtractAllFiles(context.Background())
-		assert.NoError(t, err, "Failed to extract all files")
-		assert.NotEmpty(t, files, "Files should not be empty")
-	})
+	mockFile.Filename = "renamedfile"
 
-	t.Run("ExtractFilesFromDirectory retrieves files from a specific directory", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	file, err := con_copy.GetFile(context.Background(), mockFile, mockRequester)
+	assert.NoError(t, err, "Failed to retrieve file entry")
+	assert.Equal(t, mockFile.Filename, file.Filename, "Filename should match")
+}
 
-		directory := "testuser"
-		files, err := connection.ExtractFilesFromDirectory(context.Background(), directory, mockRequester)
-		assert.NoError(t, err, "Failed to extract files from directory")
-		assert.NotEmpty(t, files, "Files should not be empty")
-		assert.Equal(t, mockFile.Filename, files[0].Filename, "Filename should match")
-	})
+func TestExtractAllFiles(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-	t.Run("SaveFile saves a file to the filesystem", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		fileHeader := &file_schema.UserFile{
-			Filename:    "newfile",
-			Extension:   "txt",
-			Path:        "testuser",
-			Size:        512,
-			ContentType: "text/plain",
-			OwnerID:     mockRequester.ID,
-		}
+	files, err := con_copy.ExtractAllFiles(context.Background())
+	assert.NoError(t, err, "Failed to extract all files")
+	assert.NotEmpty(t, files, "Files should not be empty")
+}
 
-		mockFile := new(multipart.File)
-		fileID, savedFileName, err := connection.SaveFile(context.Background(), fileHeader, mockFile, mockRequester)
-		assert.NoError(t, err, "Failed to save file to filesystem")
-		assert.Greater(t, fileID, 0, "File ID should be greater than 0")
-		assert.Equal(t, "newfile.txt", savedFileName, "Saved file name should match")
-	})
+func TestExtractFilesFromDirectory(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
 
-	t.Run("EnsureFolderExists checks if a folder exists and creates it if not", func(t *testing.T) {
-		EndTransaction := connection.UseTransaction()
-		assert.NotNil(t, EndTransaction)
-		defer EndTransaction()
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
 
-		relativePath := []string{"testuser"}
-		err := connection.EnsureFolderExists(context.Background(), relativePath, mockRequester)
-		assert.NoError(t, err, "Failed to ensure folder exists when relative path is a single segment")
+	directory := "testuser"
+	files, err := con_copy.ExtractFilesFromDirectory(context.Background(), directory, mockRequester)
+	assert.NoError(t, err, "Failed to extract files from directory")
+	assert.NotEmpty(t, files, "Files should not be empty")
+	assert.Equal(t, mockFile.Filename, files[0].Filename, "Filename should match")
+}
 
-		relativePath = []string{"testuser", "newfolder"}
-		err = connection.EnsureFolderExists(context.Background(), relativePath, mockRequester)
-		assert.NoError(t, err, "Failed to ensure folder exists when relative path has multiple segments")
-	})
+func TestSaveFile(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
+
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
+
+	fileHeader := file_schema.NewUserFileBuilder().
+		WithFilename("newfile").
+		WithExtension("txt").
+		WithPath("testuser").
+		WithSize(512).
+		WithContentType("text/plain").
+		WithOwnerID(mockRequester.ID)
+
+	mockFile := new(multipart.File)
+	fileID, savedFileName, err := con_copy.SaveFile(context.Background(), fileHeader, mockFile, mockRequester)
+	assert.NoError(t, err, "Failed to save file to filesystem")
+	assert.Greater(t, fileID, 0, "File ID should be greater than 0")
+	assert.Equal(t, "newfile.txt", savedFileName, "Saved file name should match")
+}
+
+func TestEnsureFolderExists(t *testing.T) {
+	cleanup := setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t, cleanup)
+
+	con_copy := connection.Copy()
+	EndTransaction := con_copy.UseTransaction()
+	assert.NotNil(t, EndTransaction)
+	defer EndTransaction()
+
+	relativePath := []string{"testuser"}
+	err := con_copy.EnsureFolderExists(context.Background(), relativePath, mockRequester)
+	assert.NoError(t, err, "Failed to ensure folder exists when relative path is a single segment")
+
+	relativePath = []string{"testuser", "newfolder"}
+	err = con_copy.EnsureFolderExists(context.Background(), relativePath, mockRequester)
+	assert.NoError(t, err, "Failed to ensure folder exists when relative path has multiple segments")
 }

@@ -102,8 +102,6 @@ func GetFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_sc
 		return nil, fmt.Errorf("invalid file data: %v", err)
 	}
 
-	fmt.Printf("Query parameters: Path=%s, Filename=%s, OwnerID=%d\n", file.Path, file.Filename, requester.ID)
-
 	rows, err := db.Query(ctx, fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files

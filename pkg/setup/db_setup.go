@@ -14,8 +14,10 @@ var RequiredDBTables = []*globals.DBTable{
 	globals.DBFilesTable,
 }
 
-func CheckDatabaseTables(connection interfaces.DatabaseInterface) error {
+func CheckDatabaseTables(connection interfaces.DatabaseInterface, enable_logs ...bool) error {
 	ctx := context.Background()
+
+	to_log := len(enable_logs) > 0 && enable_logs[0]
 
 	for _, table := range RequiredDBTables {
 		exists, err := connection.TableExists(ctx, table.Name)
@@ -23,7 +25,9 @@ func CheckDatabaseTables(connection interfaces.DatabaseInterface) error {
 			return fmt.Errorf("error checking table %s: %v", table.Name, err)
 		}
 
-		fmt.Printf("Checking table %s: exists=%v\n", table.Name, exists)
+		if to_log {
+			fmt.Printf("Checking table %s: exists=%v\n", table.Name, exists)
+		}
 
 		if !exists {
 			if err := connection.CreateTable(ctx, table); err != nil {
@@ -32,12 +36,16 @@ func CheckDatabaseTables(connection interfaces.DatabaseInterface) error {
 		}
 	}
 
-	fmt.Println("All required database tables exist.")
+	if to_log {
+		fmt.Println("All required database tables exist.")
+	}
 	return nil
 }
 
-func CheckUserFolders(connection interfaces.DatabaseInterface) error {
+func CheckUserFolders(connection interfaces.DatabaseInterface, enable_logs ...bool) error {
 	ctx := context.Background()
+
+	to_log := len(enable_logs) > 0 && enable_logs[0]
 
 	storage_path := os.Getenv(globals.EnvStoragePath)
 
@@ -65,7 +73,9 @@ func CheckUserFolders(connection interfaces.DatabaseInterface) error {
 		}
 	}
 
-	fmt.Println("All user folders have been created.")
+	if to_log {
+		fmt.Println("All user folders have been created.")
+	}
 	return nil
 }
 
@@ -89,12 +99,12 @@ func CheckTableIndices(connection interfaces.DatabaseInterface) error {
 	return nil
 }
 
-func DatabaseSetup(connection interfaces.DatabaseInterface) error {
+func DatabaseSetup(connection interfaces.DatabaseInterface, enable_logs ...bool) error {
 	if err := CheckDatabaseExtensions(connection); err != nil {
 		return fmt.Errorf("database extension setup failed: %v", err)
 	}
 
-	if err := CheckDatabaseTables(connection); err != nil {
+	if err := CheckDatabaseTables(connection, enable_logs...); err != nil {
 		return fmt.Errorf("database setup failed: %v", err)
 	}
 
@@ -102,10 +112,12 @@ func DatabaseSetup(connection interfaces.DatabaseInterface) error {
 		return fmt.Errorf("table index setup failed: %v", err)
 	}
 
-	if err := CheckUserFolders(connection); err != nil {
+	if err := CheckUserFolders(connection, enable_logs...); err != nil {
 		return fmt.Errorf("user folder setup failed: %v", err)
 	}
 
-	fmt.Println("Database and user folders are set up successfully.")
+	if len(enable_logs) > 0 && enable_logs[0] {
+		fmt.Println("Database and user folders are set up successfully.")
+	}
 	return nil
 }

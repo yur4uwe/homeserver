@@ -49,10 +49,11 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 }
 
 func DropTable(ctx context.Context, db interfaces.DatabaseInterface, table_name string) error {
-	query := fmt.Sprintf(`DROP TABLE IF EXISTS "%s" CASCADE;`, table_name)
+	query := fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE;`, table_name)
 	_, err := db.Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("error dropping table %s: %v", table_name, err)
 	}
+
 	return nil
 }
