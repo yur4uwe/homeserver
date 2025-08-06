@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupTestEnvironment(t *testing.T) cleanupFunc {
+func setupFileTestEnvironment(t *testing.T) cleanupFunc {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
 	mockOS := new(MockOS)
@@ -79,7 +79,7 @@ func setupTestEnvironment(t *testing.T) cleanupFunc {
 	}
 }
 
-func cleanupTestEnvironment(t *testing.T, cleanupFunc cleanupFunc) {
+func cleanupFileTestEnvironment(t *testing.T, cleanupFunc cleanupFunc) {
 	for _, table := range setup.RequiredDBTables {
 		err := connection.DropTable(context.Background(), table.Name)
 		if err != nil {
@@ -92,8 +92,8 @@ func cleanupTestEnvironment(t *testing.T, cleanupFunc cleanupFunc) {
 }
 
 func TestCreateFileEntry(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -106,8 +106,8 @@ func TestCreateFileEntry(t *testing.T) {
 }
 
 func TestExtractUserFiles(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -121,8 +121,8 @@ func TestExtractUserFiles(t *testing.T) {
 }
 
 func TestRenameFile(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -138,8 +138,8 @@ func TestRenameFile(t *testing.T) {
 }
 
 func TestUpdateFileEntry(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -160,8 +160,8 @@ func TestUpdateFileEntry(t *testing.T) {
 }
 
 func TestDeleteFile(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -174,8 +174,8 @@ func TestDeleteFile(t *testing.T) {
 }
 
 func TestGetFile(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -190,8 +190,8 @@ func TestGetFile(t *testing.T) {
 }
 
 func TestExtractAllFiles(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -204,8 +204,8 @@ func TestExtractAllFiles(t *testing.T) {
 }
 
 func TestExtractFilesFromDirectory(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -220,8 +220,8 @@ func TestExtractFilesFromDirectory(t *testing.T) {
 }
 
 func TestSaveFile(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()
@@ -244,8 +244,8 @@ func TestSaveFile(t *testing.T) {
 }
 
 func TestEnsureFolderExists(t *testing.T) {
-	cleanup := setupTestEnvironment(t)
-	defer cleanupTestEnvironment(t, cleanup)
+	cleanup := setupFileTestEnvironment(t)
+	defer cleanupFileTestEnvironment(t, cleanup)
 
 	con_copy := connection.Copy()
 	EndTransaction := con_copy.UseTransaction()

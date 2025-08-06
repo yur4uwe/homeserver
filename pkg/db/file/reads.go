@@ -49,6 +49,10 @@ func SearchFiles(ctx context.Context, db interfaces.DatabaseInterface, query str
 }
 
 func ExtractFilesFromDirectory(ctx context.Context, db interfaces.DatabaseInterface, directory string, requester *user_schema.User) ([]*file_schema.UserFile, error) {
+	if err := requester.ShouldHaveFields(schemas.UserID); err != nil {
+		return nil, fmt.Errorf("requester must have a valid user ID")
+	}
+
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM user_files
@@ -98,6 +102,10 @@ func ExtractAllFiles(ctx context.Context, db interfaces.DatabaseInterface) ([]*f
 }
 
 func GetFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, requester *user_schema.User) (*file_schema.UserFile, error) {
+	if err := requester.ShouldHaveFields(schemas.Username); err != nil {
+		return nil, fmt.Errorf("error validating requester: %v", err)
+	}
+
 	if err := file.ShouldHaveFields(requester.Username)(schemas.Filename, schemas.Path); err != nil {
 		return nil, fmt.Errorf("invalid file data: %v", err)
 	}

@@ -34,6 +34,14 @@ func SaveFile(
 	file *multipart.File,
 	requester *user_schema.User,
 ) (int, string, error) {
+	if err := requester.ShouldHaveFields(schemas.UserID); err != nil {
+		return 0, "", fmt.Errorf("requester must have a valid user ID: %v", err)
+	}
+
+	if err := header.ShouldHaveFields(requester.Username)(schemas.Filename, schemas.Extension, schemas.Path); err != nil {
+		return 0, "", fmt.Errorf("file header must have valid fields: %v", err)
+	}
+
 	filePath := globals.BuildFilePath(header.Path, header.Filename, header.Extension)
 
 	path_slice := strings.Split(header.Path, "/")
@@ -105,6 +113,10 @@ func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 // UPDATE
 
 func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath string, newPath string, requester *user_schema.User) (string, error) {
+	if oldPath == "" || newPath == "" {
+		return "", fmt.Errorf("invalid file path: oldPath and newPath cannot be empty")
+	}
+
 	err := requester.ShouldHaveFields(schemas.Username)
 	if err != nil {
 		return "", fmt.Errorf("error validating requester: %v", err)
@@ -175,6 +187,10 @@ func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 // DELETE
 
 func DeleteFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, user_name string) (int, error) {
+	if user_name == "" {
+		return 0, fmt.Errorf("user name cannot be empty")
+	}
+
 	if err := file.ShouldHaveFields(user_name)(schemas.Filename, schemas.OwnerID, schemas.Path); err != nil {
 		return 0, fmt.Errorf("invalid file data: %v", err)
 	}
