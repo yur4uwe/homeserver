@@ -16,10 +16,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var mockRequester *user_schema.User
-var mockFolder *folder_schema.UserFolder
-var mockFile *file_schema.UserFile
-
 func setupTestEnvironment(t *testing.T) cleanupFunc {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 

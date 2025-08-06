@@ -57,40 +57,54 @@ func CheckUserFolder(ctx context.Context, db interfaces.DatabaseInterface, user 
 	return nil
 }
 
-func QueryUserOnLogin(ctx context.Context, db interfaces.DatabaseInterface, form globals.LoginForm) (int, bool, error) {
-	var userID int
-	var email_verified bool
-	err := db.QueryRow(ctx, `SELECT id, email_verified FROM users WHERE (username = $1 OR email = $1) AND password = $2`, form.Identificator, form.Password).
-		Scan(&userID, &email_verified)
+func QueryUserOnLogin(ctx context.Context, db interfaces.DatabaseInterface, form globals.LoginForm) (*user_schema.User, bool, error) {
+	var user user_schema.User
+	err := db.QueryRow(
+		ctx,
+		`SELECT id, username, email, auth_token, created_at, email_verified FROM users WHERE (username = $1 OR email = $1) AND password = $2`,
+		form.Identificator, form.Password,
+	).Scan(&user.ID, &user.Username, &user.Email, &user.AuthToken, &user.CreatedAt, &user.EmailVerified)
 	if err != nil {
-		return 0, false, err
+		return nil, false, err
 	}
-	return userID, email_verified, nil
+	return &user, user.EmailVerified, nil
 }
 
-func QueryUsername(ctx context.Context, db interfaces.DatabaseInterface, username string) (int, error) {
-	var userID int
-	err := db.QueryRow(ctx, `SELECT id FROM users WHERE username = $1`, username).Scan(&userID)
+func QueryUsername(ctx context.Context, db interfaces.DatabaseInterface, username string) (*user_schema.User, error) {
+	var user user_schema.User
+	err := db.QueryRow(
+		ctx,
+		`SELECT id, username, email, auth_token, created_at, email_verified FROM users WHERE username = $1`,
+		username,
+	).Scan(&user.ID, &user.Username, &user.Email, &user.AuthToken, &user.CreatedAt, &user.EmailVerified)
 	if err != nil {
-		return 0, fmt.Errorf("error querying username: %v", err)
+		return nil, fmt.Errorf("error querying username: %v", err)
 	}
-	return userID, nil
+	return &user, nil
 }
 
-func QueryEmail(ctx context.Context, db interfaces.DatabaseInterface, email string) (int, error) {
-	var userID int
-	err := db.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&userID)
+func QueryEmail(ctx context.Context, db interfaces.DatabaseInterface, email string) (*user_schema.User, error) {
+	var user user_schema.User
+	err := db.QueryRow(
+		ctx,
+		`SELECT id, username, email, auth_token, created_at, email_verified FROM users WHERE email = $1`,
+		email,
+	).Scan(&user.ID, &user.Username, &user.Email, &user.AuthToken, &user.CreatedAt, &user.EmailVerified)
 	if err != nil {
-		return 0, fmt.Errorf("error querying email: %v", err)
+		return nil, fmt.Errorf("error querying email: %v", err)
 	}
-	return userID, nil
+	return &user, nil
 }
 
-func QueryPassword(ctx context.Context, db interfaces.DatabaseInterface, password string) (int, error) {
-	var userID int
-	err := db.QueryRow(ctx, `SELECT id FROM users WHERE password = $1`, password).Scan(&userID)
+func QueryPassword(ctx context.Context, db interfaces.DatabaseInterface, password string) (*user_schema.User, error) {
+	var user user_schema.User
+	err := db.QueryRow(
+		ctx,
+		`SELECT id, username, email, auth_token, created_at, email_verified FROM users WHERE password = $1`,
+		password,
+	).Scan(&user.ID, &user.Username, &user.Email, &user.AuthToken, &user.CreatedAt, &user.EmailVerified)
 	if err != nil {
-		return 0, fmt.Errorf("error querying password: %v", err)
+		return nil, fmt.Errorf("error querying password: %v", err)
 	}
-	return userID, nil
+	return &user, nil
 }

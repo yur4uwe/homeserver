@@ -44,7 +44,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		userId, email_verified, err := connection.QueryUserOnLogin(r.Context(), form)
+		user, email_verified, err := connection.QueryUserOnLogin(r.Context(), form)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
@@ -61,7 +61,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 		}
 
 		if !email_verified {
-			fmt.Fprintf(os.Stderr, "User %d has not verified their email\n", userId)
+			fmt.Fprintf(os.Stderr, "User %d has not verified their email\n", user.ID)
 			w.Header().Set("HX-Retarget", "#error-resp")
 			w.Header().Set("HX-Reswap", "innerHTML")
 			w.WriteHeader(http.StatusForbidden)
@@ -76,7 +76,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		err = connection.CreateToken(r.Context(), userId, newToken)
+		err = connection.CreateToken(r.Context(), user.ID, newToken)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create token: %v\n", err.Error())
 			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

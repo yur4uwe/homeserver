@@ -10,10 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var mockUser *user_schema.User
-var mockSecondUser *user_schema.User
-var mockIncompleteUser *user_schema.User
-
 func setupUserFileTestEnvironment(t *testing.T) (*Database, cleanupFunc) {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
@@ -137,10 +133,10 @@ func TestQueryUserOnLogin(t *testing.T) {
 		Password:      mockUser.Password,
 	}
 
-	userID, email_verified, err := con_copy.QueryUserOnLogin(context.Background(), loginForm)
+	retrieved_user, email_verified, err := con_copy.QueryUserOnLogin(context.Background(), loginForm)
 	assert.NoError(t, err, "Failed to query user on login")
 	assert.False(t, email_verified, "User email should not be verified")
-	assert.Equal(t, user.ID, userID, "User ID should match the created user ID")
+	assert.Equal(t, user.ID, retrieved_user.ID, "User ID should match the created user ID")
 }
 
 func TestQueryUsername(t *testing.T) {
@@ -151,9 +147,9 @@ func TestQueryUsername(t *testing.T) {
 	assert.NoError(t, err, "Failed to create user")
 	assert.NotNil(t, user, "User should not be nil")
 
-	usernameID, err := con_copy.QueryUsername(context.Background(), mockUser.Username)
+	retrieved_user, err := con_copy.QueryUsername(context.Background(), mockUser.Username)
 	assert.NoError(t, err, "Failed to query username")
-	assert.Equal(t, user.ID, usernameID, "Username ID should match the created user ID")
+	assert.Equal(t, user.ID, retrieved_user.ID, "Username ID should match the created user ID")
 }
 
 func TestQueryEmail(t *testing.T) {
@@ -164,9 +160,9 @@ func TestQueryEmail(t *testing.T) {
 	assert.NoError(t, err, "Failed to create user")
 	assert.NotNil(t, user, "User should not be nil")
 
-	emailID, err := con_copy.QueryEmail(context.Background(), mockUser.Email)
+	retrieved_user, err := con_copy.QueryEmail(context.Background(), mockUser.Email)
 	assert.NoError(t, err, "Failed to query email")
-	assert.Equal(t, user.ID, emailID, "Email ID should match the created user ID")
+	assert.Equal(t, user.ID, retrieved_user.ID, "Email ID should match the created user ID")
 }
 
 func TestQueryPassword(t *testing.T) {
@@ -177,7 +173,7 @@ func TestQueryPassword(t *testing.T) {
 	assert.NoError(t, err, "Failed to create user")
 	assert.NotNil(t, user, "User should not be nil")
 
-	passwordID, err := con_copy.QueryPassword(context.Background(), mockUser.Password)
+	retrieved_user, err := con_copy.QueryPassword(context.Background(), mockUser.Password)
 	assert.NoError(t, err, "Failed to query password")
-	assert.Equal(t, user.ID, passwordID, "Password ID should match the created user ID")
+	assert.Equal(t, user.ID, retrieved_user.ID, "Password ID should match the created user ID")
 }

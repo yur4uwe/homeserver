@@ -56,8 +56,8 @@ type DatabaseInterface interface {
 	CreateUserEntry(ctx context.Context, user *user_schema.User) (*user_schema.User, error)
 	ExtractUserEntries(ctx context.Context) ([]*user_schema.User, error)
 	CheckUserFolder(ctx context.Context, user *user_schema.User) error
-	QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error)
-	QueryUsername(ctx context.Context, username string) (int, error)
-	QueryEmail(ctx context.Context, email string) (int, error)
-	QueryPassword(ctx context.Context, password string) (int, error)
+	QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (*user_schema.User, bool, error)
+	QueryUsername(ctx context.Context, username string) (*user_schema.User, error)
+	QueryEmail(ctx context.Context, email string) (*user_schema.User, error)
+	QueryPassword(ctx context.Context, password string) (*user_schema.User, error)
 }

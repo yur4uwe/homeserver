@@ -9,6 +9,10 @@ import (
 	"os"
 )
 
+var (
+	Mkdir = os.Mkdir
+)
+
 func CheckToken(ctx context.Context, db interfaces.DatabaseInterface, token string) (int, error) {
 	var userID int
 	err := db.QueryRow(ctx, `SELECT id FROM users WHERE auth_token = $1 AND email_verified = true`, token).Scan(&userID)
@@ -66,7 +70,7 @@ func VerifyToken(ctx context.Context, db interfaces.DatabaseInterface, token str
 
 	storagePath := os.Getenv(globals.EnvStoragePath)
 
-	if err := os.Mkdir(storagePath+userName, 0755); err != nil {
+	if err := Mkdir(storagePath+userName, 0755); err != nil {
 		return fmt.Errorf("error creating user directory: %v", err)
 	}
 

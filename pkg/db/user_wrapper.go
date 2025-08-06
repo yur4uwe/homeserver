@@ -23,18 +23,18 @@ func (db *Database) CheckUserFolder(ctx context.Context, user_data *user_schema.
 	return user.CheckUserFolder(ctx, db, user_data)
 }
 
-func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error) {
+func (db *Database) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (*user_schema.User, bool, error) {
 	return user.QueryUserOnLogin(ctx, db, form)
 }
 
-func (db *Database) QueryUsername(ctx context.Context, username string) (int, error) {
+func (db *Database) QueryUsername(ctx context.Context, username string) (*user_schema.User, error) {
 	return user.QueryUsername(ctx, db, username)
 }
 
-func (db *Database) QueryEmail(ctx context.Context, email string) (int, error) {
+func (db *Database) QueryEmail(ctx context.Context, email string) (*user_schema.User, error) {
 	return user.QueryEmail(ctx, db, email)
 }
 
-func (db *Database) QueryPassword(ctx context.Context, password string) (int, error) {
+func (db *Database) QueryPassword(ctx context.Context, password string) (*user_schema.User, error) {
 	return user.QueryPassword(ctx, db, password)
 }

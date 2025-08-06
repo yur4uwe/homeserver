@@ -192,29 +192,29 @@ func (m *MockDB) CheckUserFolder(ctx context.Context, user *user_schema.User) er
 	return args.Error(0)
 }
 
-func (m *MockDB) CreateUser(ctx context.Context, username, email, password string) (int, error) {
+func (m *MockDB) CreateUser(ctx context.Context, username, email, password string) (*user_schema.User, error) {
 	args := m.Called(ctx, username, email, password)
-	return args.Int(0), args.Error(1)
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
-func (m *MockDB) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (int, bool, error) {
+func (m *MockDB) QueryUserOnLogin(ctx context.Context, form globals.LoginForm) (*user_schema.User, bool, error) {
 	args := m.Called(ctx, form)
-	return args.Int(0), args.Bool(1), args.Error(2)
+	return args.Get(0).(*user_schema.User), args.Bool(1), args.Error(2)
 }
 
-func (m *MockDB) QueryUsername(ctx context.Context, username string) (int, error) {
+func (m *MockDB) QueryUsername(ctx context.Context, username string) (*user_schema.User, error) {
 	args := m.Called(ctx, username)
-	return args.Int(0), args.Error(1)
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
-func (m *MockDB) QueryEmail(ctx context.Context, email string) (int, error) {
+func (m *MockDB) QueryEmail(ctx context.Context, email string) (*user_schema.User, error) {
 	args := m.Called(ctx, email)
-	return args.Int(0), args.Error(1)
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
-func (m *MockDB) QueryPassword(ctx context.Context, password string) (int, error) {
+func (m *MockDB) QueryPassword(ctx context.Context, password string) (*user_schema.User, error) {
 	args := m.Called(ctx, password)
-	return args.Int(0), args.Error(1)
+	return args.Get(0).(*user_schema.User), args.Error(1)
 }
 
 func (m *MockDB) DropTable(ctx context.Context, tableName string) error {
