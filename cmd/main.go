@@ -13,6 +13,7 @@ import (
 	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/handlers"
+	"homeserver/pkg/handlers/auth"
 	"homeserver/pkg/middleware"
 
 	"github.com/joho/godotenv"
@@ -35,15 +36,14 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/verification", handlers.VerificationHandler(connection))
+	mux.HandleFunc("/verification", auth.VerificationHandler(connection))
 	mux.HandleFunc("/upload", handlers.UploadPageHandler)
 	mux.HandleFunc("/search/", handlers.SearchHandler(connection))
 	mux.HandleFunc("/api/v1/upload", handlers.UploadHandler(connection))
-	mux.HandleFunc("/api/v1/login", handlers.LoginHandler(connection))
-	mux.HandleFunc("/api/v1/register", handlers.RegisterHandler(connection))
-	mux.HandleFunc("/api/v1/logout", handlers.LogoutHandler(connection))
+	mux.HandleFunc("/api/v1/login", auth.LoginHandler(connection))
+	mux.HandleFunc("/api/v1/register", auth.RegisterHandler(connection))
+	mux.HandleFunc("/api/v1/logout", auth.LogoutHandler(connection))
 	mux.HandleFunc("/api/v1/file-actions/", handlers.FileActionsRouter(connection))
-	mux.HandleFunc("/nothing", handlers.NothingHandler)
 	mux.HandleFunc("/", handlers.PageServer)
 
 	handler := middleware.MiddlewareWrapper(mux, connection)
