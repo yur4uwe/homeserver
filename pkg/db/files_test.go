@@ -260,3 +260,66 @@ func TestEnsureFolderExists(t *testing.T) {
 	err = con_copy.EnsureFolderExists(context.Background(), relativePath, mockRequester)
 	assert.NoError(t, err, "Failed to ensure folder exists when relative path has multiple segments")
 }
+
+func TestPreventDuplicateFileName(t *testing.T) {
+	os.Setenv("STORAGE_PATH", "storage/") // Set environment variable for testing
+
+	mockOS := new(MockOS)
+
+	cleanupStat := test.MockFunction(&file.Stat, mockOS.Stat, func() {})
+	defer cleanupStat()
+
+	// Test cases
+	t.Run("Returns original path if file does not exist", func(t *testing.T) {
+		mockOS.On("Stat", "storage/path/to/file.txt").Return(nil, os.ErrNotExist).Once() // Allow two calls
+
+		path := "path/to/file.txt"
+		newPath, err := file.PreventDuplicateFileName(path)
+		assert.NoError(t, err, "PreventDuplicateFileName should not return an error")
+		assert.Equal(t, "storage/"+path, newPath, "Path should match the original path")
+	})
+
+	t.Run("Generates new path if file exists", func(t *testing.T) {
+		mockOS.On("Stat", "storage/path/to/file.txt").Return(nil, nil).Once()              // Allow two calls
+		mockOS.On("Stat", "storage/path/to/file_1.txt").Return(nil, os.ErrNotExist).Once() // File exists
+
+		path := "path/to/file.txt"
+		newPath, err := file.PreventDuplicateFileName(path)
+		assert.NoError(t, err, "PreventDuplicateFileName should not return an error")
+		assert.NotEqual(t, path, newPath, "Path should be updated to avoid duplication")
+		assert.Equal(t, "storage/path/to/file_1.txt", newPath, "Generated path should match expected value")
+	})
+
+	t.Run("Handles multiple duplicates correctly", func(t *testing.T) {
+		mockOS.On("Stat", "storage/path/to/file.txt").Return(nil, nil).Once()              // File exists
+		mockOS.On("Stat", "storage/path/to/file_1.txt").Return(nil, nil).Once()            // File exists
+		mockOS.On("Stat", "storage/path/to/file_2.txt").Return(nil, os.ErrNotExist).Once() // File does not exist
+
+		path := "path/to/file.txt"
+		newPath, err := file.PreventDuplicateFileName(path)
+		assert.NoError(t, err, "PreventDuplicateFileName should not return an error")
+		assert.Equal(t, "storage/path/to/file_2.txt", newPath, "Generated path should match expected value after handling multiple duplicates")
+	})
+
+	t.Run("Panics for invalid file path", func(t *testing.T) {
+		assert.PanicsWithValue(t, "Invalid file path: ", func() {
+			file.PreventDuplicateFileName("")
+		}, "PreventDuplicateFileName should panic for invalid file path")
+	})
+
+	t.Run("Handles paths with special characters", func(t *testing.T) {
+		mockOS.On("Stat", "storage/path/to/special@file.txt").Return(nil, os.ErrNotExist).Once() // File does not exist
+
+		path := "path/to/special@file.txt"
+		newPath, err := file.PreventDuplicateFileName(path)
+		assert.NoError(t, err, "PreventDuplicateFileName should not return an error")
+		assert.Equal(t, "storage/"+path, newPath, "Path should match the original path")
+	})
+
+	t.Run("Handles paths with no extension", func(t *testing.T) {
+		path := "path/to/file"
+		assert.Panics(t, func() {
+			file.PreventDuplicateFileName(path)
+		}, "PreventDuplicateFileName should panic for invalid file path")
+	})
+}
