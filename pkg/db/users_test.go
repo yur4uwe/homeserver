@@ -110,14 +110,19 @@ func TestExtractUserEntries(t *testing.T) {
 }
 
 func TestCheckUserFolder(t *testing.T) {
-	t.Skip("This test is not implemented yet")
-
 	con_copy, end_transaction := setupUserFileTestEnvironment(t)
 	defer cleanupUserTestEnvironment(t, end_transaction)
 
-	user, err := con_copy.CreateUserEntry(context.Background(), mockUser)
+	user, err := con_copy.CreateUserEntry(context.Background(), mockSecondUser)
 	assert.NoError(t, err, "Failed to create user")
 	assert.NotNil(t, user, "User should not be nil")
+
+	err = con_copy.CheckUserFolder(context.Background(), user)
+	assert.NoError(t, err, "Failed to check user folder")
+
+	exists, err := con_copy.FolderExists(context.Background(), user.Username, user.ID, "")
+	assert.NoError(t, err, "Failed to create root folder")
+	assert.True(t, exists, "User folder should exist")
 }
 
 func TestQueryUserOnLogin(t *testing.T) {

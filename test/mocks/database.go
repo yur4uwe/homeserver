@@ -107,6 +107,11 @@ func (m *MockDB) CreateFolderEntry(ctx context.Context, folder *folder_schema.Us
 	return args.Error(0)
 }
 
+func (m *MockDB) CreateRootFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error {
+	args := m.Called(ctx, folder, ownerName)
+	return args.Error(0)
+}
+
 func (m *MockDB) ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]*folder_schema.UserFolder), args.Error(1)

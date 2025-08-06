@@ -44,6 +44,7 @@ type DatabaseInterface interface {
 	UpdateFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (int, error)
 	RenameFolder(ctx context.Context, folder *folder_schema.UserFolder, newName string, ownerName string) error
 	EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error
+	CreateRootFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
 
 	// Token Queries
 	CheckToken(ctx context.Context, token_str string) (int, error)
