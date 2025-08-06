@@ -44,7 +44,7 @@ func main() {
 	mux.HandleFunc("/api/v1/register", auth.RegisterHandler(connection))
 	mux.HandleFunc("/api/v1/logout", auth.LogoutHandler(connection))
 	mux.HandleFunc("/api/v1/file-actions/", handlers.FileActionsRouter(connection))
-	mux.HandleFunc("/", handlers.PageServer)
+	mux.HandleFunc("/", handlers.StaticPageHandler)
 
 	handler := middleware.MiddlewareWrapper(mux, connection)
 
