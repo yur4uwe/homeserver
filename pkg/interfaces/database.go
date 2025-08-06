@@ -35,16 +35,16 @@ type DatabaseInterface interface {
 	UpdateFileEntry(ctx context.Context, file *file_schema.UserFile, ownerName string) error
 
 	// Folder Queries
-	CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
-	ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error)
-	QueryFolderByName(ctx context.Context, folderName string, ownerID int, pathToFolder string) (int, error)
-	FolderExists(ctx context.Context, folderName string, ownerID int, pathToFolder string) (bool, error)
 	ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error)
-	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
-	UpdateFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (int, error)
+	CreateRootFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (*folder_schema.UserFolder, error)
+	QueryFolderByName(ctx context.Context, folderName string, ownerID int, pathToFolder string) (*folder_schema.UserFolder, error)
+	CreateFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (*folder_schema.UserFolder, error)
+	UpdateFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (*folder_schema.UserFolder, error)
 	RenameFolder(ctx context.Context, folder *folder_schema.UserFolder, newName string, ownerName string) error
+	FolderExists(ctx context.Context, folderName string, ownerID int, pathToFolder string) (bool, error)
 	EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error
-	CreateRootFolderEntry(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
+	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
+	ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error)
 
 	// Token Queries
 	CheckToken(ctx context.Context, token_str string) (int, error)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"homeserver/pkg/interfaces"
-	"os"
 )
 
 func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string, error) {
@@ -23,10 +22,6 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 			if _, err := db.DeleteFile(ctx, file, user.Username); err != nil {
 				return "", fmt.Errorf("error deleting file %s for user %s: %v", file.Filename, user.Username, err)
 			}
-
-			if err := os.Remove(file.AbsolutePath()); err != nil {
-				return "", fmt.Errorf("error removing file %s from disk: %v", file.Filename, err)
-			}
 		}
 
 		folders, err := db.ExtractUserFolders(ctx, user.ID)
@@ -37,10 +32,6 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 		for _, folder := range folders {
 			if err := db.DeleteFolder(ctx, folder, user.Username); err != nil {
 				return "", fmt.Errorf("error deleting folder %s for user %s: %v", folder.Name, user.Username, err)
-			}
-
-			if err := os.RemoveAll(folder.AbsolutePath()); err != nil {
-				return "", fmt.Errorf("error removing folder %s from disk: %v", folder.Name, err)
 			}
 		}
 	}

@@ -11,6 +11,10 @@ import (
 )
 
 func ExtractUserFolders(ctx context.Context, db interfaces.DatabaseInterface, userID int) ([]*folder_schema.UserFolder, error) {
+	if userID <= 0 {
+		return nil, fmt.Errorf("invalid user ID: %d", userID)
+	}
+
 	rows, err := db.Query(
 		ctx,
 		`SELECT id, name, parent, owner_id, created_at FROM user_folders WHERE owner_id = $1`,
@@ -33,22 +37,22 @@ func ExtractUserFolders(ctx context.Context, db interfaces.DatabaseInterface, us
 	return entries, nil
 }
 
-func QueryFolderByName(ctx context.Context, db interfaces.DatabaseInterface, folderName string, ownerID int, pathToFolder string) (int, error) {
-	var folderID int
+func QueryFolderByName(ctx context.Context, db interfaces.DatabaseInterface, folderName string, ownerID int, pathToFolder string) (*folder_schema.UserFolder, error) {
+	var inserted_folder folder_schema.UserFolder
 	err := db.QueryRow(
 		ctx,
-		`SELECT id FROM user_folders WHERE name = $1 AND owner_id = $2 AND path = $3`,
+		`SELECT id, name, parent, owner_id, created_at FROM user_folders WHERE name = $1 AND owner_id = $2 AND path = $3`,
 		folderName,
 		ownerID,
 		pathToFolder,
-	).Scan(&folderID)
+	).Scan(&inserted_folder.ID, &inserted_folder.Name, &inserted_folder.Parent, &inserted_folder.OwnerID, &inserted_folder.CreatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
-			return -1, fmt.Errorf("folder does not exist: %s", folderName)
+			return nil, fmt.Errorf("folder does not exist: %s", folderName)
 		}
-		return -1, fmt.Errorf("error querying folder by name: %v", err)
+		return nil, fmt.Errorf("error querying folder by name: %v", err)
 	}
-	return folderID, nil
+	return &inserted_folder, nil
 }
 
 func FolderExists(ctx context.Context, db interfaces.DatabaseInterface, folderName string, ownerID int, pathToFolder string) (bool, error) {
@@ -67,11 +71,23 @@ func FolderExists(ctx context.Context, db interfaces.DatabaseInterface, folderNa
 }
 
 func ExtractFoldersFromDirectory(ctx context.Context, db interfaces.DatabaseInterface, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error) {
+	if requester == nil {
+		return nil, fmt.Errorf("invalid requester: requester cannot be nil")
+	}
+
+	if err := requester.ShouldHaveFields(schemas.UserID); err != nil {
+		return nil, fmt.Errorf("invalid requester: %v", err)
+	}
+
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s
 		FROM user_folders
 		WHERE path = $1 AND owner_id = $2
 	`, schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID, schemas.CreatedAt)
+
+	if len(directory) == 0 {
+		return nil, fmt.Errorf("directory cannot be empty")
+	}
 
 	rows, err := db.Query(ctx, query, strings.Join(directory, "/"), requester.ID)
 	if err != nil {

@@ -89,11 +89,11 @@ func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 		relativePath = []string{requester.Username}
 	}
 
-	id, err := db.QueryFolderByName(ctx, relativePath[len(relativePath)-1], requester.ID, strings.Join(relativePath[:len(relativePath)-1], "/"))
+	directory, err := db.QueryFolderByName(ctx, relativePath[len(relativePath)-1], requester.ID, strings.Join(relativePath[:len(relativePath)-1], "/"))
 	if err != nil {
 		return -1, fmt.Errorf("error querying folder by name: %v", err)
 	}
-	file.Directory = id
+	file.Directory = directory.ID
 
 	var fileID int
 	query := fmt.Sprintf(`

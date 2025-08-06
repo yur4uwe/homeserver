@@ -50,7 +50,7 @@ func CheckUserFolder(ctx context.Context, db interfaces.DatabaseInterface, user 
 			Path:    "",
 		}
 
-		if err := db.CreateRootFolderEntry(ctx, folder, user.Username); err != nil {
+		if _, err := db.CreateRootFolderEntry(ctx, folder, user.Username); err != nil {
 			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
 		}
 	}

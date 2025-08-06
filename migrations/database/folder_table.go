@@ -36,11 +36,11 @@ func CreateFolderStructure(connection *db.Database) error {
 					parent_name := path_to_file[i-1]
 					parent_path := strings.Join(path_to_file[:i-1], "/")
 
-					id, err := connection.QueryFolderByName(ctx, parent_name, user.ID, parent_path)
+					parent, err := connection.QueryFolderByName(ctx, parent_name, user.ID, parent_path)
 					if err != nil {
 						return fmt.Errorf("error querying parent folder %s for user %s: %v", parent_name, user.Username, err)
 					}
-					parentID = &id
+					parentID = &parent.ID
 				}
 
 				folder := &folder_schema.UserFolder{
@@ -53,7 +53,7 @@ func CreateFolderStructure(connection *db.Database) error {
 				_, err := connection.QueryFolderByName(ctx, folder.Name, user.ID, folder.Path)
 				if err != nil {
 					if strings.Contains(err.Error(), "folder does not exist") {
-						if err := connection.CreateFolderEntry(ctx, folder, user.Username); err != nil {
+						if _, err := connection.CreateFolderEntry(ctx, folder, user.Username); err != nil {
 							return fmt.Errorf("error creating folder %s for user %s: %v", folder.Name, user.Username, err)
 						}
 					} else {

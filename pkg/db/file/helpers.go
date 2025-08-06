@@ -32,11 +32,11 @@ func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, re
 
 		var parentID *int = nil
 		if i > 0 {
-			id, err := db.QueryFolderByName(ctx, relativePath[i-1], owner.ID, strings.Join(relativePath[:i-1], "/"))
+			parent_folder, err := db.QueryFolderByName(ctx, relativePath[i-1], owner.ID, strings.Join(relativePath[:i-1], "/"))
 			if err != nil {
 				return fmt.Errorf("error querying folder by name: %v", err)
 			}
-			parentID = &id
+			parentID = &parent_folder.ID
 		}
 
 		fmt.Println("Creating folder:", segment, "under parent ID:", parentID, "for segment:", i)
@@ -48,7 +48,7 @@ func EnsureFolderExists(ctx context.Context, db interfaces.DatabaseInterface, re
 			OwnerID: owner.ID,
 		}
 
-		if err := db.CreateFolderEntry(ctx, new_folder, owner.Username); err != nil {
+		if _, err := db.CreateFolderEntry(ctx, new_folder, owner.Username); err != nil {
 			return fmt.Errorf("error creating folder entry: %v", err)
 		}
 	}

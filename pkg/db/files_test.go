@@ -54,7 +54,7 @@ func setupFileTestEnvironment(t *testing.T) cleanupFunc {
 		WithName(mockRequester.Username).
 		WithOwnerID(mockRequester.ID)
 
-	err = connection.CreateRootFolderEntry(context.Background(), mockFolder, mockRequester.Username)
+	mockRootFolder, err = connection.CreateRootFolderEntry(context.Background(), mockFolder, mockRequester.Username)
 	assert.NoError(t, err, "Failed to create folder entry")
 
 	mockFile = file_schema.NewUserFileBuilder().

@@ -22,6 +22,7 @@ var (
 	mockIncompleteUser *user_schema.User
 	mockRequester      *user_schema.User
 	mockFolder         *folder_schema.UserFolder
+	mockRootFolder     *folder_schema.UserFolder
 	mockFile           *file_schema.UserFile
 	connection         *Database
 )
