@@ -116,8 +116,6 @@ func GetFile(ctx context.Context, db interfaces.DatabaseInterface, file *file_sc
 		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning file entry: %v", err)
 		}
-
-		fmt.Printf("Retrieved file: ID=%d, Filename=%s, Path=%s\n", file.ID, file.Filename, file.Path)
 	}
 
 	query := fmt.Sprintf(`
