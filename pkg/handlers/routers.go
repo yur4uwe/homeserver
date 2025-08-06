@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func UploadHandler(connection *db.Database) http.HandlerFunc {
+func UploadRouter(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -64,23 +64,10 @@ func FileActionsRouter(connection *db.Database) http.HandlerFunc {
 		default:
 			utils.ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
-
-		// alert := parser.NewAlert(
-		// 	"File Action Success",
-		// 	"check",
-		// 	fmt.Sprintf("Action '%s' performed on file '%s'.", action, fileName),
-		// 	utils.AlertSuccess,
-		// )
-
-		// w.Header().Set("HX-Trigger", fmt.Sprintf(`%sSuccess-%s-%s`, action, strings.Join(relativePath, "/"), fileName))
-		// w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		// w.Header().Set("HX-Retarget", "#modal-content")
-		// w.Header().Set("HX-Reswap", "innerHTML")
-		// w.Write([]byte(alert))
 	}
 }
 
-func SearchHandler(connection *db.Database) http.HandlerFunc {
+func SearchRouter(connection *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
