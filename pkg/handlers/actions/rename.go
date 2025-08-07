@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/utils"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection *db.Database, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {
+func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {
 	if desiredName == "" {
 		utils.ErrorResponse(w, "Desired name parameter is required for rename action", http.StatusBadRequest)
 		return

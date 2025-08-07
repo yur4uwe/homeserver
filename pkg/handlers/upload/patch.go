@@ -1,13 +1,13 @@
 package upload
 
 import (
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/utils"
 	"net/http"
 )
 
-func PatchFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func PatchFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Patch file request received")
 

@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func DeleteFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")
 

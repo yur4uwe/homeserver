@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/schemas/file_schema"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection *db.Database, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string, is_folder bool) {
+func DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string, is_folder bool) {
 	filePath := strings.Join(append(relativePath, fileName), "/")
 
 	file := file_schema.NewUserFileBuilder().

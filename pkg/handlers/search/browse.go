@@ -3,14 +3,14 @@ package search
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
 	"sort"
 	"strings"
 )
 
-func BrowseHandler(ctx context.Context, connection *db.Database, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func BrowseHandler(ctx context.Context, connection interfaces.DatabaseInterface, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
 	user_relative_directory := directory[1:]
 
 	data := &templates.SearchPageData{

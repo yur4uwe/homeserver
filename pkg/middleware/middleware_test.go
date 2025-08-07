@@ -34,7 +34,7 @@ func TestMiddlewareSuite(t *testing.T) {
 		ctx := contextConstructor()
 
 		assert.NotNil(t, ctx, "Context should not be nil")
-		assert.Equal(t, *defaultContext, *ctx, "Context should match the default context")
+		assert.Equal(t, *DefaultContext, *ctx, "Context should match the default context")
 	})
 
 	t.Run("TestWithAdditionalRequestContext", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestMiddlewareSuite(t *testing.T) {
 			reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 			assert.True(t, ok, "Request context should be of type AdditionalRequestContext")
 			assert.NotNil(t, reqCont, "Request context should not be nil")
-			assert.Equal(t, *defaultContext, *reqCont, "Request context should match the default context")
+			assert.Equal(t, *DefaultContext, *reqCont, "Request context should match the default context")
 			w.WriteHeader(http.StatusOK)
 		})
 

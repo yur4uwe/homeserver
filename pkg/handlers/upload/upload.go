@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"homeserver/pkg/db"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func DownloadFile(connection *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Download file request received")
 

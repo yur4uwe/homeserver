@@ -6,6 +6,7 @@ import (
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/folder_schema"
 	"homeserver/pkg/schemas/user_schema"
+	"mime/multipart"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -33,6 +34,7 @@ type DatabaseInterface interface {
 	DeleteFile(ctx context.Context, file *file_schema.UserFile, userName string) (int, error)
 	RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error)
 	UpdateFileEntry(ctx context.Context, file *file_schema.UserFile, ownerName string) error
+	SaveFile(ctx context.Context, header *file_schema.UserFile, fileData *multipart.File, requester *user_schema.User) (int, string, error)
 
 	// Folder Queries
 	ExtractFoldersFromDirectory(ctx context.Context, directory []string, requester *user_schema.User) ([]*folder_schema.UserFolder, error)

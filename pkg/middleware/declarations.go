@@ -75,7 +75,7 @@ type AdditionalRequestContext struct {
 }
 
 // Default context initialization
-var defaultContext = &AdditionalRequestContext{
+var DefaultContext = &AdditionalRequestContext{
 	LogHistory:    &LogHistory{Entries: []string{}},
 	ToRestorePage: false,
 	RerenderBody:  false,

@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"homeserver/pkg/db"
 	"homeserver/pkg/handlers/actions"
 	"homeserver/pkg/handlers/search"
 	"homeserver/pkg/handlers/upload"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
@@ -15,59 +15,83 @@ import (
 	"strings"
 )
 
-func UploadRouter(connection *db.Database) http.HandlerFunc {
+var (
+	ErrorResponse      = utils.ErrorResponse
+	ParsePathWithUName = utils.ParsePathWithUName
+
+	DownloadFile = upload.DownloadFile
+	DeleteFile   = upload.DeleteFile
+	PatchFile    = upload.PatchFile
+
+	DeleteFileHandler = actions.DeleteFileHandler
+	RenameFileHandler = actions.RenameFileHandler
+	OpenFileHandler   = actions.OpenFileHandler
+
+	FileSearchHandler = search.FileSearchHandler
+	BrowseHandler     = search.BrowseHandler
+)
+
+func UploadRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
-			utils.ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
 			return
 		}
 
 		switch r.Method {
 		case http.MethodPost:
-			upload.DownloadFile(connection, reqCont)(w, r)
+			DownloadFile(connection, reqCont)(w, r)
 		case http.MethodDelete:
-			upload.DeleteFile(connection, reqCont)(w, r)
+			DeleteFile(connection, reqCont)(w, r)
 		case http.MethodPatch:
-			upload.PatchFile(connection, reqCont)(w, r)
+			PatchFile(connection, reqCont)(w, r)
 		default:
 			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
-			utils.ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+			ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	}
 }
 
-func FileActionsRouter(connection *db.Database) http.HandlerFunc {
+func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
-			utils.ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
 			return
 		}
 
 		isFolder := r.URL.Query().Get("is_folder") == "true"
 		desiredName := r.URL.Query().Get("desired_name")
 
-		path := append([]string{reqCont.Requester.Username}, strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"), "/")...)
-		relativePath := path[:len(path)-1]
-		fileName := path[len(path)-1]
+		entryPath := strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/")
+		if entryPath == "" {
+			ErrorResponse(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
 
-		reqCont.LogHistory.Log(fmt.Sprintf("FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s", r.Method, isFolder, relativePath, fileName))
+		entryName, pathSlice, err := ParsePathWithUName(entryPath, reqCont.Requester.Username)
+		if err != nil {
+			ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		reqCont.LogHistory.Log(fmt.Sprintf("FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s", r.Method, isFolder, pathSlice, entryName))
 
 		switch r.Method {
 		case http.MethodDelete:
-			actions.DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName, isFolder)
+			DeleteFileHandler(w, r, connection, reqCont, pathSlice, entryName, isFolder)
 		case http.MethodPatch:
-			actions.RenameFileHandler(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
+			RenameFileHandler(w, r, connection, reqCont, pathSlice, entryName, desiredName, isFolder)
 		case http.MethodGet:
-			actions.OpenFileHandler(w, r, connection, reqCont, relativePath, fileName)
+			OpenFileHandler(w, r, connection, reqCont, pathSlice, entryName)
 		default:
-			utils.ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
+			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
 	}
 }
 
-func SearchRouter(connection *db.Database) http.HandlerFunc {
+func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -93,14 +117,14 @@ func SearchRouter(connection *db.Database) http.HandlerFunc {
 		var data *templates.SearchPageData = nil
 
 		if len(query) > 0 {
-			data, err = search.FileSearchHandler(r.Context(), connection, query, directory, reqCont.Requester)
+			data, err = FileSearchHandler(r.Context(), connection, query, directory, reqCont.Requester)
 		} else {
-			data, err = search.BrowseHandler(r.Context(), connection, directory, reqCont.Requester)
+			data, err = BrowseHandler(r.Context(), connection, directory, reqCont.Requester)
 		}
 
 		if err != nil {
 			reqCont.LogHistory.ErrLog("[Handler] Search API db query error: "+err.Error(), "SearchHandler:24")
-			utils.ErrorResponse(w, "Internal Server Error: Failed to search files", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Failed to search files", http.StatusInternalServerError)
 			return
 		}
 
@@ -111,8 +135,6 @@ func SearchRouter(connection *db.Database) http.HandlerFunc {
 
 		data.Parent = strings.Join(parent, "/")
 		data.URIParent = search.ParseQuerySlice(parent)
-
-		fmt.Println("SearchHandler: data:", data)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
