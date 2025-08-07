@@ -2,26 +2,30 @@ package handlers
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/templates"
-	"homeserver/pkg/utils"
+)
+
+var (
+	ReadFile = os.ReadFile
+
+	IsPage = globals.IsPage
 )
 
 func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
-		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 
 	reqCont.LogHistory.Log("[Handler] Welcome page accessed")
 
-	tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+	tmpl := Must(ParseFiles("../static/templates/welcome.html"))
 
 	data := templates.WelcomePageData{
 		IsLoggedIn: reqCont.AuthToken != "",
@@ -35,13 +39,13 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
-		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 
 	reqCont.LogHistory.Log("[Handler] Upload page accessed")
 
-	tmpl := template.Must(template.ParseFiles("../static/fragments/upload.html"))
+	tmpl := Must(ParseFiles("../static/fragments/upload.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -52,7 +56,7 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "Missing request context in StaticPageHandler\n")
-		utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 		return
 	}
 
@@ -74,7 +78,7 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 	content, err := os.ReadFile(file_to_serve)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read file %s: %v\n", file_to_serve, err.Error())
-		utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -82,7 +86,7 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(content)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write reponse: %v\n", err.Error())
-		utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+		ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

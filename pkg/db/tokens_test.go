@@ -6,6 +6,7 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/setup"
 	"homeserver/test"
+	"homeserver/test/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 func setupTokenTestEnvironment(t *testing.T) (*Database, cleanupFunc) {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
-	mockOS := new(MockOS)
+	mockOS := new(mocks.MockOS)
 	mockOS.On("Mkdir", mock.Anything, mock.Anything).Return(nil)
 
 	cleanupMkdir := test.MockFunction(&token.Mkdir, mockOS.Mkdir, func() {})

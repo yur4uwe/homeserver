@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"homeserver/test/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +25,7 @@ var mockhandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 })
 
 func TestLoggerMiddlewareUnit(t *testing.T) {
-	mockLogHistory := new(MockLogHistory)
+	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", "Request received").Return()
 	mockLogHistory.On("ErrLog", "An error occurred", "main.go:42").Return()
 	mockLogHistory.On("UnloadLogs", mock.Anything).Return()

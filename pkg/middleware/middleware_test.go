@@ -25,7 +25,7 @@ func TestMiddlewareSuite(t *testing.T) {
 	parseCleanup := test.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
 	defer parseCleanup()
 
-	mockErrorResponse := new(MockErrorResponse)
+	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return()
 
 	errorResponseCleanup := test.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})

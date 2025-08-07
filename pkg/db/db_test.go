@@ -12,6 +12,7 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/setup"
 	"homeserver/test"
+	"homeserver/test/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -66,7 +67,7 @@ func TestClearEntries(t *testing.T) {
 	con_copy, end_transaction := setupTableTestEnvironment(t)
 	defer cleanupTableTestEnvironment(t, end_transaction)
 
-	mockOS := new(MockOS)
+	mockOS := new(mocks.MockOS)
 	mockOS.On("RemoveAll", mock.Anything).Return(nil)
 	mockOS.On("Remove", mock.Anything).Return(nil)
 

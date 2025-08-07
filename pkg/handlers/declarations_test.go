@@ -65,3 +65,12 @@ func (m *SearchMock) BrowseHandler(ctx context.Context, connection interfaces.Da
 	args := m.Called(ctx, connection, directory, requester)
 	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }
+
+type IsPageMock struct {
+	mock.Mock
+}
+
+func (m *IsPageMock) IsPage(path string) bool {
+	args := m.Called(path)
+	return args.Bool(0)
+}

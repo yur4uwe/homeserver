@@ -20,14 +20,14 @@ func TestAuthMiddleware(t *testing.T) {
 	mockDB.On("QueryToken", mock.Anything, "").Return(nil, fmt.Errorf("token not found"))
 	mockDB.On("QueryToken", mock.Anything, "validToken").Return(user_schema.NewUserBuilder(), nil)
 
-	mockLogHistory := new(MockLogHistory)
+	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
 	mockLogHistory.On("ErrLog", mock.Anything, mock.Anything).Return()
 
 	mockParseAsString := new(MockParseAsString)
 	mockParseAsString.On("ParseTemplateToString", "../static/templates/header.html", mock.Anything).Return("<header>Welcome</header>", nil)
 
-	mockErrorResponse := new(MockErrorResponse)
+	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return()
 
 	mockProtectedPath := new(MockIsProtectedPath)

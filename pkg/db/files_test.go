@@ -8,6 +8,7 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/setup"
 	"homeserver/test"
+	"homeserver/test/mocks"
 	"mime/multipart"
 	"os"
 	"testing"
@@ -19,7 +20,7 @@ import (
 func setupFileTestEnvironment(t *testing.T) cleanupFunc {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
-	mockOS := new(MockOS)
+	mockOS := new(mocks.MockOS)
 	mockOS.On("MkdirAll", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("Rename", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("RemoveAll", mock.Anything).Return(nil)
@@ -34,7 +35,7 @@ func setupFileTestEnvironment(t *testing.T) cleanupFunc {
 	cleanupRemove := test.MockFunction(&file.Remove, mockOS.Remove, func() {})
 	cleanupStat := test.MockFunction(&file.Stat, mockOS.Stat, func() {})
 
-	mockIO := new(MockIO)
+	mockIO := new(mocks.MockIO)
 	mockIO.On("Copy", mock.Anything, mock.Anything).Return(int64(0), nil)
 
 	cleanupCopy := test.MockFunction(&file.Copy, mockIO.Copy, func() {})
@@ -264,7 +265,7 @@ func TestEnsureFolderExists(t *testing.T) {
 func TestPreventDuplicateFileName(t *testing.T) {
 	os.Setenv("STORAGE_PATH", "storage/") // Set environment variable for testing
 
-	mockOS := new(MockOS)
+	mockOS := new(mocks.MockOS)
 
 	cleanupStat := test.MockFunction(&file.Stat, mockOS.Stat, func() {})
 	defer cleanupStat()

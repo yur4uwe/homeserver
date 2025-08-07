@@ -7,6 +7,7 @@ import (
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/setup"
 	"homeserver/test"
+	"homeserver/test/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ import (
 func setupFolderTestEnvironment(t *testing.T) (*Database, func()) {
 	assert.NotNil(t, connection, "Database connection should not be nil")
 
-	mockOS := new(MockOS)
+	mockOS := new(mocks.MockOS)
 	mockOS.On("MkdirAll", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("RemoveAll", mock.Anything).Return(nil)
 	mockOS.On("Rename", mock.Anything, mock.Anything).Return(nil)

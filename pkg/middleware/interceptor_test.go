@@ -22,7 +22,7 @@ func mockHandler(contentType string, statusCode int, body string) http.HandlerFu
 }
 
 func TestInterceptor(t *testing.T) {
-	mockLogHistory := new(MockLogHistory)
+	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
 
 	mockParseFiles := new(mocks.MockParseFiles)
@@ -34,7 +34,7 @@ func TestInterceptor(t *testing.T) {
 	cleanupParseFiles := test.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
 	defer cleanupParseFiles()
 
-	mockErrorResponse := new(MockErrorResponse)
+	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, "Internal Server Error", http.StatusInternalServerError).Return()
 
 	errorResponseCleanup := test.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
