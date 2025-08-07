@@ -4,6 +4,7 @@ import (
 	"context"
 	"homeserver/pkg/templates"
 	"homeserver/test"
+	"homeserver/test/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +25,7 @@ func TestInterceptor(t *testing.T) {
 	mockLogHistory := new(MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
 
-	mockParseFiles := new(MockParseFiles)
+	mockParseFiles := new(mocks.MockParseFiles)
 	mockParseFiles.On("ParseFiles", mock.Anything, mock.Anything).
 		Return(mockIndexTemplate)
 	mockParseFiles.On("ParseFiles", mock.Anything).

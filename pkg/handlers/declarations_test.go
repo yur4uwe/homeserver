@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/schemas/user_schema"
+	"homeserver/pkg/templates"
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
@@ -47,4 +50,18 @@ func (m *ActionsMock) OpenFileHandler(w http.ResponseWriter, r *http.Request, co
 	m.Called(w, r, connection, reqCont, relativePath, fileName)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File opened successfully"))
+}
+
+type SearchMock struct {
+	mock.Mock
+}
+
+func (m *SearchMock) FileSearchHandler(ctx context.Context, connection interfaces.DatabaseInterface, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+	args := m.Called(ctx, connection, query, directory, requester)
+	return args.Get(0).(*templates.SearchPageData), args.Error(1)
+}
+
+func (m *SearchMock) BrowseHandler(ctx context.Context, connection interfaces.DatabaseInterface, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+	args := m.Called(ctx, connection, directory, requester)
+	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }

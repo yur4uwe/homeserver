@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-func ParsePathWithUName(path string, username string) (string, []string, error) {
+func ParsePathWithUName(path string, username string) ([]string, error) {
 	if username == "" {
-		return "", nil, fmt.Errorf("username cannot be empty")
+		return nil, fmt.Errorf("username cannot be empty")
 	}
 
 	path = strings.TrimPrefix(path, "/")
@@ -15,10 +15,7 @@ func ParsePathWithUName(path string, username string) (string, []string, error) 
 
 	path_slice := strings.Split(path, "/")
 
-	entryName := path_slice[len(path_slice)-1]
-	path_slice = path_slice[:len(path_slice)-1]
-
 	path_slice = append([]string{username}, path_slice...)
 
-	return entryName, path_slice, nil
+	return path_slice, nil
 }

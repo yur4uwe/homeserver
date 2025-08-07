@@ -29,6 +29,10 @@ var (
 
 	FileSearchHandler = search.FileSearchHandler
 	BrowseHandler     = search.BrowseHandler
+	ParseQuerySlice   = search.ParseQuerySlice
+
+	Must       = template.Must
+	ParseFiles = template.ParseFiles
 )
 
 func UploadRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
@@ -70,21 +74,29 @@ func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc
 			return
 		}
 
-		entryName, pathSlice, err := ParsePathWithUName(entryPath, reqCont.Requester.Username)
+		pathSlice, err := ParsePathWithUName(entryPath, reqCont.Requester.Username)
 		if err != nil {
 			ErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		reqCont.LogHistory.Log(fmt.Sprintf("FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s", r.Method, isFolder, pathSlice, entryName))
+		relativePath := pathSlice[:len(pathSlice)-1]
+		fileName := pathSlice[len(pathSlice)-1]
+
+		reqCont.LogHistory.Log(
+			fmt.Sprintf(
+				"FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s",
+				r.Method, isFolder, relativePath, fileName,
+			),
+		)
 
 		switch r.Method {
 		case http.MethodDelete:
-			DeleteFileHandler(w, r, connection, reqCont, pathSlice, entryName, isFolder)
+			DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName, isFolder)
 		case http.MethodPatch:
-			RenameFileHandler(w, r, connection, reqCont, pathSlice, entryName, desiredName, isFolder)
+			RenameFileHandler(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
 		case http.MethodGet:
-			OpenFileHandler(w, r, connection, reqCont, pathSlice, entryName)
+			OpenFileHandler(w, r, connection, reqCont, relativePath, fileName)
 		default:
 			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
@@ -95,7 +107,7 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
-			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 
@@ -103,15 +115,17 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 		directory_string, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/search/"))
 		if err != nil {
 			reqCont.LogHistory.ErrLog("[Handler] Search API url.QueryUnescape error: "+err.Error(), "SearchHandler:30")
-			utils.ErrorResponse(w, "Internal Server Error: Failed to unescape directory", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Failed to unescape directory", http.StatusBadRequest)
 			return
 		}
 
 		reqCont.LogHistory.Log("[Handler] Search API accessed: query: '" + query + "', directory: '" + directory_string + "'")
 
-		directory := []string{reqCont.Requester.Username}
-		if directory_string != "" {
-			directory = append(directory, strings.Split(directory_string, "/")...)
+		directory, err := ParsePathWithUName(directory_string, reqCont.Requester.Username)
+		if err != nil {
+			reqCont.LogHistory.ErrLog("[Handler] Search API ParsePathWithUName error: "+err.Error(), "SearchHandler:20")
+			ErrorResponse(w, "Internal Server Error: Failed to parse directory", http.StatusInternalServerError)
+			return
 		}
 
 		var data *templates.SearchPageData = nil
@@ -134,19 +148,19 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 		}
 
 		data.Parent = strings.Join(parent, "/")
-		data.URIParent = search.ParseQuerySlice(parent)
+		data.URIParent = ParseQuerySlice(parent)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 
 		var tmpl *template.Template
 		if reqCont.ToRestorePage || reqCont.RerenderBody || r.URL.Query().Get("redirect") != "" {
-			tmpl = template.Must(template.ParseFiles("../static/templates/search_base.html", "../static/templates/search_results.html"))
+			tmpl = Must(ParseFiles("../static/templates/search_base.html", "../static/templates/search_results.html"))
 
 			w.Header().Set("HX-Push-Url", "/search/"+url.QueryEscape(strings.Join(directory[1:], "/")))
 			tmpl.ExecuteTemplate(w, "search_base.html", &data)
 		} else {
-			tmpl = template.Must(template.ParseFiles("../static/templates/search_results.html"))
+			tmpl = Must(ParseFiles("../static/templates/search_results.html"))
 
 			tmpl.Execute(w, data)
 		}

@@ -12,15 +12,6 @@ var (
 	mockIndexTemplate = template.Must(template.New("index.html").Parse("<html><body>{{.Content}}</body></html>"))
 )
 
-type MockParseFiles struct {
-	mock.Mock
-}
-
-func (m *MockParseFiles) ParseFiles(filenames ...string) *template.Template {
-	args := m.Called(filenames)
-	return args.Get(0).(*template.Template)
-}
-
 type MockLogHistory struct {
 	mock.Mock
 }
@@ -35,18 +26,6 @@ func (m *MockLogHistory) ErrLog(entry, at string) {
 
 func (m *MockLogHistory) UnloadLogs(header string) {
 	m.Called(header)
-}
-
-type MockMust struct {
-	mock.Mock
-}
-
-func (m *MockMust) Must(value interface{}, err error) interface{} {
-	args := m.Called(value, err)
-	if args.Get(1) != nil {
-		panic(args.Get(1).(error))
-	}
-	return args.Get(0)
 }
 
 type MockParseAsString struct {

@@ -1,6 +1,10 @@
 package test
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/stretchr/testify/mock"
+)
 
 // MockFunction replaces a global function with a mock function and returns a cleanup function.
 func MockFunction(originalFuncPtr interface{}, mockFunc interface{}, cleanup func()) func() {
@@ -42,5 +46,14 @@ func MockGlobalVar(globalVarPtr interface{}, mockValue interface{}, cleanup func
 	return func() {
 		globalValue.Elem().Set(originalValue)
 		cleanup()
+	}
+}
+
+func NewMocksResetter(mocks ...*mock.Mock) func() {
+	return func() {
+		for i := range mocks {
+			mocks[i].Calls = nil
+			mocks[i].ExpectedCalls = nil
+		}
 	}
 }
