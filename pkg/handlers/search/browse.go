@@ -6,7 +6,6 @@ import (
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
-	"sort"
 	"strings"
 )
 
@@ -32,14 +31,7 @@ func BrowseHandler(ctx context.Context, connection interfaces.DatabaseInterface,
 
 	relevant_entries := TransformEntries(file_entries, folder_entries)
 
-	sort.Slice(relevant_entries, func(i, j int) bool {
-		if relevant_entries[i].IsFolder && !relevant_entries[j].IsFolder {
-			return true
-		} else if !relevant_entries[i].IsFolder && relevant_entries[j].IsFolder {
-			return false
-		}
-		return relevant_entries[i].Name < relevant_entries[j].Name
-	})
+	SortEntries(relevant_entries)
 
 	data.Entries = relevant_entries
 

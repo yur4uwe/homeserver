@@ -8,7 +8,12 @@ import (
 	"homeserver/pkg/templates"
 	"math"
 	"net/url"
+	"sort"
 	"strings"
+)
+
+var (
+	IsFileTypeAvailable = globals.IsFileTypeAvailable
 )
 
 func ParseQuerySlice(query []string) string {
@@ -51,7 +56,7 @@ func FileToSearchEntry(file *file_schema.UserFile) templates.SearchEntry {
 	entry.URIName = url.QueryEscape(entry.Name)
 
 	extension := file.Extension
-	if globals.IsFileTypeAvailable(extension) {
+	if IsFileTypeAvailable(extension) {
 		entry.Type = "icons/" + extension
 	} else {
 		entry.Type = "file"
@@ -94,4 +99,15 @@ func TransformEntries(file_entries []*file_schema.UserFile, folder_entries []*fo
 	}
 
 	return entries
+}
+
+func SortEntries(entries []templates.SearchEntry) {
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].IsFolder && !entries[j].IsFolder {
+			return true
+		} else if !entries[i].IsFolder && entries[j].IsFolder {
+			return false
+		}
+		return entries[i].Name < entries[j].Name
+	})
 }
