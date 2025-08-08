@@ -15,7 +15,11 @@ func ParsePathWithUName(path string, username string) ([]string, error) {
 
 	path_slice := strings.Split(path, "/")
 
-	path_slice = append([]string{username}, path_slice...)
+	if len(path_slice) == 1 && path_slice[0] == "" {
+		path_slice = []string{username}
+	} else {
+		path_slice = append([]string{username}, path_slice...)
+	}
 
 	return path_slice, nil
 }

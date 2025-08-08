@@ -50,3 +50,42 @@ func (m *MockOS) Stat(name string) (os.FileInfo, error) {
 	}
 	return args.Get(0).(os.FileInfo), args.Error(1)
 }
+
+func (m *MockOS) ReadFile(name string) ([]byte, error) {
+	args := m.Called(name)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockOS) ReadDir(name string) ([]os.DirEntry, error) {
+	args := m.Called(name)
+	return args.Get(0).([]os.DirEntry), args.Error(1)
+}
+
+func (m *MockOS) WriteFile(name string, data []byte, perm os.FileMode) error {
+	args := m.Called(name, data, perm)
+	return args.Error(0)
+}
+
+type MockDirEntry struct {
+	mock.Mock
+}
+
+func (m *MockDirEntry) Name() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *MockDirEntry) IsDir() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
+func (m *MockDirEntry) Type() os.FileMode {
+	args := m.Called()
+	return args.Get(0).(os.FileMode)
+}
+
+func (m *MockDirEntry) Info() (os.FileInfo, error) {
+	args := m.Called()
+	return args.Get(0).(os.FileInfo), args.Error(1)
+}

@@ -55,12 +55,10 @@ func IsPage(path string) bool {
 
 	for _, page := range Pages {
 		if page[len(page)-1] == '/' && len(page) > 1 && strings.HasPrefix(path, page) {
-			fmt.Println("Matched path:", path, "with prefix:", page)
 			return true
 		}
 
 		if path == page {
-			fmt.Println("Matched exact path:", path, "with page:", page)
 			return true
 		}
 	}

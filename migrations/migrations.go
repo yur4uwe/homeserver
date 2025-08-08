@@ -1,7 +1,7 @@
 package main
 
 import (
-	"homeserver/migrations/database"
+	"homeserver/migrations/scripts"
 	"homeserver/pkg/db"
 	"log"
 
@@ -27,7 +27,9 @@ func main() {
 	// 	log.Fatalf("Error separating extensions from names: %v", err)
 	// }
 
-	if err := database.ResetFolderStructure(connection); err != nil {
-		log.Fatalf("Error resetting folder structure: %v", err)
-	}
+	// if err := database.ResetFolderStructure(connection); err != nil {
+	// 	log.Fatalf("Error resetting folder structure: %v", err)
+	// }
+
+	scripts.ChangeClassNames()
 }

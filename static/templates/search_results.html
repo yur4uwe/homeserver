@@ -7,7 +7,9 @@
     {{else}}
     <div class="empty-results">
         <div style="width: 110px; height: 95px;">
-            <icon name="folder-open"></icon>
+            <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/folder-open.svg"
+                hx-swap="outerHTML">
+            </div>
         </div>
         <p class="no-files">No files found</p>
     </div>

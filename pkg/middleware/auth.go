@@ -47,7 +47,6 @@ func AuthMiddleware(connection interfaces.DatabaseInterface) func(http.Handler) 
 				ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 				return
 			} else {
-				fmt.Println("Parsed header template successfully:", header)
 				reqCont.PageContent.Header = template.HTML(header)
 			}
 
