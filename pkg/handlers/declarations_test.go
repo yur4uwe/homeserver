@@ -74,3 +74,13 @@ func (m *IsPageMock) IsPage(path string) bool {
 	args := m.Called(path)
 	return args.Bool(0)
 }
+
+type WelcomeMock struct {
+	mock.Mock
+}
+
+func (m *WelcomeMock) WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
+	m.Called(w, r)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("WelcomePage"))
+}

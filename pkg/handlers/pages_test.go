@@ -33,12 +33,11 @@ func TestWelcomePageHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("Renders welcome page with valid context", func(t *testing.T) {
-		mockMust.On("Must", mock.Anything).Return(mockTemplate)
+		mockMust.On("Must", mock.Anything, mock.Anything).Return(mockTemplate)
 		mockParseFiles.On("ParseFiles", mock.Anything).Return(mockTemplate, nil)
 
 		modContext := middleware.DefaultContext
 		modContext.AuthToken = "token"
-		modContext.LogHistory = &mocks.MockLogHistory{}
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -71,6 +70,12 @@ func TestUploadPageHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
+	resetter := test.NewMocksResetter(
+		&mockMust.Mock,
+		&mockParseFiles.Mock,
+		&mockErrResp.Mock,
+	)
+
 	defer func() {
 		cleanupMust()
 		cleanupParseFiles()
@@ -81,11 +86,12 @@ func TestUploadPageHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("Renders upload page with valid context", func(t *testing.T) {
-		mockMust.On("Must", mock.Anything).Return(mockTemplate)
+		resetter()
+
+		mockMust.On("Must", mock.Anything, mock.Anything).Return(mockTemplate)
 		mockParseFiles.On("ParseFiles", mock.Anything).Return(mockTemplate, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.LogHistory = &mocks.MockLogHistory{}
 
 		req := httptest.NewRequest(http.MethodGet, "/upload", nil)
 		rec := httptest.NewRecorder()
@@ -98,6 +104,8 @@ func TestUploadPageHandler(t *testing.T) {
 	})
 
 	t.Run("Returns error for missing context", func(t *testing.T) {
+		resetter()
+
 		mockErrResp.On("ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError).Return()
 
 		req := httptest.NewRequest(http.MethodGet, "/upload", nil)
@@ -114,19 +122,54 @@ func TestStaticPageHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
-	defer cleanupErrorResponse()
+	mockOS := new(mocks.MockOS)
+	cleanupReadFile := test.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
 
-	t.Run("Serves welcome page for root path", func(t *testing.T) {
-		called := false
-		cleanupWelcome := test.MockFunction(WelcomePageHandler, func(w http.ResponseWriter, r *http.Request) {
-			called = true
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("WelcomePage"))
-		}, func() {})
-		defer cleanupWelcome()
+	isPageMock := new(IsPageMock)
+	cleanupIsPage := test.MockFunction(&IsPage, isPageMock.IsPage, func() {})
+
+	mockWelcomePage := new(WelcomeMock)
+	cleanupWelcome := test.MockFunction(&WelcomePage, mockWelcomePage.WelcomePageHandler, func() {})
+
+	resetter := test.NewMocksResetter(
+		&mockErrResp.Mock,
+		&mockOS.Mock,
+		&isPageMock.Mock,
+		&mockWelcomePage.Mock,
+	)
+
+	defer func() {
+		cleanupErrorResponse()
+		cleanupReadFile()
+		cleanupIsPage()
+		cleanupWelcome()
+	}()
+
+	t.Run("Serves static page with valid context", func(t *testing.T) {
+		resetter()
+
+		mockOS.On("ReadFile", mock.AnythingOfType("string")).Return([]byte("static content"), nil)
+		isPageMock.On("IsPage", mock.Anything).Return(true)
 
 		modContext := middleware.DefaultContext
-		modContext.LogHistory = &mocks.MockLogHistory{}
+
+		req := httptest.NewRequest(http.MethodGet, "/static", nil)
+		rec := httptest.NewRecorder()
+		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
+
+		StaticPageHandler(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Contains(t, rec.Body.String(), "static content")
+	})
+
+	t.Run("Serves welcome page for root path", func(t *testing.T) {
+		resetter()
+
+		mockWelcomePage.On("WelcomePageHandler", mock.Anything, mock.Anything).Return()
+		isPageMock.On("IsPage", mock.Anything).Return(true)
+
+		modContext := middleware.DefaultContext
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -134,12 +177,14 @@ func TestStaticPageHandler(t *testing.T) {
 
 		StaticPageHandler(rec, req)
 
-		assert.True(t, called, "WelcomePageHandler should be called")
+		mockWelcomePage.AssertCalled(t, "WelcomePageHandler", rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "WelcomePage")
 	})
 
 	t.Run("Returns error for missing context", func(t *testing.T) {
+		resetter()
+
 		mockErrResp.On("ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError).Return()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -152,12 +197,11 @@ func TestStaticPageHandler(t *testing.T) {
 	})
 
 	t.Run("Returns not found for non-page path", func(t *testing.T) {
-		isPageMock := new(IsPageMock)
-		cleanupIsPage := test.MockFunction(&IsPage, isPageMock.IsPage, func() {})
-		defer cleanupIsPage()
+		resetter()
+
+		isPageMock.On("IsPage", mock.Anything).Return(false)
 
 		modContext := middleware.DefaultContext
-		modContext.LogHistory = &mocks.MockLogHistory{}
 
 		req := httptest.NewRequest(http.MethodGet, "/notapage", nil)
 		rec := httptest.NewRecorder()
@@ -169,58 +213,21 @@ func TestStaticPageHandler(t *testing.T) {
 	})
 
 	t.Run("Returns error for missing file", func(t *testing.T) {
-		isPageMock := new(IsPageMock)
-		cleanupIsPage := test.MockFunction(&IsPage, isPageMock.IsPage, func() {})
-		defer cleanupIsPage()
+		resetter()
+
+		mockOS.On("ReadFile", mock.Anything).Return(([]byte)(nil), fmt.Errorf("file not found"))
+		isPageMock.On("IsPage", mock.Anything).Return(true)
+		mockErrResp.On("ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError).Return()
 
 		modContext := middleware.DefaultContext
-		modContext.LogHistory = &mocks.MockLogHistory{}
 
-		req := httptest.NewRequest(http.MethodGet, "/missingfile", nil)
+		req := httptest.NewRequest(http.MethodGet, "/login", nil)
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
-
-		// Mock os.ReadFile to return error
-		cleanupReadFile := test.MockFunction(&ReadFile, func(filename string) ([]byte, error) {
-			return nil, fmt.Errorf("file not found")
-		}, func() {})
-		defer cleanupReadFile()
 
 		StaticPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)
 	})
-
-	// t.Run("Returns error for write failure", func(t *testing.T) {
-	// 	cleanupIsPage := test.MockFunction(&IsPage, func(path string) bool { return true }, func() {})
-	// 	defer cleanupIsPage()
-
-	// 	modContext := middleware.DefaultContext
-	// 	modContext.LogHistory = &mocks.MockLogHistory{}
-
-	// 	req := httptest.NewRequest(http.MethodGet, "/writefail", nil)
-	// 	rec := httptest.NewRecorder()
-	// 	req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
-
-	// 	// Mock os.ReadFile to return valid content
-	// 	cleanupReadFile := test.MockFunction(&ReadFile, func(filename string) ([]byte, error) {
-	// 		return []byte("content"), nil
-	// 	}, func() {})
-	// 	defer cleanupReadFile()
-
-	// 	// Monkey patch rec.Write to simulate error
-	// 	origWrite := rec.Write
-	// 	rec.Write = func(p []byte) (int, error) {
-	// 		return 0, fmt.Errorf("write error")
-	// 	}
-
-	// 	StaticPageHandler(rec, req)
-
-	// 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	// 	mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)
-
-	// 	// Restore original Write method
-	// 	rec.Write = origWrite
-	// })
 }

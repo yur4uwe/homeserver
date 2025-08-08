@@ -14,6 +14,8 @@ var (
 	ReadFile = os.ReadFile
 
 	IsPage = globals.IsPage
+
+	WelcomePage = WelcomePageHandler
 )
 
 func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,20 +64,20 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqCont.LogHistory.Log("[Handler] Page server accessed for page: " + r.URL.Path)
 
-	if !globals.IsPage(r.URL.Path) {
+	if !IsPage(r.URL.Path) {
 		reqCont.LogHistory.Log("Path not considered a page: " + r.URL.Path)
 		http.NotFound(w, r)
 		return
 	}
 
 	if r.URL.Path == "/" {
-		WelcomePageHandler(w, r)
+		WelcomePage(w, r)
 		return
 	}
 
 	file_to_serve := "../static/fragments/" + r.URL.Path[1:] + ".html"
 
-	content, err := os.ReadFile(file_to_serve)
+	content, err := ReadFile(file_to_serve)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read file %s: %v\n", file_to_serve, err.Error())
 		ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -83,10 +85,5 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, err = w.Write(content)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write reponse: %v\n", err.Error())
-		ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Write(content)
 }
