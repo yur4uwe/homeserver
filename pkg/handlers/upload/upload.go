@@ -4,7 +4,6 @@ import (
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -30,12 +29,12 @@ func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.A
 			case <-done:
 				// Handle cancellation
 				reqCont.LogHistory.ErrLog("Request canceled during file upload", "DownloadFile")
-				utils.ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
 				reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
-				utils.ErrorResponse(w, "Error retrieving file", http.StatusBadRequest)
+				ErrorResponse(w, "Error retrieving file", http.StatusBadRequest)
 				return
 			}
 		}
@@ -65,12 +64,12 @@ func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.A
 			case <-done:
 				// Handle cancellation
 				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile")
-				utils.ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
 				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
-				utils.ErrorResponse(w, "Error saving file", http.StatusInternalServerError)
+				ErrorResponse(w, "Error saving file", http.StatusInternalServerError)
 				return
 			}
 		}

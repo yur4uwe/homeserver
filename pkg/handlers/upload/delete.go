@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var ErrorResponse = utils.ErrorResponse
+
 func DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")
@@ -17,7 +19,7 @@ func DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.Add
 		filePath := r.URL.Query().Get("filename")
 		if filePath == "" {
 			reqCont.LogHistory.ErrLog("Missing filename parameter", "DeleteFile")
-			utils.ErrorResponse(w, "Missing filename parameter", http.StatusBadRequest)
+			ErrorResponse(w, "Missing filename parameter", http.StatusBadRequest)
 			return
 		}
 
@@ -29,7 +31,7 @@ func DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.Add
 
 		if _, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
-			utils.ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
+			ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return
 		}
 

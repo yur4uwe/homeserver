@@ -3,7 +3,6 @@ package upload
 import (
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/utils"
 	"net/http"
 )
 
@@ -14,10 +13,16 @@ func PatchFile(connection interfaces.DatabaseInterface, reqCont *middleware.Addi
 		newFileName := r.URL.Query().Get("new_name")
 		oldFileName := r.URL.Query().Get("old_name")
 
+		if newFileName == "" || oldFileName == "" {
+			reqCont.LogHistory.ErrLog("Missing filename parameter", "PatchFile")
+			ErrorResponse(w, "Missing filename parameter", http.StatusBadRequest)
+			return
+		}
+
 		newFilePath, err := connection.RenameFile(r.Context(), oldFileName, newFileName, reqCont.Requester)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
-			utils.ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
+			ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
 			return
 		}
 
