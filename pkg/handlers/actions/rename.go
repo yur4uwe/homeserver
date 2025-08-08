@@ -10,9 +10,14 @@ import (
 	"strings"
 )
 
+var (
+	NewAlert      = parser.NewAlert
+	ErrorResponse = utils.ErrorResponse
+)
+
 func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {
 	if desiredName == "" {
-		utils.ErrorResponse(w, "Desired name parameter is required for rename action", http.StatusBadRequest)
+		ErrorResponse(w, "Desired name parameter is required for rename action", http.StatusBadRequest)
 		return
 	}
 
@@ -20,11 +25,11 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interf
 
 	newName, err := connection.RenameFile(r.Context(), filePath, desiredName, reqCont.Requester)
 	if err != nil {
-		utils.ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
+		ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	alert := parser.NewAlert(
+	alert := NewAlert(
 		"File Renamed",
 		"check",
 		fmt.Sprintf("File '%s' has been renamed to '%s'.", fileName, newName),

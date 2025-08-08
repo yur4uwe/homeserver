@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/parser"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
 	"net/http"
@@ -21,11 +20,11 @@ func DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection interf
 
 	id, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username)
 	if err != nil {
-		utils.ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
+		ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	alert := parser.NewAlert(
+	alert := NewAlert(
 		"File Deleted",
 		"check",
 		fmt.Sprintf("File '%s' has been deleted successfully.", fileName),
