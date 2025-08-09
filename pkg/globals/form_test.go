@@ -26,10 +26,10 @@ func TestRegisterFormFromRequest(t *testing.T) {
 	t.Run("Populates RegisterForm correctly", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/register", nil)
 		req.Form = map[string][]string{
-			"username":         {"testuser"},
-			"email":            {"testuser@example.com"},
-			"password":         {"testpassword"},
-			"confirm-password": {"testpassword"},
+			"username": {"testuser"},
+			"email":    {"testuser@example.com"},
+			"password": {"testpassword"},
+			"confirm":  {"testpassword"},
 		}
 
 		form := RegisterFormFromRequest(req)

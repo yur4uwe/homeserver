@@ -14,19 +14,11 @@ import (
 	"time"
 )
 
-func MustParseFiles(filenames ...string) *template.Template {
-	tmpl, err := template.ParseFiles(filenames...)
-	if err != nil {
-		log.Fatalf("Failed to parse template files: %v", err)
-	}
-	return tmpl
-}
-
 // Global variables for mocking
 var (
-	ParseFiles            = MustParseFiles
+	ParseFiles            = template.ParseFiles
+	Must                  = template.Must
 	IconsInjector         = utils.IconsInjector
-	Must                  = utils.Must
 	ParseTemplateToString = parser.ParseTemplateToString
 	ErrorResponse         = utils.ErrorResponse
 	Now                   = time.Now

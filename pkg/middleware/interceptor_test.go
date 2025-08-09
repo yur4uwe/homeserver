@@ -27,9 +27,9 @@ func TestInterceptor(t *testing.T) {
 
 	mockTemplate := new(mocks.MockTemplate)
 	mockTemplate.On("ParseFiles", mock.Anything, mock.Anything).
-		Return(mockIndexTemplate)
+		Return(mockIndexTemplate, nil)
 	mockTemplate.On("ParseFiles", mock.Anything).
-		Return(mockedTemplate)
+		Return(mockedTemplate, nil)
 
 	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 	defer cleanupParseFiles()
