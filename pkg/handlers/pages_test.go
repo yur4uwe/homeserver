@@ -16,11 +16,11 @@ import (
 )
 
 func TestWelcomePageHandler(t *testing.T) {
-	mockMust := new(mocks.MockMust)
-	cleanupMust := test.MockFunction(&Must, mockMust.Must, func() {})
-	mockParseFiles := new(mocks.MockParseFiles)
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
+	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
+
+	cleanupMust := test.MockFunction(&Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
 	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	defer func() {
@@ -29,12 +29,12 @@ func TestWelcomePageHandler(t *testing.T) {
 		cleanupErrorResponse()
 	}()
 
-	mockTemplate, err := template.New("welcome").Parse("<html><body>Welcome</body></html>")
+	mockedTemplate, err := template.New("welcome").Parse("<html><body>Welcome</body></html>")
 	assert.NoError(t, err)
 
 	t.Run("Renders welcome page with valid context", func(t *testing.T) {
-		mockMust.On("Must", mock.Anything, mock.Anything).Return(mockTemplate)
-		mockParseFiles.On("ParseFiles", mock.Anything).Return(mockTemplate, nil)
+		mockTemplates.On("Must", mock.Anything, mock.Anything).Return(mockedTemplate)
+		mockTemplates.On("ParseFiles", mock.Anything).Return(mockedTemplate, nil)
 
 		modContext := middleware.DefaultContext
 		modContext.AuthToken = "token"
@@ -63,16 +63,15 @@ func TestWelcomePageHandler(t *testing.T) {
 }
 
 func TestUploadPageHandler(t *testing.T) {
-	mockMust := new(mocks.MockMust)
-	cleanupMust := test.MockFunction(&Must, mockMust.Must, func() {})
-	mockParseFiles := new(mocks.MockParseFiles)
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
+	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
+
+	cleanupMust := test.MockFunction(&Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
 	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	resetter := test.NewMocksResetter(
-		&mockMust.Mock,
-		&mockParseFiles.Mock,
+		&mockTemplates.Mock,
 		&mockErrResp.Mock,
 	)
 
@@ -82,14 +81,14 @@ func TestUploadPageHandler(t *testing.T) {
 		cleanupErrorResponse()
 	}()
 
-	mockTemplate, err := template.New("upload").Parse("<html><body>Upload</body></html>")
+	mockedTemplate, err := template.New("upload").Parse("<html><body>Upload</body></html>")
 	assert.NoError(t, err)
 
 	t.Run("Renders upload page with valid context", func(t *testing.T) {
 		resetter()
 
-		mockMust.On("Must", mock.Anything, mock.Anything).Return(mockTemplate)
-		mockParseFiles.On("ParseFiles", mock.Anything).Return(mockTemplate, nil)
+		mockTemplates.On("Must", mock.Anything, mock.Anything).Return(mockedTemplate)
+		mockTemplates.On("ParseFiles", mock.Anything).Return(mockedTemplate, nil)
 
 		modContext := middleware.DefaultContext
 

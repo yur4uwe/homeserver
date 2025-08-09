@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockMust struct {
+type MockTemplate struct {
 	mock.Mock
 }
 
-func (m *MockMust) Must(value *template.Template, err error) *template.Template {
+func (m *MockTemplate) Must(value *template.Template, err error) *template.Template {
 	args := m.Called(value, err)
 	if err != nil {
 		panic(err)
@@ -18,11 +18,7 @@ func (m *MockMust) Must(value *template.Template, err error) *template.Template 
 	return args.Get(0).(*template.Template)
 }
 
-type MockParseFiles struct {
-	mock.Mock
-}
-
-func (m *MockParseFiles) ParseFiles(filenames ...string) (*template.Template, error) {
+func (m *MockTemplate) ParseFiles(filenames ...string) (*template.Template, error) {
 	args := m.Called(filenames)
 	return args.Get(0).(*template.Template), args.Error(1)
 }

@@ -25,13 +25,13 @@ func TestInterceptor(t *testing.T) {
 	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
 
-	mockParseFiles := new(mocks.MockParseFiles)
-	mockParseFiles.On("ParseFiles", mock.Anything, mock.Anything).
+	mockTemplate := new(mocks.MockTemplate)
+	mockTemplate.On("ParseFiles", mock.Anything, mock.Anything).
 		Return(mockIndexTemplate)
-	mockParseFiles.On("ParseFiles", mock.Anything).
-		Return(mockTemplate)
+	mockTemplate.On("ParseFiles", mock.Anything).
+		Return(mockedTemplate)
 
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
+	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 	defer cleanupParseFiles()
 
 	mockErrorResponse := new(mocks.ErrorResponseMock)
@@ -154,6 +154,6 @@ func TestInterceptor(t *testing.T) {
 	})
 
 	mockLogHistory.AssertExpectations(t)
-	mockParseFiles.AssertExpectations(t)
+	mockTemplate.AssertExpectations(t)
 	mockErrorResponse.AssertExpectations(t)
 }

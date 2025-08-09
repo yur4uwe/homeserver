@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	mockTemplate      = template.Must(template.New("").Parse("<html><body>{{.Content}}</body></html>"))
+	mockedTemplate    = template.Must(template.New("").Parse("<html><body>{{.Content}}</body></html>"))
 	mockIndexTemplate = template.Must(template.New("index.html").Parse("<html><body>{{.Content}}</body></html>"))
 )
 

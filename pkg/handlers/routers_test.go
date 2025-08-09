@@ -312,21 +312,18 @@ func TestSearchRouter(t *testing.T) {
 	cleanupSearch := test.MockFunction(&FileSearchHandler, mockSearch.FileSearchHandler, func() {})
 	cleanupBrowse := test.MockFunction(&BrowseHandler, mockSearch.BrowseHandler, func() {})
 
-	mockMust := new(mocks.MockMust)
-	cleanupMust := test.MockFunction(&Must, mockMust.Must, func() {})
+	mockTemplate := new(mocks.MockTemplate)
+	cleanupMust := test.MockFunction(&Must, mockTemplate.Must, func() {})
+	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 
-	mockParseFiles := new(mocks.MockParseFiles)
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockParseFiles.ParseFiles, func() {})
-
-	mockTemplate, err := template.New("test").Parse("<html><body>Test</body></html>")
+	mockedTemplate, err := template.New("test").Parse("<html><body>Test</body></html>")
 	assert.NoError(t, err, "Failed to create mock template")
 
 	resetter := test.NewMocksResetter(
 		&mockErrResp.Mock,
 		&mockParsePath.Mock,
 		&mockSearch.Mock,
-		&mockMust.Mock,
-		&mockParseFiles.Mock,
+		&mockTemplate.Mock,
 	)
 
 	defer func() {
@@ -351,15 +348,15 @@ func TestSearchRouter(t *testing.T) {
 			mock.Anything, mock.Anything,
 		).Return([]string{"user"}, nil)
 
-		mockMust.On(
+		mockTemplate.On(
 			"Must",
 			mock.Anything, mock.Anything,
-		).Return(mockTemplate)
+		).Return(mockedTemplate)
 
-		mockParseFiles.On(
+		mockTemplate.On(
 			"ParseFiles",
 			mock.AnythingOfType("[]string"),
-		).Return(mockTemplate, nil)
+		).Return(mockedTemplate, nil)
 
 		defer mockSearch.AssertExpectations(t)
 
@@ -390,15 +387,15 @@ func TestSearchRouter(t *testing.T) {
 			mock.Anything, mock.Anything,
 		).Return([]string{"user", "parent", "folder"}, nil)
 
-		mockMust.On(
+		mockTemplate.On(
 			"Must",
 			mock.Anything, mock.Anything,
-		).Return(mockTemplate)
+		).Return(mockedTemplate)
 
-		mockParseFiles.On(
+		mockTemplate.On(
 			"ParseFiles",
 			mock.AnythingOfType("[]string"),
-		).Return(mockTemplate, nil)
+		).Return(mockedTemplate, nil)
 
 		defer mockSearch.AssertExpectations(t)
 
@@ -429,19 +426,18 @@ func TestSearchRouter(t *testing.T) {
 			mock.Anything, mock.Anything,
 		).Return([]string{"user"}, nil)
 
-		mockMust.On(
+		mockTemplate.On(
 			"Must",
 			mock.Anything, mock.Anything,
-		).Return(mockTemplate)
+		).Return(mockedTemplate)
 
-		mockParseFiles.On(
+		mockTemplate.On(
 			"ParseFiles",
 			[]string{"../static/templates/search_base.html", "../static/templates/search_results.html"},
-		).Return(mockTemplate, nil)
+		).Return(mockedTemplate, nil)
 
 		defer mockSearch.AssertExpectations(t)
-		defer mockMust.AssertExpectations(t)
-		defer mockParseFiles.AssertExpectations(t)
+		defer mockTemplate.AssertExpectations(t)
 
 		modContext := middleware.DefaultContext
 		modContext.Requester = user_schema.NewUserBuilder().WithUsername("user")

@@ -16,22 +16,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockNewAlert struct {
-	mock.Mock
-}
-
-func (m *MockNewAlert) NewAlert(title string, icon string, message string, alertType string) string {
-	args := m.Called(title, icon, message, alertType)
-	return args.String(0)
-}
-
 func TestRenameFileHandler(t *testing.T) {
 	mockDB := new(mocks.MockDB)
 
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
-	mockNewAlert := new(MockNewAlert)
+	mockNewAlert := new(mocks.MockParser)
 	cleanupNewAlert := test.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
 
 	resetter := test.NewMocksResetter(

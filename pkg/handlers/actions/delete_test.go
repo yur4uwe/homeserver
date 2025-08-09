@@ -22,7 +22,7 @@ func TestDeleteFileHandler(t *testing.T) {
 	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 	defer cleanupErrResp()
 
-	mockNewAlert := new(MockNewAlert)
+	mockNewAlert := new(mocks.MockParser)
 	cleanupNewAlert := test.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
 	defer cleanupNewAlert()
 

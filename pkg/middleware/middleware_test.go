@@ -13,10 +13,10 @@ import (
 )
 
 func TestMiddlewareSuite(t *testing.T) {
-	mockMust := new(mocks.MockMust)
-	mockMust.On("Must", mock.Anything, mock.Anything).Return("Mocked String", nil)
+	mockTemplate := new(mocks.MockTemplate)
+	mockTemplate.On("Must", mock.Anything, mock.Anything).Return("Mocked String", nil)
 
-	mustCleanup := test.MockFunction(&Must, mockMust.Must, func() {})
+	mustCleanup := test.MockFunction(&Must, mockTemplate.Must, func() {})
 	defer mustCleanup()
 
 	mockParse := new(MockParseAsString)

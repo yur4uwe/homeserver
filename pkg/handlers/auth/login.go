@@ -2,35 +2,26 @@ package auth
 
 import (
 	"fmt"
-	"homeserver/pkg/auth"
-	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
-	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
 	"time"
 )
 
-func LoginHandler(connection *db.Database) http.HandlerFunc {
+func LoginHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in LoginHandler\n")
-			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 
 		reqCont.LogHistory.Log("[Handler] Login endpoint accessed")
-
-		if err := r.ParseForm(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse login form: %v\n", err.Error())
-			utils.ErrorResponse(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
-			return
-		}
 
 		form := globals.LoginFormFromRequest(r)
 
@@ -54,7 +45,7 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 				return
 			}
 			fmt.Fprintf(os.Stderr, "Failed to query user on login: %v\n", err.Error())
-			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -67,17 +58,16 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 			return
 		}
 
-		newToken, err := auth.NewToken()
+		newToken, err := NewToken()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to generate new token: %v\n", err.Error())
-			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		err = connection.CreateToken(r.Context(), user.ID, newToken)
-		if err != nil {
+		if err = connection.CreateToken(r.Context(), user.ID, newToken); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create token: %v\n", err.Error())
-			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -94,25 +84,24 @@ func LoginHandler(connection *db.Database) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("HX-Push-Url", "/")
-		w.WriteHeader(http.StatusOK)
 
 		welcomeData := &templates.WelcomePageData{
 			IsLoggedIn: true,
 		}
 
-		header, err := parser.ParseTemplateToString("../static/templates/header.html", welcomeData)
+		header, err := ParseTemplateToString("../static/templates/header.html", welcomeData)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LoginHandler:66")
-			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		reqCont.PageContent.Header = template.HTML(header)
 
-		tmpl := template.Must(template.ParseFiles("../static/templates/welcome.html"))
+		tmpl := Must(ParseFiles("../static/templates/welcome.html"))
 		if err := tmpl.Execute(w, welcomeData); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LoginHandler:66")
-			utils.ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}

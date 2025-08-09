@@ -27,7 +27,7 @@ type RegisterForm struct {
 func RegisterFormFromRequest(r *http.Request) RegisterForm {
 	var form RegisterForm
 
-	register_fields := []string{"username", "email", "password", "confirm-password"}
+	register_fields := []string{"username", "email", "password", "confirm"}
 	for _, field := range register_fields {
 		switch field {
 		case "username":
@@ -36,7 +36,7 @@ func RegisterFormFromRequest(r *http.Request) RegisterForm {
 			form.Email = r.FormValue(field)
 		case "password":
 			form.Password = r.FormValue(field)
-		case "confirm-password":
+		case "confirm":
 			form.Confirm = r.FormValue(field)
 		}
 	}

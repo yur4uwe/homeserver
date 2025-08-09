@@ -2,8 +2,8 @@ package auth
 
 import (
 	"fmt"
-	"homeserver/pkg/db"
 	"homeserver/pkg/globals"
+	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/templates"
@@ -16,8 +16,17 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+var (
+	ErrorResponse = utils.ErrorResponse
+	NewAlert      = parser.NewAlert
+	LoadIcon      = parser.LoadIcon
+	verFailed     = sendVerificationFailurePage
+	Must          = template.Must
+	ParseFiles    = template.ParseFiles
+)
+
 func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
-	tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
+	tmpl := Must(ParseFiles("../static/templates/verification.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(errCode)
@@ -40,11 +49,7 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 		`, form.Username, verification_token),
 	)
 
-	port, err := strconv.Atoi(os.Getenv(globals.EnvEmailPort))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Invalid email port: %v\n", err.Error())
-		return
-	}
+	port, _ := strconv.Atoi(os.Getenv(globals.EnvEmailPort))
 
 	d := gomail.NewDialer(os.Getenv(globals.EnvEmailHost), port, os.Getenv(globals.EnvEmailUser), os.Getenv(globals.EnvEmailPassword))
 	if err := d.DialAndSend(m); err != nil {
@@ -53,12 +58,12 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 	}
 }
 
-func VerificationHandler(connection *db.Database) http.HandlerFunc {
+func VerificationHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "Missing request context in VerificationHandler\n")
-			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 
@@ -68,7 +73,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 			Success: false,
 			Error:   "",
 			Causes:  []template.HTML{},
-			Icon:    template.HTML(parser.LoadIcon("x")),
+			Icon:    template.HTML(LoadIcon("x")),
 		}
 
 		token := r.URL.Query().Get("token")
@@ -76,7 +81,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 			reqCont.LogHistory.ErrLog("Missing verification token in request\n", "VerificationHandler:58")
 			verification.Error = "Missing verification token"
 			verification.Causes = append(verification.Causes, template.HTML("You shouldn't be here"))
-			sendVerificationFailurePage(w, verification, http.StatusBadRequest)
+			verFailed(w, verification, http.StatusBadRequest)
 			return
 		}
 
@@ -88,14 +93,14 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 			verification.Error = "Failed to check verification token"
 			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
 			verification.Causes = append(verification.Causes, template.HTML("You refreshed the page with already verified token"))
-			sendVerificationFailurePage(w, verification, http.StatusInternalServerError)
+			verFailed(w, verification, http.StatusInternalServerError)
 			return
 		}
 
 		verification.Success = true
-		verification.Icon = template.HTML(parser.LoadIcon("check"))
+		verification.Icon = template.HTML(LoadIcon("check"))
 
-		alert := parser.NewAlert("Verification success", "check", "Your email has been verified successfully!", utils.AlertSuccess)
+		alert := NewAlert("Verification success", "check", "Your email has been verified successfully!", utils.AlertSuccess)
 
 		reqCont.PageContent.ModalContent = template.HTML(alert)
 		reqCont.RerenderBody = true
@@ -103,7 +108,7 @@ func VerificationHandler(connection *db.Database) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 
-		tmpl := template.Must(template.ParseFiles("../static/templates/verification.html"))
+		tmpl := Must(ParseFiles("../static/templates/verification.html"))
 		tmpl.Execute(w, verification)
 	}
 }
