@@ -33,7 +33,7 @@ func DeleteFileHandler(
 	alert := NewAlert(
 		"File Deleted",
 		"check",
-		fmt.Sprintf("File '%s' has been deleted successfully.", fileName),
+		fmt.Sprintf("File '%s.%s' has been deleted successfully.", name, extension),
 		utils.AlertSuccess,
 	)
 

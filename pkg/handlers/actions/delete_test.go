@@ -78,10 +78,12 @@ func TestDeleteFileHandler(t *testing.T) {
 	}
 
 	relativePath := []string{"folder"}
-	fileName := "test.txt"
-	filePath := "folder/test.txt"
+	fileName := "test"
+	fileExtension := "txt"
+	filePath := "folder"
 	fileObj := file_schema.NewUserFileBuilder().
 		WithFilename(fileName).
+		WithExtension(fileExtension).
 		WithPath(filePath).
 		WithOwnerID(mockRequester.ID)
 
@@ -93,13 +95,13 @@ func TestDeleteFileHandler(t *testing.T) {
 			if tt.returnErr != nil {
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return(tt.wantBody)
 			} else {
-				mockNewAlert.On("NewAlert", "File Deleted", "check", fmt.Sprintf("File '%s' has been deleted successfully.", fileName), mock.Anything).Return(tt.wantBody)
+				mockNewAlert.On("NewAlert", "File Deleted", "check", fmt.Sprintf("File '%s.%s' has been deleted successfully.", fileName, fileExtension), mock.Anything).Return(tt.wantBody)
 			}
 
 			req := httptest.NewRequest(http.MethodDelete, "/delete", nil)
 			rec := httptest.NewRecorder()
 
-			DeleteFileHandler(rec, req, mockDB, additionalContext, relativePath, fileName, tt.isFolder)
+			DeleteFileHandler(rec, req, mockDB, additionalContext, relativePath, fileName+"."+fileExtension, tt.isFolder)
 			assert.Equal(t, tt.wantCode, rec.Code)
 			assert.Equal(t, tt.wantBody, rec.Body.String())
 			if tt.wantTrigger != "" {
