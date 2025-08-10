@@ -151,7 +151,6 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 		data.URIParent = ParseQuerySlice(parent)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
 
 		var tmpl *template.Template
 		if reqCont.ToRestorePage || reqCont.RerenderBody || r.URL.Query().Get("redirect") != "" {

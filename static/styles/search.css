@@ -84,6 +84,7 @@
 
 .search-table .file-type, .search-table .file-actions {
     text-align: center;
+    vertical-align: middle;
 }
 
 .search-table .no-results, .search-table .empty {
@@ -116,7 +117,7 @@ tbody td, thead th {
 }
 
 .folder-icon {
-    display: block;
+    display: inline-block;
     width: 30px;
     height: 30px;
     border-radius: 99px;
@@ -168,4 +169,27 @@ tbody td, thead th {
 
 .actions-menu-content>ul>li:hover {
     background-color: var(--attention-color);
+}
+
+.search-input-container>button[type="reset"] {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.search-input-container>button[type="reset"]>div {
+    width: 25px;
+    height: 25px;
+}
+
+.dwnld {
+    float: left;
+}
+
+.acts {
+    float: right;
+}
+
+.file-actions {
+    width: 70px;
 }

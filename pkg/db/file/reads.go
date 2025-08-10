@@ -40,17 +40,19 @@ func ExtractUserFiles(ctx context.Context, db interfaces.DatabaseInterface, user
 
 func SearchFiles(ctx context.Context, db interfaces.DatabaseInterface, search_query string, requester *user_schema.User, directory []string) ([]*file_schema.UserFile, error) {
 	select_query := fmt.Sprintf(
-		`SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM user_files`,
+		`SELECT f.%s, f.%s, f.%s, f.%s, f.%s, f.%s, f.%s, f.%s
+	    FROM user_files f
+	    INNER JOIN users u ON f.owner_id = u.id AND u.id = $2`,
 		schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path,
 		schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt,
 	)
 
 	query := select_query + `
-		WHERE filename % $1
-		ORDER BY similarity(filename, $1) DESC
-		LIMIT 20;`
+	    WHERE f.filename % $1
+	    ORDER BY similarity(f.filename, $1) DESC
+	    LIMIT 20;`
 
-	rows, err := db.Query(ctx, query, search_query)
+	rows, err := db.Query(ctx, query, search_query, requester.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error searching files: %v", err)
 	}

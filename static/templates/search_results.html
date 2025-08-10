@@ -61,7 +61,13 @@
                 {{end}}
                 <td class="file-size">{{.Size}}</td>
                 <td class="file-actions">
-                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}" class="folder-icon">
+                    <div class="folder-icon dwnld" hx-trigger="click" hx-push-url="false"
+                        hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}">
+                        <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/download.svg"
+                            hx-swap="innerHTML">
+                        </div>
+                    </div>
+                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}" class="folder-icon acts">
                         <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/more.svg"
                             hx-swap="outerHTML">
                         </div>
@@ -70,11 +76,6 @@
                         class="actions-menu-toggle" hidden>
                     <div class="actions-menu-content" hx-push-url="false">
                         <ul>
-                            {{if not .IsFolder}}
-                            <li hx-get="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}">
-                                Open
-                            </li>
-                            {{end}}
                             <li
                                 hx-patch="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?is_folder={{.IsFolder}}">
                                 Rename
