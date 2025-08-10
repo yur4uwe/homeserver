@@ -38,3 +38,7 @@ func (db *Database) QueryEmail(ctx context.Context, email string) (*user_schema.
 func (db *Database) QueryPassword(ctx context.Context, password string) (*user_schema.User, error) {
 	return user.QueryPassword(ctx, db, password)
 }
+
+func (db *Database) ModifyUserField(ctx context.Context, user_data *user_schema.User, field string, value interface{}) error {
+	return user.ModifyUserField(ctx, db, user_data, field, value)
+}

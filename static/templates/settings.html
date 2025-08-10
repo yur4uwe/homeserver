@@ -1,0 +1,34 @@
+<div id="settings-container">
+    <h1>Settings</h1>
+    <form id="settings-form" hx-patch="/api/v1/account/settings" hx-push-url="false">
+        <div class="settings-field" id="username-wrapper">
+            <fieldset>
+                <legend>Username:</legend>
+                <input type="text" name="username" placeholder="Your Username" value="{{.Username}}">
+            </fieldset>
+        </div>
+
+        <div class="settings-field" id="email-wrapper">
+            <fieldset>
+                <legend>Email:</legend>
+                <input type="email" name="email" placeholder="Your Email" value="{{.Email}}">
+            </fieldset>
+        </div>
+
+        <div class="settings-field" id="password-wrapper">
+            <fieldset>
+                <legend>Password:</legend>
+                <input type="password" name="password" placeholder="Your Password">
+            </fieldset>
+        </div>
+
+        <div class="settings-field" id="confirm-password-wrapper">
+            <fieldset>
+                <legend>Confirm Password:</legend>
+                <input type="password" name="confirm-password" placeholder="Confirm Your Password">
+            </fieldset>
+        </div>
+
+        <button class="button">Save Changes</button>
+    </form>
+</div>

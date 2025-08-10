@@ -1,0 +1,9 @@
+#settings-container {
+    max-width: 350px;
+    margin: 0 auto;
+}
+
+.settings-field {
+    margin-bottom: 1rem;
+    max-width: 300px;
+}

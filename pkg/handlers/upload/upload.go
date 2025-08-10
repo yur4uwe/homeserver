@@ -28,12 +28,12 @@ func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.A
 			select {
 			case <-done:
 				// Handle cancellation
-				reqCont.LogHistory.ErrLog("Request canceled during file upload", "DownloadFile")
+				reqCont.LogHistory.ErrLog("Request canceled during file upload", "DownloadFile:31")
 				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
-				reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile")
+				reqCont.LogHistory.ErrLog("Error retrieving file from form: "+err.Error(), "DownloadFile:36")
 				ErrorResponse(w, "Error retrieving file", http.StatusBadRequest)
 				return
 			}
@@ -63,12 +63,12 @@ func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.A
 			select {
 			case <-done:
 				// Handle cancellation
-				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile")
+				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile:66")
 				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
 				return
 			default:
 				// Handle other errors
-				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile")
+				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile:71")
 				ErrorResponse(w, "Error saving file", http.StatusInternalServerError)
 				return
 			}

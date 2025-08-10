@@ -16,11 +16,12 @@ func DeleteFileHandler(
 	reqCont *middleware.AdditionalRequestContext,
 	relativePath []string, fileName string, is_folder bool,
 ) {
-	filePath := strings.Join(append(relativePath, fileName), "/")
+	name, extension := strings.Split(fileName, ".")[0], strings.Split(fileName, ".")[1]
 
 	file := file_schema.NewUserFileBuilder().
-		WithFilename(fileName).
-		WithPath(filePath).
+		WithFilename(name).
+		WithExtension(extension).
+		WithPath(strings.Join(relativePath, "/")).
 		WithOwnerID(reqCont.Requester.ID)
 
 	id, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username)

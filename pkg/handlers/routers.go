@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"homeserver/pkg/handlers/account"
 	"homeserver/pkg/handlers/actions"
 	"homeserver/pkg/handlers/search"
 	"homeserver/pkg/handlers/upload"
@@ -163,5 +164,52 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 
 			tmpl.Execute(w, data)
 		}
+	}
+}
+
+func AccountSettingsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+		if !ok {
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			return
+		}
+
+		reqCont.LogHistory.Log("[Handler] Account settings accessed")
+
+		new_username := r.FormValue("username")
+		new_email := r.FormValue("email")
+		new_password := r.FormValue("password")
+
+		var err error
+		if new_username != "" && new_username != reqCont.Requester.Username {
+			reqCont.LogHistory.Log("[Handler] Username change requested")
+			if uname_err := account.HandleUsernameChange(r, connection); uname_err != nil {
+				err = uname_err
+			}
+		}
+
+		if new_email != "" && new_email != reqCont.Requester.Email {
+			reqCont.LogHistory.Log("[Handler] Email change requested")
+			if em_err := account.HandleEmailChange(r, connection); em_err != nil {
+				err = em_err
+			}
+		}
+
+		if new_password != "" && new_password == r.FormValue("confirm-password") {
+			reqCont.LogHistory.Log("[Handler] Password change requested")
+			if pass_err := account.HandlePasswordChange(r, connection); pass_err != nil {
+				err = pass_err
+			}
+		}
+
+		if err != nil {
+			reqCont.LogHistory.ErrLog("[Handler] Account settings update error: "+err.Error(), "AccountSettingsRouter:40")
+			ErrorResponse(w, "Internal Server Error: Failed to update account settings", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Account settings updated successfully"))
 	}
 }

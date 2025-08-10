@@ -195,7 +195,7 @@ func DeleteFile(ctx context.Context, db interfaces.DatabaseInterface, file *file
 		return 0, fmt.Errorf("user name cannot be empty")
 	}
 
-	if err := file.ShouldHaveFields(user_name)(schemas.Filename, schemas.OwnerID, schemas.Path); err != nil {
+	if err := file.ShouldHaveFields(user_name)(schemas.Filename, schemas.Extension, schemas.OwnerID, schemas.Path); err != nil {
 		return 0, fmt.Errorf("invalid file data: %v", err)
 	}
 
@@ -208,11 +208,11 @@ func DeleteFile(ctx context.Context, db interfaces.DatabaseInterface, file *file
 	var id int
 	err := db.QueryRow(
 		ctx,
-		`DELETE FROM user_files WHERE filename = $1 AND owner_id = $2 RETURNING id`,
-		file.Filename, file.OwnerID,
+		`DELETE FROM user_files WHERE filename = $1 AND path = $2 AND owner_id = $3 RETURNING id`,
+		file.Filename, file.Path, file.OwnerID,
 	).Scan(&id)
 	if err != nil {
-		return 0, fmt.Errorf("error deleting file metadata: %v", err)
+		return 0, fmt.Errorf("error deleting file: %v", err)
 	}
 
 	return id, nil

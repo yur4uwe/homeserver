@@ -63,4 +63,5 @@ type DatabaseInterface interface {
 	QueryUsername(ctx context.Context, username string) (*user_schema.User, error)
 	QueryEmail(ctx context.Context, email string) (*user_schema.User, error)
 	QueryPassword(ctx context.Context, password string) (*user_schema.User, error)
+	ModifyUserField(ctx context.Context, user *user_schema.User, field string, value interface{}) error
 }

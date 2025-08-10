@@ -21,8 +21,10 @@ func FileSearchHandler(ctx context.Context, connection interfaces.DatabaseInterf
 		return nil, fmt.Errorf("error searching files: %v", err)
 	}
 
+	filtered := ExcludeFilesFromParents(search_results, directory)
+
 	data.QueryResults = true
-	data.Entries = TransformEntries(search_results, nil)
+	data.Entries = TransformEntries(filtered, nil)
 
 	return data, nil
 }

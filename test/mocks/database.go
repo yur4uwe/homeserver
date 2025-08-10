@@ -226,3 +226,8 @@ func (m *MockDB) DropTable(ctx context.Context, tableName string) error {
 	args := m.Called(ctx, tableName)
 	return args.Error(0)
 }
+
+func (m *MockDB) ModifyUserField(ctx context.Context, user *user_schema.User, field string, value interface{}) error {
+	args := m.Called(ctx, user, field, value)
+	return args.Error(0)
+}

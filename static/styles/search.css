@@ -147,6 +147,7 @@ tbody td, thead th {
     background-color: white;
     border: 1px solid var(--light-border);
     border-radius: 5px;
+    top: 35px;
     z-index: 1000;
 }
 
@@ -192,4 +193,5 @@ tbody td, thead th {
 
 .file-actions {
     width: 70px;
+    position: relative;
 }

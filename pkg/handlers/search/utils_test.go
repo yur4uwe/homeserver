@@ -153,3 +153,50 @@ func TestSortEntries(t *testing.T) {
 	assert.Equal(t, "file1", entries[2].Name)
 	assert.Equal(t, "file2", entries[3].Name)
 }
+
+func TestExcludeFilesFromParents(t *testing.T) {
+	files := []*file_schema.UserFile{
+		{
+			Filename: "file1.txt",
+			Path:     "root/parent",
+		},
+		{
+			Filename: "file2.txt",
+			Path:     "root/parent/folder",
+		},
+		{
+			Filename: "file3.txt",
+			Path:     "root/parent/folder/subfolder",
+		},
+		{
+			Filename: "file4.txt",
+			Path:     "root",
+		},
+		{
+			Filename: "file5.txt",
+			Path:     "root/parent2",
+		},
+	}
+
+	directory := []string{"root", "parent", "folder"}
+
+	filtered := ExcludeFilesFromParents(files, directory)
+
+	// Only files whose path starts with "root/parent/folder" should remain
+	expected := []*file_schema.UserFile{
+		{
+			Filename: "file2.txt",
+			Path:     "root/parent/folder",
+		},
+		{
+			Filename: "file3.txt",
+			Path:     "root/parent/folder/subfolder",
+		},
+	}
+
+	assert.Equal(t, len(expected), len(filtered))
+	for i, f := range filtered {
+		assert.Equal(t, expected[i].Filename, f.Filename)
+		assert.Equal(t, expected[i].Path, f.Path)
+	}
+}

@@ -45,6 +45,27 @@ func CreateUserEntry(ctx context.Context, db interfaces.DatabaseInterface, user 
 
 // UPDATE
 
+func ModifyUserField(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User, field string, value interface{}) error {
+	if field == schemas.UserID {
+		return fmt.Errorf("UserID cannot be modified")
+	}
+
+	if err := user.ShouldHaveFields(schemas.UserID); err != nil {
+		return fmt.Errorf("invalid user data: %v", err)
+	}
+
+	tag, err := db.Exec(ctx, fmt.Sprintf(`UPDATE users SET %s = $1 WHERE id = $2`, field), value, user.ID)
+	if err != nil {
+		return fmt.Errorf("error updating user field: %v", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
 // DELETE
 
 func DeleteUser(ctx context.Context, db interfaces.DatabaseInterface, user *user_schema.User) error {

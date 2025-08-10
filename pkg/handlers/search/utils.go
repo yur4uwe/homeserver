@@ -111,3 +111,13 @@ func SortEntries(entries []templates.SearchEntry) {
 		return entries[i].Name < entries[j].Name
 	})
 }
+
+func ExcludeFilesFromParents(files []*file_schema.UserFile, directory []string) []*file_schema.UserFile {
+	var filtered []*file_schema.UserFile
+	for _, file := range files {
+		if strings.HasPrefix(file.Path, strings.Join(directory, "/")) {
+			filtered = append(filtered, file)
+		}
+	}
+	return filtered
+}

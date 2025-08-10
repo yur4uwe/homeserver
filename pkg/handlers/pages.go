@@ -54,6 +54,29 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
+func SettingsPageHandler(w http.ResponseWriter, r *http.Request) {
+	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
+	if !ok {
+		ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+		return
+	}
+
+	reqCont.LogHistory.Log("[Handler] Settings page accessed")
+
+	tmpl := Must(ParseFiles("../static/templates/settings.html"))
+
+	data := templates.SettingsPageData{
+		Username: reqCont.Requester.Username,
+		Email:    reqCont.Requester.Email,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if err := tmpl.Execute(w, data); err != nil {
+		ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
