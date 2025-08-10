@@ -39,6 +39,10 @@ func main() {
 		log.Fatalf("Database table setup error: %v", err)
 	}
 
+	if err := setup.CheckDatabaseExtensions(connection); err != nil {
+		log.Fatalf("Database extension setup error: %v", err)
+	}
+
 	if err := setup.CheckUserFolders(connection); err != nil {
 		log.Fatalf("User folder setup error: %v", err)
 	}

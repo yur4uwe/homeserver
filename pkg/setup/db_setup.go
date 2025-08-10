@@ -84,6 +84,18 @@ func CheckDatabaseExtensions(connection interfaces.DatabaseInterface) error {
 		return fmt.Errorf("error creating extension: %v", err)
 	}
 
+	if _, err := connection.Exec(context.Background(), "SELECT set_limit(0.1);"); err != nil {
+		return fmt.Errorf("error setting similarity threshold: %v", err)
+	}
+
+	var similarityThreshold string
+	err := connection.QueryRow(context.Background(), "SELECT show_limit();").Scan(&similarityThreshold)
+	if err != nil {
+		return fmt.Errorf("error finding similarity threshold: %v", err)
+	}
+
+	fmt.Printf("Current similarity threshold: %s\n", similarityThreshold)
+
 	return nil
 }
 

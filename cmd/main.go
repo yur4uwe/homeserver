@@ -15,6 +15,7 @@ import (
 	"homeserver/pkg/handlers"
 	"homeserver/pkg/handlers/auth"
 	"homeserver/pkg/middleware"
+	"homeserver/pkg/setup"
 
 	"github.com/joho/godotenv"
 )
@@ -31,6 +32,10 @@ func main() {
 	defer connection.Close()
 
 	globals.FillPages()
+
+	if err := setup.CheckDatabaseExtensions(connection); err != nil {
+		log.Fatalf("Database extension check error: %v", err)
+	}
 
 	fs := http.FileServer(http.Dir("../static"))
 

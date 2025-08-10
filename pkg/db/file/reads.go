@@ -7,7 +7,6 @@ import (
 	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/user_schema"
-	"strings"
 )
 
 func ExtractUserFiles(ctx context.Context, db interfaces.DatabaseInterface, userID int) ([]*file_schema.UserFile, error) {
@@ -39,10 +38,38 @@ func ExtractUserFiles(ctx context.Context, db interfaces.DatabaseInterface, user
 	return entries, nil
 }
 
-func SearchFiles(ctx context.Context, db interfaces.DatabaseInterface, query string, requester *user_schema.User, directory []string) ([]*file_schema.UserFile, error) {
-	files, err := ExtractFilesFromDirectory(ctx, db, strings.Join(directory, "/"), requester)
+func SearchFiles(ctx context.Context, db interfaces.DatabaseInterface, search_query string, requester *user_schema.User, directory []string) ([]*file_schema.UserFile, error) {
+	select_query := fmt.Sprintf(
+		`SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM user_files`,
+		schemas.FileID, schemas.Filename, schemas.Extension, schemas.Path,
+		schemas.Size, schemas.ContentType, schemas.OwnerID, schemas.CreatedAt,
+	)
+
+	query := select_query + `
+		WHERE filename % $1
+		ORDER BY similarity(filename, $1) DESC
+		LIMIT 20;`
+
+	rows, err := db.Query(ctx, query, search_query)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting user files: %v", err)
+		return nil, fmt.Errorf("error searching files: %v", err)
+	}
+	defer rows.Close()
+
+	var files []*file_schema.UserFile
+	for rows.Next() {
+		file := &file_schema.UserFile{}
+		if err := rows.Scan(
+			&file.ID, &file.Filename, &file.Extension, &file.Path,
+			&file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("error scanning file entry: %v", err)
+		}
+		files = append(files, file)
+	}
+
+	if !rows.Next() && rows.Err() != nil {
+		return nil, fmt.Errorf("error occurred during rows iteration: %v", rows.Err())
 	}
 
 	return files, nil
