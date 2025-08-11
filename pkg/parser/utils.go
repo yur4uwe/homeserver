@@ -27,10 +27,10 @@ func LoadIcon(icon_name string) string {
 func NewAlert(title, iconName, message, status string) string {
 
 	alert := &templates.ModalContent{
-		Title:    title,
-		IconName: iconName,
-		Type:     status,
-		Message:  message,
+		Title:   title,
+		Icon:    template.HTML(LoadIcon(iconName)),
+		Type:    status,
+		Message: message,
 	}
 
 	str, err := ParseTemplateToString("../static/templates/modal.html", alert)

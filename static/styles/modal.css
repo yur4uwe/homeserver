@@ -24,3 +24,11 @@
     background-color: #a94442;
     color: #f2dede;
 }
+
+.alert>p {
+    letter-spacing: 2px;
+}
+
+.alert.removing {
+    animation: scaleOut 0.3s forwards;
+}
