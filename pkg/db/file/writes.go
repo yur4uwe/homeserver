@@ -118,6 +118,10 @@ func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath st
 		return "", fmt.Errorf("invalid file path: oldPath and newName cannot be empty")
 	}
 
+	if strings.Contains(newName, "/") {
+		return "", fmt.Errorf("invalid file name: %s", newName)
+	}
+
 	err := requester.ShouldHaveFields(schemas.Username)
 	if err != nil {
 		return "", fmt.Errorf("error validating requester: %v", err)

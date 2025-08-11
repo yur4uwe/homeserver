@@ -23,6 +23,8 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interf
 
 	filePath := strings.Join(append(relativePath, fileName), "/")
 
+	fmt.Println("Renaming file:", filePath, "to", desiredName)
+
 	newName, err := connection.RenameFile(r.Context(), filePath, desiredName, reqCont.Requester)
 	if err != nil {
 		ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
@@ -36,7 +38,7 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interf
 		utils.AlertSuccess,
 	)
 
-	w.Header().Set("HX-Trigger", fmt.Sprintf("rename-success-%s-%s", strings.Join(relativePath, "/"), fileName))
+	w.Header().Set("HX-Trigger", "rename-success")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")

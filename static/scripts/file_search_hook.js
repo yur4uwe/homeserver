@@ -32,69 +32,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchResults = document.querySelectorAll('.search-result');
 
     searchResults.forEach(result => {
-        // Toggle selection on click
         result.addEventListener('click', function () {
             result.classList.toggle('selected');
             result.draggable = document.querySelectorAll('.search-result.selected').length > 0; // Enable dragging only if something is selected
         });
+    });
 
-        // Handle dragstart for selected files
-        result.addEventListener('dragstart', function (event) {
-            const selectedResults = document.querySelectorAll('.search-result.selected');
-            const selectedPaths = Array.from(selectedResults).map(selected => {
-                const path = selected.getAttribute('data-path');
-                const name = selected.getAttribute('data-name');
+    const renameAction = document.querySelectorAll('.rename-action');
 
-                let fullPath = path;
-                if (!fullPath) {
-                    fullPath = name;
-                } else {
-                    fullPath = `${fullPath}/${name}`;
+    renameAction.forEach(item => {
+        item.addEventListener('click', function () {
+            const row = item.closest('tr');
+            const fileNameCell = row.querySelector('.file-name');
+            if (!fileNameCell) {
+                console.error('No .file-name cell found in row');
+                return;
+            }
+            const fileSig = fileNameCell.textContent.trim().split('.');
+            const fileName = fileSig.shift();
+            const fileExtension = fileSig.pop();
+            const newName = encodeURI(prompt('Enter new name for ' + fileName, fileName) + '.' + fileExtension);
+            if (newName) {
+                console.log('Renaming ' + fileName + ' to ' + newName);
+                const filePathCell = row.querySelector('td.file-path');
+                let filePath = filePathCell ? filePathCell.textContent.trim() : '';
+                if (filePath) {
+                    filePath += "/"
+                    filePath = encodeURI(filePath);
                 }
 
-                return fullPath;
-            });
+                const origFileName = encodeURI(fileName + '.' + fileExtension);
 
-            // Store all selected paths in the drag event
-            event.dataTransfer.setData('application/json', JSON.stringify(selectedPaths));
-
-            // Add dragging class to all selected items
-            selectedResults.forEach(selected => {
-                selected.classList.add('dragging');
-            });
+                htmx.ajax('PATCH', '/api/v1/file-actions/' + filePath + origFileName + "?desired_name=" + newName);
+            }
         });
-
-        // Remove dragging class on dragend
-        result.addEventListener('dragend', function () {
-            const selectedResults = document.querySelectorAll('.search-result.dragging');
-            selectedResults.forEach(selected => {
-                selected.classList.remove('dragging');
-            });
-        });
-    });
-
-    const dropZone = document.querySelector('#search-results');
-
-    // Handle dragover event
-    dropZone.addEventListener('dragover', function (event) {
-        event.preventDefault(); // Allow dropping
-        dropZone.classList.add('drag-over');
-    });
-
-    // Handle dragleave event
-    dropZone.addEventListener('dragleave', function () {
-        dropZone.classList.remove('drag-over');
-    });
-
-    // Handle drop event
-    dropZone.addEventListener('drop', function (event) {
-        event.preventDefault();
-        dropZone.classList.remove('drag-over');
-
-        // Retrieve all dropped paths
-        const droppedPaths = JSON.parse(event.dataTransfer.getData('application/json'));
-        console.log('Dropped paths:', droppedPaths);
-
-        // Perform your action here (e.g., move files, update UI)
     });
 });

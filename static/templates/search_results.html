@@ -1,35 +1,18 @@
 <div id="search-results">
-    {{if not .Entries}}
-    {{if .Query}}
-    <div class="no-results">
-        <p>No results found for "{{.Query}}".</p>
-    </div>
-    {{else}}
-    <div class="empty-results">
-        <div style="width: 110px; height: 95px;">
-            <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/folder-open.svg"
-                hx-swap="outerHTML">
+    {{if .Directory}}
+    <div>
+        <div class="parent-link" colspan="{{if .QueryResults}}5{{else}}4{{end}}">
+            <div hx-get="/search/{{.Parent}}" hx-push-url="true">
+                <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/arrow-left.svg"
+                    hx-swap="outerHTML"></div>
             </div>
+            {{.Directory}}
         </div>
-        <p class="no-files">No files found</p>
     </div>
     {{end}}
-    {{else}}
     <table class="search-table" hx-push-url="true">
         <thead>
-            {{if .Directory}}
-            <tr>
-                <th class="directory-header">
-                    <div hx-get="/search/{{.Parent}}">
-                        <div hx-trigger="load" hx-target="this" hx-push-url="false"
-                            hx-get="/static/assets/arrow-left.svg" hx-swap="outerHTML"></div>
-                    </div>
-                </th>
-                <th colspan="{{if .QueryResults}}4{{else}}3{{end}}">
-                    {{.Directory}}
-                </th>
-            </tr>
-            {{end}}
+            {{if .Entries}}
             <tr class="search-header">
                 <th>Type</th>
                 <th>Name</th>
@@ -39,7 +22,9 @@
                 <th>Size</th>
                 <th>Actions</th>
             </tr>
+            {{end}}
         </thead>
+        {{if .Entries}}
         <tbody>
             {{range .Entries}}
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
@@ -76,8 +61,7 @@
                         class="actions-menu-toggle" hidden>
 
                     <ul class="actions-menu-content" hx-push-url="false" hx-target="#modal-content" hx-swap="innerHTML">
-                        <li
-                            hx-patch="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?is_folder={{.IsFolder}}">
+                        <li class="rename-action">
                             Rename
                         </li>
                         <li hx-confirm="Do you really want to delete {{.Name}}{{.Extension}} {{if .IsFolder}}folder{{else}}file{{end}}?"
@@ -89,6 +73,22 @@
             </tr>
             {{end}}
         </tbody>
+        {{end}}
     </table>
+    {{if not .Entries}}
+    {{if .Query}}
+    <div class="no-results">
+        <p>No results found for "{{.Query}}".</p>
+    </div>
+    {{else}}
+    <div class="empty-results">
+        <div style="width: 110px; height: 95px;">
+            <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/folder-open.svg"
+                hx-swap="outerHTML">
+            </div>
+        </div>
+        <p class="no-files">No files found</p>
+    </div>
+    {{end}}
     {{end}}
 </div>

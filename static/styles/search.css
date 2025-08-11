@@ -55,11 +55,16 @@
     background-color: var(--attention-color);
 }
 
-.directory-header {
-    display: table-caption;
+.parent-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: var(--attention-color);
+    border-bottom: 1px solid var(--light-border);
+    padding: 5px;
 }
 
-.directory-header>div {
+.parent-link>div {
     width: 30px;
     height: 30px;
     margin-right: 10px;
@@ -75,10 +80,6 @@
 }
 
 .search-table th {
-    font-weight: bold;
-}
-
-.search-table .file-name {
     font-weight: bold;
 }
 
