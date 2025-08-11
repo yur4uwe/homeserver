@@ -45,7 +45,7 @@ type DatabaseInterface interface {
 	RenameFolder(ctx context.Context, folder *folder_schema.UserFolder, newName string, ownerName string) error
 	FolderExists(ctx context.Context, folderName string, ownerID int, pathToFolder string) (bool, error)
 	EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error
-	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error
+	DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (int, error)
 	ExtractUserFolders(ctx context.Context, userID int) ([]*folder_schema.UserFolder, error)
 
 	// Token Queries

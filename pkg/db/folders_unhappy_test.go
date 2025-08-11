@@ -97,12 +97,14 @@ func TestDeleteFolderUnhappyPath(t *testing.T) {
 
 	// Test with invalid folder data
 	invalidFolder := &folder_schema.UserFolder{}
-	err := con_copy.DeleteFolder(context.Background(), invalidFolder, mockUser.Username)
+	id, err := con_copy.DeleteFolder(context.Background(), invalidFolder, mockUser.Username)
+	assert.Equal(t, 0, id, "Deleting folder with invalid folder data should return ID 0")
 	assert.Error(t, err, "Deleting folder with invalid folder data should return an error")
 	assert.Contains(t, err.Error(), "invalid folder data", "Error message should indicate invalid folder data")
 
 	// Test with empty owner name
-	err = con_copy.DeleteFolder(context.Background(), mockFolder, "")
+	id, err = con_copy.DeleteFolder(context.Background(), mockFolder, "")
+	assert.Equal(t, 0, id, "Deleting folder with empty owner name should return ID 0")
 	assert.Error(t, err, "Deleting folder with empty owner name should return an error")
 	assert.Contains(t, err.Error(), "invalid folder data", "Error message should indicate invalid folder data")
 }

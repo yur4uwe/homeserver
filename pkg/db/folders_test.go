@@ -156,8 +156,9 @@ func TestDeleteFolder(t *testing.T) {
 	assert.NoError(t, err, "Creating folder entry should not return an error")
 
 	// Delete the folder
-	err = con_copy.DeleteFolder(context.Background(), inserted_folder, mockUser.Username)
+	id, err := con_copy.DeleteFolder(context.Background(), inserted_folder, mockUser.Username)
 	assert.NoError(t, err, "Deleting folder should not return an error")
+	assert.Equal(t, inserted_folder.ID, id, "Deleting folder should return the correct ID")
 
 	// Verify the folder no longer exists
 	exists, err := con_copy.FolderExists(context.Background(), inserted_folder.Name, mockUser.ID, inserted_folder.Path)

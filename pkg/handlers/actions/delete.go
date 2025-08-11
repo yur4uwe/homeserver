@@ -5,6 +5,7 @@ import (
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
+	"homeserver/pkg/schemas/folder_schema"
 	"homeserver/pkg/utils"
 	"net/http"
 	"strings"
@@ -14,37 +15,56 @@ func DeleteFileHandler(
 	w http.ResponseWriter, r *http.Request,
 	connection interfaces.DatabaseInterface,
 	reqCont *middleware.AdditionalRequestContext,
-	relativePath []string, fileName string, is_folder bool,
+	relativePath []string, fileName string,
 ) {
-	name, extension := strings.Split(fileName, ".")[0], strings.Split(fileName, ".")[1]
+	entryNameSlice := strings.Split(fileName, ".")
 
-	file := file_schema.NewUserFileBuilder().
-		WithFilename(name).
-		WithExtension(extension).
-		WithPath(strings.Join(relativePath, "/")).
-		WithOwnerID(reqCont.Requester.ID)
+	var alert string
+	if len(entryNameSlice) < 2 {
+		folder := folder_schema.NewUserFolderBuilder().
+			WithName(entryNameSlice[0]).
+			WithPath(strings.Join(relativePath, "/")).
+			WithOwnerID(reqCont.Requester.ID)
 
-	id, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username)
-	if err != nil {
-		ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
-		return
+		id, err := connection.DeleteFolder(r.Context(), folder, reqCont.Requester.Username)
+		if err != nil {
+			ErrorResponse(w, fmt.Sprintf("Error deleting folder: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		alert = NewAlert(
+			"Folder Deleted",
+			"check",
+			fmt.Sprintf("Folder '%s' has been deleted successfully.", folder.Name),
+			utils.AlertSuccess,
+		)
+
+		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", id))
+	} else {
+		file := file_schema.NewUserFileBuilder().
+			WithFilename(entryNameSlice[0]).
+			WithExtension(entryNameSlice[1]).
+			WithPath(strings.Join(relativePath, "/")).
+			WithOwnerID(reqCont.Requester.ID)
+
+		id, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username)
+		if err != nil {
+			ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		alert = NewAlert(
+			"File Deleted",
+			"check",
+			fmt.Sprintf("File '%s.%s' has been deleted successfully.", entryNameSlice[0], entryNameSlice[1]),
+			utils.AlertSuccess,
+		)
+
+		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-file-%d", id))
 	}
 
-	alert := NewAlert(
-		"File Deleted",
-		"check",
-		fmt.Sprintf("File '%s.%s' has been deleted successfully.", name, extension),
-		utils.AlertSuccess,
-	)
-
-	entry_type := "file"
-	if is_folder {
-		entry_type = "folder"
-	}
-
-	w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-%s-%d", entry_type, id))
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(alert))
 }

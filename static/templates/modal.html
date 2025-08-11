@@ -1,7 +1,7 @@
 <div class="alert alert-{{.Type}}" hx-on::trigger="this.remove()" hx-trigger="load delay:5s">
     <div class="alert-header">
-        <div style="width: 40px; height: 40px;">
-            {{.Icon}}
+        <div style="width: 40px; height: 40px;" hx-get="/static/assets/icons/{{.IconName}}.svg" hx-trigger="load"
+            hx-target="this" hx-push-url="false" hx-swap="innerHTML">
         </div>
         <h4>{{.Title}}</h4>
     </div>

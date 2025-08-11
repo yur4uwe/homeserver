@@ -149,26 +149,23 @@ tbody td, thead th {
     border-radius: 5px;
     top: 35px;
     z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .actions-menu-toggle:checked~.actions-menu-content {
     display: block;
 }
 
-.actions-menu-content>ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.actions-menu-content>ul>li {
+.actions-menu-content>li {
     text-align: left;
     padding: 5px 10px;
     cursor: pointer;
     border-bottom: 1px solid var(--light-border);
 }
 
-.actions-menu-content>ul>li:hover {
+.actions-menu-content>li:hover {
     background-color: var(--attention-color);
 }
 

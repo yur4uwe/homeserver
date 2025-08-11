@@ -144,24 +144,26 @@ func UpdateFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *
 
 // DELETE
 
-func DeleteFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) error {
-	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderID, schemas.OwnerID); err != nil {
-		return fmt.Errorf("invalid folder data: %v", err)
+func DeleteFolder(ctx context.Context, db interfaces.DatabaseInterface, folder *folder_schema.UserFolder, ownerName string) (int, error) {
+	if err := folder.ShouldHaveFields(ownerName)(schemas.FolderName, schemas.OwnerID, schemas.Path); err != nil {
+		return 0, fmt.Errorf("invalid folder data: %v", err)
 	}
 
-	_, err := db.Exec(
+	var deletedID int
+	err := db.QueryRow(
 		ctx,
-		`DELETE FROM user_folders WHERE id = $1 AND owner_id = $2`,
-		folder.ID,
+		`DELETE FROM user_folders WHERE name = $1 AND path = $2 AND owner_id = $3 RETURNING id`,
+		folder.Name,
+		folder.Path,
 		folder.OwnerID,
-	)
+	).Scan(&deletedID)
 	if err != nil {
-		return fmt.Errorf("error deleting folder entry: %v", err)
+		return 0, fmt.Errorf("error deleting folder entry: %v", err)
 	}
 
 	if err := RemoveAll(folder.AbsolutePath()); err != nil {
-		return fmt.Errorf("error removing folder %s from disk: %v", folder.Name, err)
+		return 0, fmt.Errorf("error removing folder %s from disk: %v", folder.Name, err)
 	}
 
-	return nil
+	return deletedID, nil
 }

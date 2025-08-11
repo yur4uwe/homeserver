@@ -101,7 +101,7 @@ func TestDeleteFileHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/delete", nil)
 			rec := httptest.NewRecorder()
 
-			DeleteFileHandler(rec, req, mockDB, additionalContext, relativePath, fileName+"."+fileExtension, tt.isFolder)
+			DeleteFileHandler(rec, req, mockDB, additionalContext, relativePath, fileName+"."+fileExtension)
 			assert.Equal(t, tt.wantCode, rec.Code)
 			assert.Equal(t, tt.wantBody, rec.Body.String())
 			if tt.wantTrigger != "" {

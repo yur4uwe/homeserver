@@ -31,7 +31,7 @@ func (db *Database) ExtractFoldersFromDirectory(ctx context.Context, directory [
 	return folder.ExtractFoldersFromDirectory(ctx, db, directory, requester)
 }
 
-func (db *Database) DeleteFolder(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) error {
+func (db *Database) DeleteFolder(ctx context.Context, folder_data *folder_schema.UserFolder, ownerName string) (int, error) {
 	return folder.DeleteFolder(ctx, db, folder_data, ownerName)
 }
 

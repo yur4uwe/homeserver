@@ -132,9 +132,9 @@ func (m *MockDB) ExtractFoldersFromDirectory(ctx context.Context, directory []st
 	return args.Get(0).([]*folder_schema.UserFolder), args.Error(1)
 }
 
-func (m *MockDB) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) error {
+func (m *MockDB) DeleteFolder(ctx context.Context, folder *folder_schema.UserFolder, ownerName string) (int, error) {
 	args := m.Called(ctx, folder, ownerName)
-	return args.Error(0)
+	return args.Int(0), args.Error(1)
 }
 
 func (m *MockDB) EnsureFolderExists(ctx context.Context, relativePath []string, owner *user_schema.User) error {

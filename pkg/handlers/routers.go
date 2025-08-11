@@ -69,8 +69,8 @@ func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc
 		isFolder := r.URL.Query().Get("is_folder") == "true"
 		desiredName := r.URL.Query().Get("desired_name")
 
-		entryPath := strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/")
-		if entryPath == "" {
+		entryPath, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"))
+		if err != nil || entryPath == "" {
 			ErrorResponse(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
@@ -93,7 +93,7 @@ func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc
 
 		switch r.Method {
 		case http.MethodDelete:
-			DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName, isFolder)
+			DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName)
 		case http.MethodPatch:
 			RenameFileHandler(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
 		case http.MethodGet:
