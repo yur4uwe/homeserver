@@ -55,7 +55,7 @@ func TestPatchFile(t *testing.T) {
 			}
 
 			mockDB.On("RenameFile",
-				mock.Anything, mock.AnythingOfType("string"),
+				mock.Anything, mock.Anything,
 				mock.AnythingOfType("string"), mockReqContext.Requester,
 			).Return("new file.txt", err)
 			mockErrRes.On("ErrorResponse", mock.Anything, mock.Anything, tt.statusCode).Return()

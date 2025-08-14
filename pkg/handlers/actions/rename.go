@@ -17,7 +17,7 @@ var (
 )
 
 func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {
-	if desiredName == "" {
+	if desiredName == "" || fileName == "" {
 		ErrorResponse(w, "Desired name parameter is required for rename action", http.StatusBadRequest)
 		return
 	}

@@ -30,6 +30,10 @@ func ClearEntries(ctx context.Context, db interfaces.DatabaseInterface) (string,
 		}
 
 		for _, folder := range folders {
+			if folder.Path == "" {
+				continue // Skip root folders
+			}
+
 			if _, err := db.DeleteFolder(ctx, folder, user.Username); err != nil {
 				return "", fmt.Errorf("error deleting folder %s for user %s: %v", folder.Name, user.Username, err)
 			}

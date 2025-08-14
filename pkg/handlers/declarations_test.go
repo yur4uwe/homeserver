@@ -34,8 +34,8 @@ type ActionsMock struct {
 	mock.Mock
 }
 
-func (m *ActionsMock) DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string, isFolder bool) {
-	m.Called(w, r, connection, reqCont, relativePath, fileName, isFolder)
+func (m *ActionsMock) DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
+	m.Called(w, r, connection, reqCont, relativePath, fileName)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File deleted successfully"))
 }

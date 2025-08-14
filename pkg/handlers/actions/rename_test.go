@@ -9,7 +9,6 @@ import (
 	"homeserver/test/mocks"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,19 +61,25 @@ func TestRenameFileHandler(t *testing.T) {
 		},
 		{
 			name:         "rename error",
+			fileName:     "file.txt",
 			desiredName:  "new.txt",
 			renameErr:    fmt.Errorf("fail"),
 			renameResult: "",
 			wantCode:     http.StatusInternalServerError,
 			wantBody:     "Error renaming file: fail",
+			relativePath: []string{"path/to/file"},
+			is_folder:    false,
 		},
 		{
 			name:         "success",
+			fileName:     "old.txt",
 			desiredName:  "new.txt",
 			renameErr:    nil,
 			renameResult: "new.txt",
 			wantCode:     http.StatusOK,
-			wantBody:     "ALERT: File Renamed check File 'old.txt' has been renamed to 'new.txt'. 1",
+			wantBody:     "new.txt",
+			relativePath: []string{"path/to/file"},
+			is_folder:    false,
 		},
 	}
 
@@ -85,7 +90,7 @@ func TestRenameFileHandler(t *testing.T) {
 			mockDB.On(
 				"RenameFile",
 				context.Background(),
-				strings.Join(append(tt.relativePath, tt.fileName), "/"),
+				mock.AnythingOfType("*file_schema.UserFile"),
 				tt.desiredName,
 				mockRequester,
 			).Return(tt.renameResult, tt.renameErr)

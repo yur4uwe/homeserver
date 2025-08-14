@@ -61,15 +61,13 @@ func TestRenameFileUnhappyPath(t *testing.T) {
 		WithPath(mockRequester.Username).
 		WithOwnerID(mockRequester.ID)
 
-	// Test with empty oldPath
-	_, err := con_copy.RenameFile(context.Background(), nil, "newfile.txt", mockRequester)
+	_, err := con_copy.RenameFile(context.Background(), &file_schema.UserFile{}, "newfile.txt", mockRequester)
 	assert.Error(t, err, "Renaming file with empty oldPath should return an error")
-	assert.Contains(t, err.Error(), "invalid file path", "Error message should indicate invalid file path")
+	assert.Contains(t, err.Error(), "invalid old file data:", "Error message should indicate invalid file path")
 
-	// Test with empty newPath
 	_, err = con_copy.RenameFile(context.Background(), oldFile, "", mockRequester)
 	assert.Error(t, err, "Renaming file with empty newPath should return an error")
-	assert.Contains(t, err.Error(), "invalid file path", "Error message should indicate invalid file path")
+	assert.Contains(t, err.Error(), "invalid file name", "Error message should indicate invalid file name")
 
 	invalid_requester := &user_schema.User{}
 	_, err = con_copy.RenameFile(context.Background(), oldFile, "newfile.txt", invalid_requester)

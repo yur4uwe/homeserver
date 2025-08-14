@@ -140,9 +140,9 @@ func TestRenameFile(t *testing.T) {
 
 	newPath := "renamedfile.txt"
 
-	renamedPath, err := con_copy.RenameFile(context.Background(), oldFile, newPath, mockRequester)
+	newName, err := con_copy.RenameFile(context.Background(), oldFile, newPath, mockRequester)
 	assert.NoError(t, err, "Failed to rename file")
-	assert.Equal(t, mockRequester.Username+"/"+newPath, renamedPath, "Renamed path should match")
+	assert.Equal(t, newPath, newName, "Renamed path should match")
 }
 
 func TestUpdateFileEntry(t *testing.T) {

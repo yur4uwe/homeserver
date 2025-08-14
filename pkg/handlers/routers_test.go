@@ -144,7 +144,7 @@ func TestFileActionsRouter(t *testing.T) {
 	t.Run("Hands over handling to DeleteFileHandler on DELETE", func(t *testing.T) {
 		resetter()
 
-		mockActions.On("DeleteFileHandler", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
+		mockActions.On("DeleteFileHandler", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return()
 		mockParsePath.On(
 			"ParsePathWithUName",
 			mock.Anything, mock.Anything,
@@ -162,7 +162,7 @@ func TestFileActionsRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockActions.AssertCalled(t, "DeleteFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt", false)
+		mockActions.AssertCalled(t, "DeleteFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt")
 	})
 
 	t.Run("Hands over handling to RenameFileHandler on PATCH", func(t *testing.T) {

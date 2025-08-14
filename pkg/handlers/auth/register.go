@@ -8,8 +8,6 @@ import (
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/user_schema"
 	"homeserver/pkg/templates"
-	"homeserver/pkg/utils"
-	"html/template"
 	"net/http"
 	"os"
 )
@@ -68,12 +66,7 @@ func RegisterHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
 
 		go verSuccess(form, verification_token)
 
-		alert := NewAlert("Register successful", "check", "You have registered successfully. Now verify your email address.", utils.AlertSuccess)
-
-		reqCont.PageContent.ModalContent = template.HTML(alert)
-
-		reqCont.RerenderBody = true
-
+		w.Header().Set("HX-Trigger", `{"raise-alert": {"title": "Success!", "value": "Registration successful! Please check your email for verification.", "status": "success", "icon": "check"}}`)
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
