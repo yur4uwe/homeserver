@@ -41,8 +41,8 @@ func (db *Database) DeleteFile(ctx context.Context, file_data *file_schema.UserF
 // oldPath and newPath should include the filename and extension but not the user directory.
 // For example, if the file is located at "testuser/testfile.txt", oldPath
 // should be "testfile.txt" and newPath should be "renamedfile.txt".
-func (db *Database) RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error) {
-	return file.RenameFile(ctx, db, oldPath, newPath, requester)
+func (db *Database) RenameFile(ctx context.Context, oldFile *file_schema.UserFile, newPath string, requester *user_schema.User) (string, error) {
+	return file.RenameFile(ctx, db, oldFile, newPath, requester)
 }
 
 func (db *Database) UpdateFileEntry(ctx context.Context, file_data *file_schema.UserFile, ownerName string) error {

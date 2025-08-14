@@ -51,19 +51,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const fileSig = fileNameCell.textContent.trim().split('.');
             const fileName = fileSig.shift();
             const fileExtension = fileSig.pop();
-            const newName = encodeURI(prompt('Enter new name for ' + fileName, fileName) + '.' + fileExtension);
+            let newName = prompt('Enter new name for ' + fileName, fileName);
             if (newName) {
+                newName = encodeURI(newName + '.' + fileExtension);
                 console.log('Renaming ' + fileName + ' to ' + newName);
-                const filePathCell = row.querySelector('td.file-path');
-                let filePath = filePathCell ? filePathCell.textContent.trim() : '';
+                const filePathData = row.getAttribute('data-path');
+                let filePath = filePathData ? filePathData.trim() : '';
                 if (filePath) {
-                    filePath += "/"
                     filePath = encodeURI(filePath);
                 }
 
                 const origFileName = encodeURI(fileName + '.' + fileExtension);
 
-                htmx.ajax('PATCH', '/api/v1/file-actions/' + filePath + origFileName + "?desired_name=" + newName);
+                htmx.ajax('PATCH', '/api/v1/file-actions/' + filePath + origFileName + "?desired_name=" + newName, {
+                    target: "tr[data-id='" + row.getAttribute('data-id') + "'] td.file-name"
+                });
             }
         });
     });

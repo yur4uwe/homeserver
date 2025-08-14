@@ -86,8 +86,8 @@ func (m *MockDB) DeleteFile(ctx context.Context, file *file_schema.UserFile, use
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockDB) RenameFile(ctx context.Context, oldPath string, newPath string, requester *user_schema.User) (string, error) {
-	args := m.Called(ctx, oldPath, newPath, requester)
+func (m *MockDB) RenameFile(ctx context.Context, oldFile *file_schema.UserFile, newPath string, requester *user_schema.User) (string, error) {
+	args := m.Called(ctx, oldFile, newPath, requester)
 	return args.String(0), args.Error(1)
 }
 

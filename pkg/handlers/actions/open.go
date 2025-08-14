@@ -15,8 +15,7 @@ var (
 
 func OpenFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
 	file := file_schema.NewUserFileBuilder().
-		WithFilename(strings.Split(fileName, ".")[0]).
-		WithExtension(strings.Split(fileName, ".")[1]).
+		WithFullName(fileName).
 		WithPath(strings.Join(relativePath, "/")).
 		WithOwnerID(reqCont.Requester.ID)
 

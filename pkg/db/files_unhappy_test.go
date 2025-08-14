@@ -53,18 +53,26 @@ func TestRenameFileUnhappyPath(t *testing.T) {
 	assert.NotNil(t, EndTransaction)
 	defer EndTransaction()
 
+	oldFile := file_schema.NewUserFileBuilder().
+		WithFilename("testfile").
+		WithExtension("txt").
+		WithSize(1024).
+		WithContentType("text/plain").
+		WithPath(mockRequester.Username).
+		WithOwnerID(mockRequester.ID)
+
 	// Test with empty oldPath
-	_, err := con_copy.RenameFile(context.Background(), "", "newfile.txt", mockRequester)
+	_, err := con_copy.RenameFile(context.Background(), nil, "newfile.txt", mockRequester)
 	assert.Error(t, err, "Renaming file with empty oldPath should return an error")
 	assert.Contains(t, err.Error(), "invalid file path", "Error message should indicate invalid file path")
 
 	// Test with empty newPath
-	_, err = con_copy.RenameFile(context.Background(), "oldfile.txt", "", mockRequester)
+	_, err = con_copy.RenameFile(context.Background(), oldFile, "", mockRequester)
 	assert.Error(t, err, "Renaming file with empty newPath should return an error")
 	assert.Contains(t, err.Error(), "invalid file path", "Error message should indicate invalid file path")
 
 	invalid_requester := &user_schema.User{}
-	_, err = con_copy.RenameFile(context.Background(), "oldfile.txt", "newfile.txt", invalid_requester)
+	_, err = con_copy.RenameFile(context.Background(), oldFile, "newfile.txt", invalid_requester)
 	assert.Error(t, err, "Renaming file with invalid requester should return an error")
 	assert.Contains(t, err.Error(), "error validating requester", "Error message should indicate invalid requester")
 }

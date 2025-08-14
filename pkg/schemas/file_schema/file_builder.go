@@ -43,6 +43,16 @@ func (uf *UserFile) WithFilename(filename string) *UserFile {
 	return uf
 }
 
+func (uf *UserFile) WithFullName(fullName string) *UserFile {
+	if fullName == "" {
+		panic("Full name cannot be empty")
+	}
+	parts := strings.Split(fullName, ".")
+	uf.Filename = strings.Join(parts[:len(parts)-1], ".")
+	uf.Extension = parts[len(parts)-1]
+	return uf
+}
+
 func (uf *UserFile) WithExtension(extension string) *UserFile {
 	if extension == "" {
 		panic("Extension cannot be empty")

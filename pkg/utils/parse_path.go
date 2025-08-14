@@ -17,7 +17,7 @@ func ParsePathWithUName(path string, username string) ([]string, error) {
 
 	if len(path_slice) == 1 && path_slice[0] == "" {
 		path_slice = []string{username}
-	} else {
+	} else if len(path_slice) > 0 && path_slice[0] != username {
 		path_slice = append([]string{username}, path_slice...)
 	}
 

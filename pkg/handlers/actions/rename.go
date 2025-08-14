@@ -5,6 +5,7 @@ import (
 	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
+	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
 	"net/http"
 	"strings"
@@ -21,26 +22,17 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interf
 		return
 	}
 
-	filePath := strings.Join(append(relativePath, fileName), "/")
+	oldFile := file_schema.NewUserFileBuilder().
+		WithFullName(fileName).
+		WithPath(strings.Join(relativePath, "/")).
+		WithOwnerID(reqCont.Requester.ID)
 
-	fmt.Println("Renaming file:", filePath, "to", desiredName)
-
-	newName, err := connection.RenameFile(r.Context(), filePath, desiredName, reqCont.Requester)
+	newName, err := connection.RenameFile(r.Context(), oldFile, desiredName, reqCont.Requester)
 	if err != nil {
 		ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	alert := NewAlert(
-		"File Renamed",
-		"check",
-		fmt.Sprintf("File '%s' has been renamed to '%s'.", fileName, newName),
-		utils.AlertSuccess,
-	)
-
-	w.Header().Set("HX-Trigger", "rename-success")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("HX-Retarget", "#modal-content")
-	w.Header().Set("HX-Reswap", "innerHTML")
-	w.Write([]byte(alert))
+	w.Header().Set("HX-Trigger", `{"raise-alert": {"title": "Success!", "value": "File successfully renamed", "status": "success", "icon": "check"}}`)
+	w.Write([]byte(newName))
 }

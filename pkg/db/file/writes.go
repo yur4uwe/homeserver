@@ -8,7 +8,6 @@ import (
 	"homeserver/pkg/schemas"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/utils"
 	"strings"
 
 	"io"
@@ -113,9 +112,13 @@ func CreateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file 
 
 // UPDATE
 
-func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath string, newName string, requester *user_schema.User) (string, error) {
-	if oldPath == "" || newName == "" {
-		return "", fmt.Errorf("invalid file path: oldPath and newName cannot be empty")
+func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldFile *file_schema.UserFile, newName string, requester *user_schema.User) (string, error) {
+	if err := oldFile.ShouldHaveFields(requester.Username)(schemas.Filename, schemas.Extension, schemas.Path); err != nil {
+		return "", fmt.Errorf("invalid old file data: %v", err)
+	}
+
+	if newName == "" {
+		return "", fmt.Errorf("invalid file name: newName cannot be empty")
 	}
 
 	if strings.Contains(newName, "/") {
@@ -127,46 +130,35 @@ func RenameFile(ctx context.Context, db interfaces.DatabaseInterface, oldPath st
 		return "", fmt.Errorf("error validating requester: %v", err)
 	}
 
-	oldRelFilePath, err := utils.ParsePathWithUName(oldPath, requester.Username)
-	if err != nil {
-		return "", fmt.Errorf("error parsing old file path: %v", err)
+	if oldFile.Filename == newName {
+		return "", fmt.Errorf("new name cannot be the same as old name: %s", oldFile.Filename)
 	}
 
-	newRelFilePath := append(oldRelFilePath[:len(oldRelFilePath)-1], newName)
-
-	oldAbsFilePath := globals.BuildFilePath(requester.Username, strings.Split(oldPath, ".")[0], strings.Split(oldPath, ".")[1])
-	newAbsFilePath, err := PreventDuplicateFileName(strings.Join(newRelFilePath, "/"))
+	newAbsFilePath, err := PreventDuplicateFileName(oldFile.Path + "/" + newName)
 	if err != nil {
 		return "", fmt.Errorf("error preventing duplicate file name: %v", err)
 	}
 
-	newFileName := strings.Split(filepath.Base(newAbsFilePath), ".")[0]
-	oldFileName := strings.Split(filepath.Base(oldAbsFilePath), ".")[0]
-
-	if strings.Join(oldRelFilePath, "/") == strings.Join(newRelFilePath, "/") {
-		return strings.Join(newRelFilePath, "/"), nil
-	}
-
-	if err := Rename(oldAbsFilePath, newAbsFilePath); err != nil {
+	if err := Rename(oldFile.AbsolutePath(), newAbsFilePath); err != nil {
 		return "", fmt.Errorf("error renaming file on disk: %v", err)
 	}
 
-	relPath := strings.Join(newRelFilePath[:len(newRelFilePath)-1], "/")
+	newFileName := strings.Split(filepath.Base(newAbsFilePath), ".")[0]
 
 	tag, err := db.Exec(
 		ctx,
-		`UPDATE user_files SET path = $1, filename = $2, updated_at = NOW() WHERE filename = $3 AND path = $4 AND owner_id = $5`,
-		relPath, newFileName, oldFileName, relPath, requester.ID,
+		`UPDATE user_files SET filename = $1, updated_at = NOW() WHERE filename = $2 AND path = $3 AND owner_id = $4`,
+		newFileName, oldFile.Filename, oldFile.Path, requester.ID,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error updating file metadata: %v", err)
 	}
 
 	if tag.RowsAffected() == 0 {
-		return "", fmt.Errorf("no file found to rename: %s", oldRelFilePath)
+		return "", fmt.Errorf("no file found to rename: %s", oldFile.AbsolutePath())
 	}
 
-	return newRelFilePath[len(newRelFilePath)-1], nil
+	return filepath.Base(newAbsFilePath), nil
 }
 
 func UpdateFileEntry(ctx context.Context, db interfaces.DatabaseInterface, file *file_schema.UserFile, ownerName string) error {

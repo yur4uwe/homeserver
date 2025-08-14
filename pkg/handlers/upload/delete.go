@@ -6,8 +6,6 @@ import (
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/utils"
 	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 var ErrorResponse = utils.ErrorResponse
@@ -26,8 +24,7 @@ func DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.Add
 		file := file_schema.NewUserFileBuilder().
 			WithPath(filePath).
 			WithOwnerID(reqCont.Requester.ID).
-			WithFilename(strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))).
-			WithExtension(filepath.Ext(filePath)[1:])
+			WithFullName(filePath)
 
 		if _, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
