@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"file-server/constants"
-	"file-server/pkg/handlers"
+	"homeserver/constants"
+	"homeserver/file-server/pkg/handlers"
 
 	"github.com/joho/godotenv"
 )
@@ -32,12 +32,12 @@ func main() {
 	mux.HandleFunc("/", handlers.PageHandler)
 
 	server := &http.Server{
-		Addr:    ":" + os.Getenv(constants.AppPortKey),
+		Addr:    ":" + os.Getenv(constants.FileSrvPort),
 		Handler: mux,
 	}
 
 	go func() {
-		log.Printf("Starting HTTP server on port %s", os.Getenv(constants.AppPortKey))
+		log.Printf("Starting HTTP server on port %s", os.Getenv(constants.FileSrvPort))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}
