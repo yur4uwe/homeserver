@@ -66,6 +66,11 @@ func (m *MockOS) WriteFile(name string, data []byte, perm os.FileMode) error {
 	return args.Error(0)
 }
 
+func (m *MockOS) Getenv(key string) string {
+	args := m.Called(key)
+	return args.String(0)
+}
+
 type MockDirEntry struct {
 	mock.Mock
 }
