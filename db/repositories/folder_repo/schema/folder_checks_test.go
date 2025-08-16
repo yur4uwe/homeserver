@@ -1,8 +1,7 @@
-package folder_schema
+package folschema
 
 import (
-	"fmt"
-	"homeserver/pkg/schemas"
+	"homeserver/constants/folconsts"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +16,7 @@ func TestFolderChecksSuite(t *testing.T) {
 		folder = &UserFolder{ID: 0}
 		err = CheckFolderID(folder)
 		assert.Error(t, err, "CheckFolderID should return an error for invalid ID")
-		assert.EqualError(t, err, "folder ID must be greater than 0", "Error message should match")
+		assert.EqualError(t, err, "ID must be greater than 0", "Error message should match")
 	})
 
 	t.Run("TestCheckFolderName", func(t *testing.T) {
@@ -28,7 +27,7 @@ func TestFolderChecksSuite(t *testing.T) {
 		folder = &UserFolder{Name: ""}
 		err = CheckFolderName(folder)
 		assert.Error(t, err, "CheckFolderName should return an error for empty name")
-		assert.EqualError(t, err, "folder name cannot be empty", "Error message should match")
+		assert.EqualError(t, err, "name cannot be empty", "Error message should match")
 	})
 
 	t.Run("TestCheckFolderPath", func(t *testing.T) {
@@ -56,7 +55,7 @@ func TestFolderChecksSuite(t *testing.T) {
 		folder = &UserFolder{Path: "other_user/documents"}
 		err = checkPath(folder)
 		assert.Error(t, err, "CheckFolderPath should return an error for path not starting with owner's name")
-		assert.EqualError(t, err, "path must start with the owner's name 'john_doe'", "Error message should match")
+		assert.EqualError(t, err, "path must start with the owner's name", "Error message should match")
 	})
 
 	t.Run("TestCheckParent", func(t *testing.T) {
@@ -94,9 +93,14 @@ func TestFolderChecksSuite(t *testing.T) {
 			OwnerID: 0,
 		}
 
-		err := folder.ShouldHaveFields("john_doe")(schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID)
+		err := folder.ShouldHaveFields("john_doe")(folconsts.ID, folconsts.FolderName, folconsts.Path, folconsts.FolderParent, folconsts.OwnerID)
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
-		assert.EqualError(t, err, fmt.Sprintf("%sFolderID: %s\nFolderName: %s\nPath: %s\nFolderParent: %s\nOwnerID: %s", schemas.ValidationErrorPrefix, schemas.InvalidFolderIDError, schemas.InvalidFolderNameError, schemas.InvalidFolderPathStartError, schemas.InvalidFolderParentError, schemas.InvalidFolderOwnerIDError), "Error message should match")
+		errStr := err.Error()
+		assert.Contains(t, errStr, "id:ID must be greater than 0", "Error message should contain ID error")
+		assert.Contains(t, errStr, "name:name cannot be empty", "Error message should contain name error")
+		assert.Contains(t, errStr, "path:path cannot start with a slash", "Error message should contain path error")
+		assert.Contains(t, errStr, "parent:parent ID must be greater than 0", "Error message should contain parent error")
+		assert.Contains(t, errStr, "owner_id:owner ID must be greater than 0", "Error message should contain owner ID error")
 
 		mockParentID := 1
 
@@ -108,7 +112,7 @@ func TestFolderChecksSuite(t *testing.T) {
 			OwnerID: 100,
 		}
 
-		err = folder.ShouldHaveFields("john_doe")(schemas.FolderID, schemas.FolderName, schemas.Path, schemas.FolderParent, schemas.OwnerID, schemas.FolderParent)
+		err = folder.ShouldHaveFields("john_doe")(folconsts.ID, folconsts.FolderName, folconsts.Path, folconsts.FolderParent, folconsts.OwnerID, folconsts.FolderParent)
 		assert.NoError(t, err, "ShouldHaveFields should not return an error for valid fields")
 
 		err = folder.ShouldHaveFields("john_doe")()
@@ -117,6 +121,6 @@ func TestFolderChecksSuite(t *testing.T) {
 
 		err = folder.ShouldHaveFields("john_doe")("InvalidField")
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid field name")
-		assert.EqualError(t, err, schemas.ValidationErrorPrefix+fmt.Sprintf(schemas.InvalidFolderFieldError, "InvalidField"), "Error message should match")
+		assert.Contains(t, err.Error(), "field 'InvalidField' is not a valid folder field", "Error message should match")
 	})
 }

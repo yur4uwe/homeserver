@@ -1,9 +1,9 @@
-package folder_schema
+package folschema
 
 import (
 	"fmt"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas"
+	"homeserver/constants"
+	"homeserver/constants/folconsts"
 	"slices"
 	"strings"
 )
@@ -11,43 +11,43 @@ import (
 func (uf *UserFolder) ShouldHaveFields(ownerName string) func(...string) error {
 	return func(fields ...string) error {
 		if len(fields) == 0 {
-			return fmt.Errorf(schemas.NoFieldsSpecifiedError)
+			return fmt.Errorf(folconsts.NoFieldsSpecifiedError)
 		}
 
-		var errorMessages []string
+		var errorMessages = make(map[string]string)
 
 		for _, field := range fields {
-			if !slices.Contains(globals.DBFoldersTable.Fields, field) {
-				errorMessages = append(errorMessages, fmt.Sprintf(schemas.InvalidFolderFieldError, field))
+			if !slices.Contains(constants.DBFoldersTable.Fields, field) {
+				errorMessages[field] = fmt.Sprintf(folconsts.InvalidFolderFieldError, field)
 				continue
 			}
 
 			switch field {
-			case schemas.FolderID:
+			case folconsts.ID:
 				if err := CheckFolderID(uf); err != nil {
-					errorMessages = append(errorMessages, fmt.Sprintf("FolderID: %v", err))
+					errorMessages[field] = err.Error()
 				}
-			case schemas.FolderName:
+			case folconsts.FolderName:
 				if err := CheckFolderName(uf); err != nil {
-					errorMessages = append(errorMessages, fmt.Sprintf("FolderName: %v", err))
+					errorMessages[field] = err.Error()
 				}
-			case schemas.Path:
+			case folconsts.Path:
 				if err := CheckFolderPath(ownerName)(uf); err != nil {
-					errorMessages = append(errorMessages, fmt.Sprintf("Path: %v", err))
+					errorMessages[field] = err.Error()
 				}
-			case schemas.FolderParent:
+			case folconsts.FolderParent:
 				if err := CheckParent(uf); err != nil {
-					errorMessages = append(errorMessages, fmt.Sprintf("FolderParent: %v", err))
+					errorMessages[field] = err.Error()
 				}
-			case schemas.OwnerID:
+			case folconsts.OwnerID:
 				if err := CheckFolderOwnerID(uf); err != nil {
-					errorMessages = append(errorMessages, fmt.Sprintf("OwnerID: %v", err))
+					errorMessages[field] = err.Error()
 				}
 			}
 		}
 
 		if len(errorMessages) > 0 {
-			return fmt.Errorf("%s%s", schemas.ValidationErrorPrefix, strings.Join(errorMessages, "\n"))
+			return fmt.Errorf("folder validation failed: %v", errorMessages)
 		}
 
 		return nil
@@ -56,14 +56,14 @@ func (uf *UserFolder) ShouldHaveFields(ownerName string) func(...string) error {
 
 func CheckFolderID(uf *UserFolder) error {
 	if uf.ID == 0 {
-		return fmt.Errorf(schemas.InvalidFolderIDError)
+		return fmt.Errorf(folconsts.InvalidIDError)
 	}
 	return nil
 }
 
 func CheckFolderName(uf *UserFolder) error {
 	if uf.Name == "" {
-		return fmt.Errorf(schemas.InvalidFolderNameError)
+		return fmt.Errorf(folconsts.MissingNameError)
 	}
 	return nil
 }
@@ -71,16 +71,16 @@ func CheckFolderName(uf *UserFolder) error {
 func CheckFolderPath(ownerName string) func(uf *UserFolder) error {
 	return func(uf *UserFolder) error {
 		if uf.Path == "" {
-			return fmt.Errorf(schemas.InvalidFolderPathError)
+			return fmt.Errorf(folconsts.MissingPathError)
 		}
 		if strings.HasPrefix(uf.Path, "/") {
-			return fmt.Errorf(schemas.InvalidFolderPathStartError)
+			return fmt.Errorf(folconsts.InvalidPathStartError)
 		}
 		if strings.HasSuffix(uf.Path, "/") {
-			return fmt.Errorf(schemas.InvalidFolderPathEndError)
+			return fmt.Errorf(folconsts.InvalidPathEndError)
 		}
 		if !strings.HasPrefix(uf.Path, ownerName) {
-			return fmt.Errorf(schemas.InvalidFolderPathOwnerError, ownerName)
+			return fmt.Errorf(folconsts.MissingOwnerFolderError)
 		}
 		return nil
 	}
@@ -88,14 +88,14 @@ func CheckFolderPath(ownerName string) func(uf *UserFolder) error {
 
 func CheckParent(uf *UserFolder) error {
 	if uf.Parent != nil && *uf.Parent <= 0 {
-		return fmt.Errorf(schemas.InvalidFolderParentError)
+		return fmt.Errorf(folconsts.InvalidFolderParentError)
 	}
 	return nil
 }
 
 func CheckFolderOwnerID(uf *UserFolder) error {
 	if uf.OwnerID == 0 {
-		return fmt.Errorf(schemas.InvalidFolderOwnerIDError)
+		return fmt.Errorf(folconsts.InvalidOwnerIDError)
 	}
 	return nil
 }

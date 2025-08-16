@@ -1,9 +1,11 @@
-package folder_schema
+package folschema
 
 import (
 	"fmt"
-	"homeserver/pkg/globals"
+	"homeserver/constants"
+	"homeserver/constants/folconsts"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -39,6 +41,12 @@ func (uf *UserFolder) WithName(name string) *UserFolder {
 	if name == "" {
 		panic("Folder name cannot be empty")
 	}
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		panic("Folder name cannot contain slashes")
+	}
+	if strings.Contains(name, ".") {
+		panic("Folder name cannot contain periods")
+	}
 	uf.Name = name
 	return uf
 }
@@ -71,7 +79,34 @@ func (uf *UserFolder) WithOwnerID(ownerID int) *UserFolder {
 }
 
 func (uf *UserFolder) AbsolutePath() string {
-	storagePath := getStoragePath(globals.EnvStoragePath)
+	storagePath := getStoragePath(constants.StoragePath)
 
 	return fmt.Sprintf("%s%s/%s", storagePath, uf.Path, uf.Name)
+}
+
+func FieldsList(to_return_time_fields bool) []string {
+	if to_return_time_fields {
+		return []string{
+			folconsts.ID,
+			folconsts.FolderName,
+			folconsts.Path,
+			folconsts.Parent,
+			folconsts.OwnerID,
+			folconsts.CreatedAt,
+		}
+	}
+	return []string{
+		folconsts.ID,
+		folconsts.FolderName,
+		folconsts.Path,
+		folconsts.Parent,
+		folconsts.OwnerID,
+	}
+}
+
+func FieldNum(to_return_time_fields bool) int {
+	if to_return_time_fields {
+		return 6
+	}
+	return 5
 }

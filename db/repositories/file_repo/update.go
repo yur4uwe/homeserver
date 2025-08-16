@@ -6,6 +6,7 @@ import (
 	"homeserver/constants/fconsts"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+	"slices"
 	"strings"
 )
 
@@ -14,6 +15,19 @@ var (
 )
 
 func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschema.UserFile, fields_to_update []string, owner *uschema.User) error {
+	if slices.Contains(fields_to_update, fconsts.ID) {
+		return fmt.Errorf("cannot update file ID")
+	}
+	if slices.Contains(fields_to_update, fconsts.OwnerID) {
+		return fmt.Errorf("cannot update owner ID")
+	}
+	if slices.Contains(fields_to_update, fconsts.CreatedAt) {
+		return fmt.Errorf("cannot update created at")
+	}
+	if slices.Contains(fields_to_update, fconsts.UpdatedAt) {
+		return fmt.Errorf("cannot update updated at")
+	}
+
 	args := append(fields_to_update, fconsts.ID)
 	if err := modified_file.ShouldHaveFields(owner.Username)(args...); err != nil {
 		return fmt.Errorf("invalid file data: %v", err)
@@ -44,11 +58,14 @@ func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschem
 		RETURNING`+strings.Join(fschema.FieldsList(), ", "),
 		fields_str, len(fields_to_update)+1)
 
+	query_args := make([]any, len(fields_to_update)+1)
+	copy(query_args, OrderFileUpdateFields(fields_to_update, modified_file))
+	query_args[len(fields_to_update)] = modified_file.ID
+
 	err = repo.db.Pool.QueryRow(
 		ctx,
 		query,
-		modified_file.Filename, modified_file.Extension, modified_file.Path,
-		modified_file.Size, modified_file.ContentType, modified_file.ID,
+		query_args...,
 	).Scan(
 		&modified_file.ID, &modified_file.Filename, &modified_file.Extension,
 		&modified_file.Path, &modified_file.Directory, &modified_file.Size,

@@ -1,4 +1,4 @@
-package folder_schema
+package folschema
 
 import "time"
 

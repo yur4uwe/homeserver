@@ -1,7 +1,7 @@
-package folder_schema
+package folschema
 
 import (
-	"homeserver/pkg/globals"
+	"homeserver/constants"
 	"homeserver/test"
 	"testing"
 
@@ -20,7 +20,7 @@ func (m *MockGetEnv) GetEnv(key string) string {
 
 func TestFolderBuilderSuite(t *testing.T) {
 	mockGetEnv := new(MockGetEnv)
-	mockGetEnv.On("GetEnv", globals.EnvStoragePath).Return("storage/")
+	mockGetEnv.On("GetEnv", constants.StoragePath).Return("storage/")
 
 	cleanup := test.MockFunction(&getStoragePath, mockGetEnv.GetEnv, func() {})
 	defer cleanup()
