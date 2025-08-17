@@ -2,10 +2,11 @@ package upload
 
 import (
 	"errors"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,21 +16,22 @@ import (
 )
 
 func TestPatchFile(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	mockFR, _, _, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrRes := new(mocks.ErrorResponseMock)
 
 	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrRes.ErrorResponse, func() {})
 	defer cleanupErrResp()
 
 	mockReqContext := middleware.DefaultContext
-	mockReqContext.Requester = user_schema.
+	mockReqContext.Requester = uschema.
 		NewUserBuilder().
 		WithID(1).
 		WithUsername("testuser")
 
 	handler := PatchFile(mockDB, mockReqContext)
 
-	resetter := test.NewMocksResetter(&mockDB.Mock)
+	resetter := test.NewMocksResetter(&mockFR.Mock)
 
 	table := []struct {
 		name         string
@@ -54,7 +56,7 @@ func TestPatchFile(t *testing.T) {
 				err = errors.New("file not found")
 			}
 
-			mockDB.On("RenameFile",
+			mockFR.On("RenameFile",
 				mock.Anything, mock.Anything,
 				mock.AnythingOfType("string"), mockReqContext.Requester,
 			).Return("new file.txt", err)

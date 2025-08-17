@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"os"
 
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 )
 
 var (
 	ReadFile = os.ReadFile
 
-	IsPage = globals.IsPage
+	IsPage = utils.IsPage
 
 	WelcomePage = WelcomePageHandler
 )

@@ -2,8 +2,8 @@ package upload
 
 import (
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/file_schema"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"strings"
 )
@@ -50,7 +50,7 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 			path_str = reqCont.Requester.Username
 		}
 
-		new_file := file_schema.NewUserFileBuilder().
+		new_file := fschema.NewUserFileBuilder().
 			WithFilename(file_sig[0]).
 			WithPath(path_str).
 			WithExtension(file_sig[1]).
@@ -58,7 +58,7 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 			WithContentType(header.Header.Get("Content-Type")).
 			WithOwnerID(reqCont.Requester.ID)
 
-		_, saved_name, err := connection.SaveFile(r.Context(), new_file, &multipart, reqCont.Requester)
+		inserted_file, err := repos.FileRepo.CreateFile(r.Context(), new_file, reqCont.Requester)
 		if err != nil {
 			select {
 			case <-done:
@@ -77,6 +77,6 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 		reqCont.LogHistory.Log("File successfully processed for upload")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(saved_name))
+		w.Write([]byte(inserted_file.Filename + "." + inserted_file.Extension))
 	}
 }

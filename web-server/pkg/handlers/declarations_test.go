@@ -3,7 +3,8 @@ package handlers
 import (
 	"context"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
+	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
 	"net/http"
 
@@ -55,12 +56,12 @@ type SearchMock struct {
 	mock.Mock
 }
 
-func (m *SearchMock) FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func (m *SearchMock) FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *uschema.User) (*templates.SearchPageData, error) {
 	args := m.Called(ctx, repos, query, directory, requester)
 	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }
 
-func (m *SearchMock) BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func (m *SearchMock) BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *uschema.User) (*templates.SearchPageData, error) {
 	args := m.Called(ctx, repos, directory, requester)
 	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"html/template"

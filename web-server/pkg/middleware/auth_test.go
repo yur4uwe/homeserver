@@ -3,6 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"homeserver/db/repositories"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"homeserver/web-server/pkg/templates"
@@ -15,9 +17,10 @@ import (
 )
 
 func TestAuthMiddleware(t *testing.T) {
-	mockDB := new(mocks.MockDB)
-	mockDB.On("QueryToken", mock.Anything, "").Return(nil, fmt.Errorf("token not found"))
-	mockDB.On("QueryToken", mock.Anything, "validToken").Return(user_schema.NewUserBuilder(), nil)
+	_, _, _, mockTokR, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, nil, nil, mockTokR, nil)
+	mockTokR.On("QueryToken", mock.Anything, "").Return((*uschema.User)(nil), fmt.Errorf("token not found"))
+	mockTokR.On("QueryToken", mock.Anything, "validToken").Return(uschema.NewUserBuilder(), nil)
 
 	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()
@@ -79,7 +82,7 @@ func TestAuthMiddleware(t *testing.T) {
 		handler.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
-		mockDB.AssertCalled(t, "QueryToken", mock.Anything, "")
+		mockTokR.AssertCalled(t, "QueryToken", mock.Anything, "")
 	})
 
 	t.Run("Handles valid token", func(t *testing.T) {
@@ -97,7 +100,7 @@ func TestAuthMiddleware(t *testing.T) {
 		handler.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
-		mockDB.AssertCalled(t, "QueryToken", mock.Anything, "validToken")
+		mockTokR.AssertCalled(t, "QueryToken", mock.Anything, "validToken")
 	})
 
 	t.Run("Redirects to login for protected path without valid token", func(t *testing.T) {
@@ -151,7 +154,7 @@ func TestAuthMiddleware(t *testing.T) {
 		mockProtectedPath.AssertNotCalled(t, "IsProtectedPath", "/static/file.css")
 	})
 
-	mockDB.AssertExpectations(t)
+	mockTokR.AssertExpectations(t)
 	mockLogHistory.AssertExpectations(t)
 	mockParseAsString.AssertExpectations(t)
 	mockErrorResponse.AssertExpectations(t)

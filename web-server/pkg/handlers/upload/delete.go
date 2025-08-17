@@ -2,9 +2,9 @@ package upload
 
 import (
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/utils"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
 )
 
@@ -21,12 +21,12 @@ func DeleteFile(repos *repositories.Repositories, reqCont *middleware.Additional
 			return
 		}
 
-		file := file_schema.NewUserFileBuilder().
+		file := fschema.NewUserFileBuilder().
 			WithPath(filePath).
 			WithOwnerID(reqCont.Requester.ID).
 			WithFullName(filePath)
 
-		if _, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username); err != nil {
+		if err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
 			ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return

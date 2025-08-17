@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/middleware"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
 	"net/http/httptest"

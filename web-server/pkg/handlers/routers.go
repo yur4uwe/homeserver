@@ -3,13 +3,13 @@ package handlers
 import (
 	"fmt"
 	"homeserver/db/repositories"
-	"homeserver/pkg/handlers/account"
-	"homeserver/pkg/handlers/actions"
-	"homeserver/pkg/handlers/search"
-	"homeserver/pkg/handlers/upload"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/utils"
+	"homeserver/web-server/pkg/handlers/account"
+	"homeserver/web-server/pkg/handlers/actions"
+	"homeserver/web-server/pkg/handlers/search"
+	"homeserver/web-server/pkg/handlers/upload"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -46,11 +46,11 @@ func UploadRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
-			DownloadFile(connection, reqCont)(w, r)
+			DownloadFile(repos, reqCont)(w, r)
 		case http.MethodDelete:
-			DeleteFile(connection, reqCont)(w, r)
+			DeleteFile(repos, reqCont)(w, r)
 		case http.MethodPatch:
-			PatchFile(connection, reqCont)(w, r)
+			PatchFile(repos, reqCont)(w, r)
 		default:
 			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
 			ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -93,11 +93,11 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodDelete:
-			DeleteFileHandler(w, r, connection, reqCont, relativePath, fileName)
+			DeleteFileHandler(w, r, repos, reqCont, relativePath, fileName)
 		case http.MethodPatch:
-			RenameFileHandler(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
+			RenameFileHandler(w, r, repos, reqCont, relativePath, fileName, desiredName, isFolder)
 		case http.MethodGet:
-			OpenFileHandler(w, r, connection, reqCont, relativePath, fileName)
+			OpenFileHandler(w, r, repos, reqCont, relativePath, fileName)
 		default:
 			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
@@ -132,9 +132,9 @@ func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
 		var data *templates.SearchPageData = nil
 
 		if len(query) > 0 {
-			data, err = FileSearchHandler(r.Context(), connection, query, directory, reqCont.Requester)
+			data, err = FileSearchHandler(r.Context(), repos, query, directory, reqCont.Requester)
 		} else {
-			data, err = BrowseHandler(r.Context(), connection, directory, reqCont.Requester)
+			data, err = BrowseHandler(r.Context(), repos, directory, reqCont.Requester)
 		}
 
 		if err != nil {
@@ -184,21 +184,21 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 		var err error
 		if new_username != "" && new_username != reqCont.Requester.Username {
 			reqCont.LogHistory.Log("[Handler] Username change requested")
-			if uname_err := account.HandleUsernameChange(r, connection); uname_err != nil {
+			if uname_err := account.HandleUsernameChange(r, repos); uname_err != nil {
 				err = uname_err
 			}
 		}
 
 		if new_email != "" && new_email != reqCont.Requester.Email {
 			reqCont.LogHistory.Log("[Handler] Email change requested")
-			if em_err := account.HandleEmailChange(r, connection); em_err != nil {
+			if em_err := account.HandleEmailChange(r, repos); em_err != nil {
 				err = em_err
 			}
 		}
 
 		if new_password != "" && new_password == r.FormValue("confirm-password") {
 			reqCont.LogHistory.Log("[Handler] Password change requested")
-			if pass_err := account.HandlePasswordChange(r, connection); pass_err != nil {
+			if pass_err := account.HandlePasswordChange(r, repos); pass_err != nil {
 				err = pass_err
 			}
 		}

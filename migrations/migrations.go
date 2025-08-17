@@ -1,8 +1,7 @@
 package main
 
 import (
-	"homeserver/migrations/scripts"
-	"homeserver/pkg/db"
+	"homeserver/db"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -13,7 +12,7 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	connection, err := db.NewDatabase()
+	connection, err := db.NewConnection()
 	if err != nil {
 		log.Fatalf("Database connection error: %v", err)
 	}
@@ -31,5 +30,5 @@ func main() {
 	// 	log.Fatalf("Error resetting folder structure: %v", err)
 	// }
 
-	scripts.ChangeClassNames()
+	// scripts.ChangeClassNames()
 }

@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -20,16 +21,17 @@ import (
 )
 
 func TestDownloadFile(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	mockFR, _, _, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	defer test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})()
 
 	reqCont := middleware.DefaultContext
-	reqCont.Requester = user_schema.NewUserBuilder().
+	reqCont.Requester = uschema.NewUserBuilder().
 		WithID(1).
 		WithUsername("testuser")
 
-	resetter := test.NewMocksResetter(&mockDB.Mock)
+	resetter := test.NewMocksResetter(&mockFR.Mock)
 
 	createMultipart := func(filename, folder string) (*bytes.Buffer, string) {
 		body := &bytes.Buffer{}
@@ -46,7 +48,7 @@ func TestDownloadFile(t *testing.T) {
 	t.Run("success upload", func(t *testing.T) {
 		resetter()
 		body, contentType := createMultipart("myfile.txt", "docs/myfile.txt")
-		mockDB.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(1, "myfile.txt", nil)
+		mockFR.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(1, "myfile.txt", nil)
 
 		req := httptest.NewRequest(http.MethodPost, "/upload", body)
 		req.Header.Set("Content-Type", contentType)
@@ -82,7 +84,7 @@ func TestDownloadFile(t *testing.T) {
 	t.Run("error saving file", func(t *testing.T) {
 		resetter()
 		body, contentType := createMultipart("myfile.txt", "")
-		mockDB.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(0, "", errors.New("save error"))
+		mockFR.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(0, "", errors.New("save error"))
 
 		mockErrResp.On("ErrorResponse", mock.Anything, "Error saving file", http.StatusInternalServerError).Return()
 

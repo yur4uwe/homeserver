@@ -25,6 +25,11 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
+	file, err := PreventDuplicateFileName(file)
+	if err != nil {
+		return nil, err
+	}
+
 	fields_to_extract := strings.Join(fields, ", ")
 	insert_points := ""
 	for i := 1; i <= len(fields); i++ {
@@ -35,7 +40,7 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 	}
 
 	var inserted_file fschema.UserFile
-	err := repo.db.Pool.QueryRow(
+	err = repo.db.Pool.QueryRow(
 		ctx,
 		"INSERT INTO files ("+fields_to_extract+") VALUES ("+insert_points+") RETURNING "+fields_to_extract,
 		file.ID, file.Filename, file.Extension, file.Path, file.Directory, file.Size, file.ContentType, file.OwnerID, file.Metadata,
