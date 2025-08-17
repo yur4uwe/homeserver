@@ -8,9 +8,17 @@ import (
 )
 
 type InFileRepo interface {
-	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error
-	UpdateFileEntry(ctx context.Context, modified_file *fschema.UserFile, fields_to_update []string, owner *uschema.User) error
 	CreateFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
+
+	GetFileByID(ctx context.Context, id string) (*fschema.UserFile, error)
+	GetFullFileInfo(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
+	GetFilesByUser(ctx context.Context, owner *uschema.User) ([]*fschema.UserFile, error)
+	FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]*fschema.UserFile, error)
+
+	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error
+	DeleteFileByID(ctx context.Context, fileID string, owner *uschema.User) error
+
+	UpdateFileEntry(ctx context.Context, modified_file *fschema.UserFile, fields_to_update []string, owner *uschema.User) error
 }
 
 type FileRepo struct {
