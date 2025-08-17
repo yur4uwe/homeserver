@@ -1,6 +1,8 @@
 package uschema
 
 import (
+	"homeserver/constants/uconsts"
+	"slices"
 	"strings"
 	"time"
 )
@@ -62,4 +64,97 @@ func (u *User) WithAuthToken(authToken *string) *User {
 func (u *User) WithEmailVerified(emailVerified bool) *User {
 	u.EmailVerified = emailVerified
 	return u
+}
+
+func (u *User) GetValidFields() []string {
+	var validFields []string
+	for _, field := range FieldsList() {
+		switch field {
+		case uconsts.ID:
+			if u.ID != 0 {
+				validFields = append(validFields, field)
+			}
+		case uconsts.Username:
+			if u.Username != "" {
+				validFields = append(validFields, field)
+			}
+		case uconsts.Password:
+			if u.Password != "" {
+				validFields = append(validFields, field)
+			}
+		case uconsts.Email:
+			if u.Email != "" {
+				validFields = append(validFields, field)
+			}
+		case uconsts.AuthToken:
+			if u.AuthToken != nil {
+				validFields = append(validFields, field)
+			}
+		case uconsts.CreatedAt:
+			if !u.CreatedAt.IsZero() {
+				validFields = append(validFields, field)
+			}
+		case uconsts.EmailVerified:
+			validFields = append(validFields, field)
+		}
+	}
+	return validFields
+}
+
+func (u *User) Get(field string) (any, bool) {
+	switch field {
+	case uconsts.ID:
+		return u.ID, true
+	case uconsts.Username:
+		return u.Username, true
+	case uconsts.Password:
+		return u.Password, true
+	case uconsts.Email:
+		return u.Email, true
+	case uconsts.AuthToken:
+		return u.AuthToken, true
+	case uconsts.CreatedAt:
+		return u.CreatedAt, true
+	case uconsts.EmailVerified:
+		return u.EmailVerified, true
+	default:
+		return nil, false
+	}
+}
+
+func IsUserField(field string) bool {
+	return slices.Contains(FieldsList(), field)
+}
+
+func FieldsList() []string {
+	return []string{
+		uconsts.ID,
+		uconsts.Username,
+		uconsts.Password,
+		uconsts.Email,
+		uconsts.AuthToken,
+		uconsts.CreatedAt,
+		uconsts.EmailVerified,
+	}
+}
+
+func UpdateableFieldsList() []string {
+	return []string{
+		uconsts.Username,
+		uconsts.Password,
+		uconsts.Email,
+		uconsts.AuthToken,
+		uconsts.EmailVerified,
+	}
+}
+
+func ReturnableFieldsList() []string {
+	return []string{
+		uconsts.ID,
+		uconsts.Username,
+		uconsts.Email,
+		uconsts.AuthToken,
+		uconsts.CreatedAt,
+		uconsts.EmailVerified,
+	}
 }

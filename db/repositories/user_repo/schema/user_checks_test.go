@@ -1,7 +1,6 @@
 package uschema
 
 import (
-	"fmt"
 	"homeserver/constants/uconsts"
 	"testing"
 
@@ -17,7 +16,7 @@ func TestUserChecksSuite(t *testing.T) {
 		user = &User{ID: 0}
 		err = CheckUserID(user)
 		assert.Error(t, err, "CheckUserID should return an error for invalid ID")
-		assert.EqualError(t, err, "user ID must be greater than 0", "Error message should match")
+		assert.EqualError(t, err, "ID must be greater than 0", "Error message should match")
 	})
 
 	t.Run("TestCheckUsername", func(t *testing.T) {
@@ -80,16 +79,11 @@ func TestUserChecksSuite(t *testing.T) {
 
 		err := user.ShouldHaveFields(uconsts.ID, uconsts.Username, uconsts.Email, uconsts.EmailVerified, uconsts.Password)
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
-		assert.Contains(t, err.Error(),
-			fmt.Sprintf("ID: %s\nUsername: %s\nEmail: %s\nEmailVerified: %s\nPassword: %s",
-				uconsts.InvalidIDError,
-				uconsts.InvalidUserFieldError,
-				uconsts.InvalidEmailFormatError,
-				uconsts.InvalidEmailVerifiedError,
-				uconsts.InvalidPasswordError,
-			),
-			"Error message should match",
-		)
+		assert.Contains(t, err.Error(), uconsts.InvalidIDError)
+		assert.Contains(t, err.Error(), uconsts.MissingUsernameError)
+		assert.Contains(t, err.Error(), uconsts.InvalidEmailFormatError)
+		assert.Contains(t, err.Error(), uconsts.InvalidEmailVerifiedError)
+		assert.Contains(t, err.Error(), uconsts.InvalidPasswordError)
 
 		user = &User{
 			ID:            1,

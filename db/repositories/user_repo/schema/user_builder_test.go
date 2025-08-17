@@ -2,6 +2,7 @@ package uschema
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -74,5 +75,98 @@ func TestUserBuilderSuite(t *testing.T) {
 
 		new_user = NewUserBuilder().WithEmailVerified(false)
 		assert.False(t, new_user.EmailVerified, "EmailVerified should be set to false")
+	})
+
+	t.Run("TestGetValidFields", func(t *testing.T) {
+		token := "tok"
+		user := NewUserBuilder().
+			WithID(1).
+			WithUsername("john").
+			WithPassword("pass").
+			WithEmail("john@example.com").
+			WithAuthToken(&token).
+			WithEmailVerified(true)
+		user.CreatedAt = time.Now()
+
+		fields := user.GetValidFields()
+		assert.Contains(t, fields, "id")
+		assert.Contains(t, fields, "username")
+		assert.Contains(t, fields, "password")
+		assert.Contains(t, fields, "email")
+		assert.Contains(t, fields, "auth_token")
+		assert.Contains(t, fields, "created_at")
+		assert.Contains(t, fields, "email_verified")
+	})
+
+	t.Run("TestGet", func(t *testing.T) {
+		token := "tok"
+		user := NewUserBuilder().
+			WithID(1).
+			WithUsername("john").
+			WithPassword("pass").
+			WithEmail("john@example.com").
+			WithAuthToken(&token).
+			WithEmailVerified(true)
+		user.CreatedAt = time.Now()
+
+		val, ok := user.Get("id")
+		assert.True(t, ok)
+		assert.Equal(t, 1, val)
+
+		val, ok = user.Get("username")
+		assert.True(t, ok)
+		assert.Equal(t, "john", val)
+
+		val, ok = user.Get("password")
+		assert.True(t, ok)
+		assert.Equal(t, "pass", val)
+
+		val, ok = user.Get("email")
+		assert.True(t, ok)
+		assert.Equal(t, "john@example.com", val)
+
+		val, ok = user.Get("auth_token")
+		assert.True(t, ok)
+		assert.Equal(t, &token, val)
+
+		_, ok = user.Get("created_at")
+		assert.True(t, ok)
+
+		val, ok = user.Get("email_verified")
+		assert.True(t, ok)
+		assert.Equal(t, true, val)
+
+		val, ok = user.Get("not_a_field")
+		assert.False(t, ok)
+		assert.Nil(t, val)
+	})
+
+	t.Run("TestIsUserField", func(t *testing.T) {
+		assert.True(t, IsUserField("id"))
+		assert.True(t, IsUserField("username"))
+		assert.True(t, IsUserField("password"))
+		assert.True(t, IsUserField("email"))
+		assert.True(t, IsUserField("auth_token"))
+		assert.True(t, IsUserField("created_at"))
+		assert.True(t, IsUserField("email_verified"))
+		assert.False(t, IsUserField("not_a_field"))
+	})
+
+	t.Run("TestFieldsList", func(t *testing.T) {
+		fields := FieldsList()
+		expected := []string{"id", "username", "password", "email", "auth_token", "created_at", "email_verified"}
+		assert.ElementsMatch(t, expected, fields)
+	})
+
+	t.Run("TestUpdateableFieldsList", func(t *testing.T) {
+		fields := UpdateableFieldsList()
+		expected := []string{"username", "password", "email", "auth_token", "email_verified"}
+		assert.ElementsMatch(t, expected, fields)
+	})
+
+	t.Run("TestReturnableFieldsList", func(t *testing.T) {
+		fields := ReturnableFieldsList()
+		expected := []string{"id", "username", "email", "auth_token", "created_at", "email_verified"}
+		assert.ElementsMatch(t, expected, fields)
 	})
 }

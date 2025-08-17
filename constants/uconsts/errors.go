@@ -7,6 +7,7 @@ const (
 
 	// User-specific
 	InvalidIDError            = "ID must be greater than 0"
+	MissingUsernameError      = "username cannot be empty"
 	InvalidPasswordError      = "password cannot be empty"
 	InvalidEmailError         = "email cannot be empty"
 	InvalidEmailFormatError   = "email must contain '@'"

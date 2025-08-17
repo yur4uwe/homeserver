@@ -24,23 +24,23 @@ func (u *User) ShouldHaveFields(fields ...string) error {
 		switch field {
 		case uconsts.ID:
 			if err := CheckUserID(u); err != nil {
-				errorMessages[uconsts.ID] = fmt.Sprintf("UserID: %v", err)
+				errorMessages[uconsts.ID] = err.Error()
 			}
 		case uconsts.Username:
 			if err := CheckUsername(u); err != nil {
-				errorMessages[uconsts.Username] = fmt.Sprintf("Username: %v", err)
+				errorMessages[uconsts.Username] = err.Error()
 			}
 		case uconsts.Email:
 			if err := CheckEmail(u); err != nil {
-				errorMessages[uconsts.Email] = fmt.Sprintf("Email: %v", err)
+				errorMessages[uconsts.Email] = err.Error()
 			}
 		case uconsts.EmailVerified:
 			if err := CheckEmailVerified(u); err != nil {
-				errorMessages[uconsts.EmailVerified] = fmt.Sprintf("EmailVerified: %v", err)
+				errorMessages[uconsts.EmailVerified] = err.Error()
 			}
 		case uconsts.Password:
 			if err := CheckPassword(u); err != nil {
-				errorMessages[uconsts.Password] = fmt.Sprintf("Password: %v", err)
+				errorMessages[uconsts.Password] = err.Error()
 			}
 		}
 	}
@@ -61,7 +61,7 @@ func CheckUserID(u *User) error {
 
 func CheckUsername(u *User) error {
 	if u.Username == "" {
-		return fmt.Errorf(uconsts.InvalidUserFieldError, uconsts.Username)
+		return fmt.Errorf(uconsts.MissingUsernameError)
 	}
 	return nil
 }
