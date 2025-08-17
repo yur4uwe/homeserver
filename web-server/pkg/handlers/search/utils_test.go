@@ -3,8 +3,8 @@ package search
 import (
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/folder_schema"
-	"homeserver/pkg/templates"
 	"homeserver/test"
+	"homeserver/web-server/pkg/templates"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

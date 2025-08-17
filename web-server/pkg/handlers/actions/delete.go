@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/folder_schema"
@@ -13,7 +13,7 @@ import (
 
 func DeleteFileHandler(
 	w http.ResponseWriter, r *http.Request,
-	connection interfaces.DatabaseInterface,
+	repos *repositories.Repositories,
 	reqCont *middleware.AdditionalRequestContext,
 	relativePath []string, fileName string,
 ) {

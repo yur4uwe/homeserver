@@ -3,18 +3,18 @@ package setup
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/pkg/globals"
 	"os"
 )
 
 var requiredVars = []string{
-	globals.EnvPort,
-	globals.EnvDbURL,
-	globals.EnvStoragePath,
-	globals.EnvEmailPassword,
-	globals.EnvEmailHost,
-	globals.EnvEmailPort,
-	globals.EnvEmailUser,
+	constants.WebSrvPort,
+	constants.FileSrvPort,
+	constants.DbURL,
+	constants.StoragePath,
+	constants.EmailPassword,
+	constants.EmailHost,
+	constants.EmailPort,
+	constants.EmailUser,
 }
 
 func CheckVariables() error {
@@ -43,7 +43,7 @@ func CheckVariables() error {
 }
 
 func CheckStoragePath() error {
-	storagePath := os.Getenv(globals.EnvStoragePath)
+	storagePath := os.Getenv(constants.StoragePath)
 	if storagePath == "" {
 		return fmt.Errorf("storage path is not set in environment variables")
 	}

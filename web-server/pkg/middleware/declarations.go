@@ -2,11 +2,10 @@ package middleware
 
 import (
 	"bytes"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/parser"
-	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/templates"
-	"homeserver/pkg/utils"
+	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/web-server/pkg/parser"
+	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"html/template"
 	"log"
 	"net/http"
@@ -23,7 +22,7 @@ var (
 	ErrorResponse         = utils.ErrorResponse
 	Now                   = time.Now
 	Since                 = time.Since
-	IsProtectedPath       = globals.IsProtectedPath
+	IsProtectedPath       = utils.IsProtectedPath
 )
 
 // Context key for storing AdditionalRequestContext in request context
@@ -62,7 +61,7 @@ type AdditionalRequestContext struct {
 	ToRestorePage bool
 	RerenderBody  bool
 	AuthToken     string
-	Requester     *user_schema.User
+	Requester     *uschema.User
 	PageContent   *templates.LayoutPageData
 }
 

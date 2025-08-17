@@ -7,7 +7,7 @@ import (
 
 	"homeserver/pkg/globals"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 )
 
 var (

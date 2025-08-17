@@ -2,17 +2,17 @@ package auth
 
 import (
 	"fmt"
+	"homeserver/db/repositories"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
 	"os"
 	"time"
 )
 
-func LoginHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {

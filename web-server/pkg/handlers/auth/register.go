@@ -2,12 +2,11 @@ package auth
 
 import (
 	"fmt"
+	"homeserver/db/repositories"
 	"homeserver/pkg/auth"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"net/http"
 	"os"
 )
@@ -17,7 +16,7 @@ var (
 	NewToken   = auth.NewToken
 )
 
-func RegisterHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {

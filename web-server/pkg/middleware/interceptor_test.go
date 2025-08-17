@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
-	"homeserver/pkg/templates"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/templates"
 	"net/http"
 	"net/http/httptest"
 	"testing"

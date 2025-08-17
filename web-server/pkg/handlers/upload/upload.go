@@ -1,14 +1,14 @@
 package upload
 
 import (
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
 	"net/http"
 	"strings"
 )
 
-func DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func DownloadFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Download file request received")
 

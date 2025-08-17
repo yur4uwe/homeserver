@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
 )
@@ -13,7 +13,7 @@ var (
 	ParseTemplateToString = parser.ParseTemplateToString
 )
 
-func LogoutHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {

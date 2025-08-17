@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas/file_schema"
 	"net/http"
@@ -13,7 +13,7 @@ var (
 	ServeFile = http.ServeFile
 )
 
-func OpenFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
+func OpenFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
 	file := file_schema.NewUserFileBuilder().
 		WithFullName(fileName).
 		WithPath(strings.Join(relativePath, "/")).

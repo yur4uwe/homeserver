@@ -1,8 +1,6 @@
-package globals
+package utils
 
-import (
-	"net/http"
-)
+import "net/http"
 
 type LoginForm struct {
 	Identificator string `json:"identificator"`

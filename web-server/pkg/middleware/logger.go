@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"homeserver/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -13,7 +12,7 @@ func Logger(next http.Handler) http.Handler {
 
 		reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
 		if !ok {
-			utils.ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
+			ErrorResponse(w, "Internal Server Error: Missing request context", http.StatusInternalServerError)
 			return
 		}
 

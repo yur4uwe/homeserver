@@ -4,6 +4,9 @@ import (
 	"homeserver/db"
 )
 
+type InUserRepo interface {
+}
+
 type UserRepo struct {
 	db *db.Database
 }

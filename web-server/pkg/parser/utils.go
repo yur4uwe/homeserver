@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"os"
 )

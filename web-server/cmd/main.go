@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"homeserver/pkg/db"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/handlers"
-	"homeserver/pkg/handlers/auth"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/setup"
+	"homeserver/db"
+	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/handlers"
+	"homeserver/web-server/pkg/handlers/auth"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/setup"
 
 	"github.com/joho/godotenv"
 )
@@ -25,13 +25,13 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	connection, err := db.NewDatabase()
+	connection, err := db.NewConnection()
 	if err != nil {
 		log.Fatalf("Database connection error: %v", err)
 	}
 	defer connection.Close()
 
-	globals.FillPages()
+	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
 
 	if err := setup.CheckDatabaseExtensions(connection); err != nil {
 		log.Fatalf("Database extension check error: %v", err)
@@ -41,19 +41,19 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/verification", auth.VerificationHandler(connection))
+	mux.HandleFunc("/verification", auth.VerificationHandler(repos))
 	mux.HandleFunc("/upload", handlers.UploadPageHandler)
 	mux.HandleFunc("/settings", handlers.SettingsPageHandler)
-	mux.HandleFunc("/search/", handlers.SearchRouter(connection))
-	mux.HandleFunc("/api/v1/upload", handlers.UploadRouter(connection))
-	mux.HandleFunc("/api/v1/login", auth.LoginHandler(connection))
-	mux.HandleFunc("/api/v1/register", auth.RegisterHandler(connection))
-	mux.HandleFunc("/api/v1/logout", auth.LogoutHandler(connection))
-	mux.HandleFunc("/api/v1/file-actions/", handlers.FileActionsRouter(connection))
-	mux.HandleFunc("/api/v1/account/settings", handlers.AccountSettingsRouter(connection))
+	mux.HandleFunc("/search/", handlers.SearchRouter(repos))
+	mux.HandleFunc("/api/v1/upload", handlers.UploadRouter(repos))
+	mux.HandleFunc("/api/v1/login", auth.LoginHandler(repos))
+	mux.HandleFunc("/api/v1/register", auth.RegisterHandler(repos))
+	mux.HandleFunc("/api/v1/logout", auth.LogoutHandler(repos))
+	mux.HandleFunc("/api/v1/file-actions/", handlers.FileActionsRouter(repos))
+	mux.HandleFunc("/api/v1/account/settings", handlers.AccountSettingsRouter(repos))
 	mux.HandleFunc("/", handlers.StaticPageHandler)
 
-	handler := middleware.MiddlewareWrapper(mux, connection)
+	handler := middleware.MiddlewareWrapper(mux, repos)
 
 	server := &http.Server{
 		Handler: handler,

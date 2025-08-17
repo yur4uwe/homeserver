@@ -2,10 +2,14 @@ package middleware
 
 import (
 	"context"
-	"homeserver/pkg/db"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/templates"
+	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
+)
+
+var (
+	IsPage = utils.IsPage
 )
 
 func contextConstructor() *AdditionalRequestContext {
@@ -27,7 +31,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 			return
 		}
 
-		if (r.Header.Get("HX-History-Restore-Request") == "true" || r.Header.Get("HX-Request") != "true") && globals.IsPage(r.URL.Path) {
+		if (r.Header.Get("HX-History-Restore-Request") == "true" || r.Header.Get("HX-Request") != "true") && IsPage(r.URL.Path) {
 			reqCont.ToRestorePage = true
 			reqCont.LogHistory.Log("[Middleware] ToRestorePage set to true")
 
@@ -48,6 +52,6 @@ func WithAdditionalRequestContext(next http.Handler) http.Handler {
 	})
 }
 
-func MiddlewareWrapper(handler http.Handler, connection *db.Database) http.Handler {
-	return WithAdditionalRequestContext(Logger(AuthMiddleware(connection)(ToRestorePage(Interceptor(handler)))))
+func MiddlewareWrapper(handler http.Handler, repos *repositories.Repositories) http.Handler {
+	return WithAdditionalRequestContext(Logger(AuthMiddleware(repos)(ToRestorePage(Interceptor(handler)))))
 }

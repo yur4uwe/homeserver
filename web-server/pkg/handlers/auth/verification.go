@@ -2,12 +2,12 @@ package auth
 
 import (
 	"fmt"
+	"homeserver/db/repositories"
 	"homeserver/pkg/globals"
-	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
 	"os"
@@ -58,7 +58,7 @@ func sendVerificationEmail(form globals.RegisterForm, verification_token string)
 	}
 }
 
-func VerificationHandler(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {

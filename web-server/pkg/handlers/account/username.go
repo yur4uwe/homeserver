@@ -2,7 +2,7 @@ package account
 
 import (
 	"fmt"
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
 	"homeserver/pkg/schemas"
 	"homeserver/pkg/utils"
@@ -13,7 +13,7 @@ var (
 	ErrorResponse = utils.ErrorResponse
 )
 
-func HandleUsernameChange(r *http.Request, connection interfaces.DatabaseInterface) error {
+func HandleUsernameChange(r *http.Request, repos *repositories.Repositories) error {
 	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 	if !ok {
 		return fmt.Errorf("missing request context")

@@ -5,7 +5,7 @@ import (
 	"homeserver/pkg/globals"
 	"homeserver/pkg/schemas/file_schema"
 	"homeserver/pkg/schemas/folder_schema"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"math"
 	"net/url"
 	"sort"

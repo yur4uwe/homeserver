@@ -3,13 +3,13 @@ package search
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"strings"
 )
 
-func FileSearchHandler(ctx context.Context, connection interfaces.DatabaseInterface, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
 	data := &templates.SearchPageData{
 		Query:        query,
 		Directory:    strings.Join(directory[1:], "/"),

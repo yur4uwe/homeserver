@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"fmt"
-	"homeserver/pkg/interfaces"
-	"homeserver/pkg/templates"
+	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
 	"strings"
 )
 
-func AuthMiddleware(connection interfaces.DatabaseInterface) func(http.Handler) http.Handler {
+func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, "/static/") {
@@ -30,7 +30,7 @@ func AuthMiddleware(connection interfaces.DatabaseInterface) func(http.Handler) 
 				reqCont.AuthToken = authToken.Value
 			}
 
-			if user, err := connection.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil {
+			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil {
 				reqCont.Requester = user
 			} else {
 				reqCont.AuthToken = ""

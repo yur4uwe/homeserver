@@ -73,7 +73,7 @@ func TestDeleteFolderByPath_Success(t *testing.T) {
 	})
 	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
 
-	deletedID, err := repo.DeleteFolderByPath(context.Background(), folder, owner)
+	deletedID, err := repo.DeleteFolder(context.Background(), folder, owner)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedID, deletedID)
 }
@@ -85,7 +85,7 @@ func TestDeleteFolderByPath_InvalidFolderData(t *testing.T) {
 	folder := &folschema.UserFolder{Path: "", Name: "", OwnerID: 0}
 	owner := makeOwner()
 
-	deletedID, err := repo.DeleteFolderByPath(context.Background(), folder, owner)
+	deletedID, err := repo.DeleteFolder(context.Background(), folder, owner)
 	assert.Error(t, err)
 	assert.Equal(t, 0, deletedID)
 	assert.Contains(t, err.Error(), "invalid folder data")
@@ -103,7 +103,7 @@ func TestDeleteFolderByPath_DBError(t *testing.T) {
 	mockRow.On("Scan", mock.Anything).Return(errors.New("db error"))
 	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
 
-	deletedID, err := repo.DeleteFolderByPath(context.Background(), folder, owner)
+	deletedID, err := repo.DeleteFolder(context.Background(), folder, owner)
 	assert.Error(t, err)
 	assert.Equal(t, 0, deletedID)
 	assert.Contains(t, err.Error(), "error deleting folder entry")

@@ -4,6 +4,9 @@ import (
 	"homeserver/db"
 )
 
+type InTokenRepo interface {
+}
+
 type TokenRepo struct {
 	db *db.Database
 }

@@ -27,7 +27,7 @@ func (r *FolderRepo) DeleteFolderByID(ctx context.Context, folderID int, ownerID
 	return deletedID, nil
 }
 
-func (r *FolderRepo) DeleteFolderByPath(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (int, error) {
+func (r *FolderRepo) DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (int, error) {
 	if folder.ShouldHaveFields(owner.Username)(folconsts.Path, folconsts.FolderName, folconsts.OwnerID) != nil {
 		return 0, fmt.Errorf("invalid folder data")
 	}

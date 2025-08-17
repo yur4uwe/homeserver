@@ -1,6 +1,7 @@
-package globals
+package utils
 
 import (
+	"homeserver/constants"
 	"strings"
 )
 
@@ -9,7 +10,7 @@ func IsPage(path string) bool {
 		return true
 	}
 
-	for _, page := range Pages {
+	for _, page := range constants.Pages {
 		if page[len(page)-1] == '/' && len(page) > 1 && strings.HasPrefix(path, page) {
 			return true
 		}
@@ -23,17 +24,8 @@ func IsPage(path string) bool {
 }
 
 func IsProtectedPath(path string) bool {
-	for _, page := range ProtectedPages {
+	for _, page := range constants.ProtectedPages {
 		if strings.HasPrefix(path, page) {
-			return true
-		}
-	}
-	return false
-}
-
-func IsFileTypeAvailable(fileType string) bool {
-	for _, availableType := range AvailableFileTypes {
-		if strings.EqualFold(availableType, fileType) {
 			return true
 		}
 	}

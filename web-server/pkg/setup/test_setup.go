@@ -2,7 +2,7 @@ package setup
 
 import (
 	"fmt"
-	"homeserver/pkg/globals"
+	"homeserver/constants"
 	"os"
 )
 
@@ -34,10 +34,10 @@ func CheckTestVariables() error {
 }
 
 func CheckTestStoragePath() error {
-	value := os.Getenv(globals.EnvStoragePath)
+	value := os.Getenv(constants.StoragePath)
 
 	if value == "" {
-		return fmt.Errorf("missing required test environment variable: %s", globals.EnvStoragePath)
+		return fmt.Errorf("missing required test environment variable: %s", constants.StoragePath)
 	}
 
 	if info, err := os.Stat(value); os.IsNotExist(err) {

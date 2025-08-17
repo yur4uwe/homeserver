@@ -2,10 +2,9 @@ package handlers
 
 import (
 	"context"
-	"homeserver/pkg/interfaces"
+	"homeserver/db/repositories"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
-	"homeserver/pkg/templates"
+	"homeserver/web-server/pkg/templates"
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
@@ -15,18 +14,18 @@ type UploadMock struct {
 	mock.Mock
 }
 
-func (m *UploadMock) DownloadFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
-	args := m.Called(connection, reqCont)
+func (m *UploadMock) DownloadFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	args := m.Called(repos, reqCont)
 	return args.Get(0).(http.HandlerFunc)
 }
 
-func (m *UploadMock) DeleteFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
-	args := m.Called(connection, reqCont)
+func (m *UploadMock) DeleteFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	args := m.Called(repos, reqCont)
 	return args.Get(0).(http.HandlerFunc)
 }
 
-func (m *UploadMock) PatchFile(connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
-	args := m.Called(connection, reqCont)
+func (m *UploadMock) PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+	args := m.Called(repos, reqCont)
 	return args.Get(0).(http.HandlerFunc)
 }
 
@@ -34,20 +33,20 @@ type ActionsMock struct {
 	mock.Mock
 }
 
-func (m *ActionsMock) DeleteFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
-	m.Called(w, r, connection, reqCont, relativePath, fileName)
+func (m *ActionsMock) DeleteFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
+	m.Called(w, r, repos, reqCont, relativePath, fileName)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File deleted successfully"))
 }
 
-func (m *ActionsMock) RenameFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, isFolder bool) {
-	m.Called(w, r, connection, reqCont, relativePath, fileName, desiredName, isFolder)
+func (m *ActionsMock) RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, isFolder bool) {
+	m.Called(w, r, repos, reqCont, relativePath, fileName, desiredName, isFolder)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File renamed successfully"))
 }
 
-func (m *ActionsMock) OpenFileHandler(w http.ResponseWriter, r *http.Request, connection interfaces.DatabaseInterface, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
-	m.Called(w, r, connection, reqCont, relativePath, fileName)
+func (m *ActionsMock) OpenFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
+	m.Called(w, r, repos, reqCont, relativePath, fileName)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File opened successfully"))
 }
@@ -56,13 +55,13 @@ type SearchMock struct {
 	mock.Mock
 }
 
-func (m *SearchMock) FileSearchHandler(ctx context.Context, connection interfaces.DatabaseInterface, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
-	args := m.Called(ctx, connection, query, directory, requester)
+func (m *SearchMock) FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+	args := m.Called(ctx, repos, query, directory, requester)
 	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }
 
-func (m *SearchMock) BrowseHandler(ctx context.Context, connection interfaces.DatabaseInterface, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
-	args := m.Called(ctx, connection, directory, requester)
+func (m *SearchMock) BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+	args := m.Called(ctx, repos, directory, requester)
 	return args.Get(0).(*templates.SearchPageData), args.Error(1)
 }
 

@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"homeserver/db/repositories"
 	"homeserver/pkg/handlers/account"
 	"homeserver/pkg/handlers/actions"
 	"homeserver/pkg/handlers/search"
 	"homeserver/pkg/handlers/upload"
-	"homeserver/pkg/interfaces"
 	"homeserver/pkg/middleware"
-	"homeserver/pkg/templates"
 	"homeserver/pkg/utils"
+	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -36,7 +36,7 @@ var (
 	ParseFiles = template.ParseFiles
 )
 
-func UploadRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func UploadRouter(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -58,7 +58,7 @@ func UploadRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	}
 }
 
-func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -104,7 +104,7 @@ func FileActionsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc
 	}
 }
 
-func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -167,7 +167,7 @@ func SearchRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
 	}
 }
 
-func AccountSettingsRouter(connection interfaces.DatabaseInterface) http.HandlerFunc {
+func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {

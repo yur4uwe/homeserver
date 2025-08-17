@@ -13,7 +13,7 @@ type Database struct {
 	Pool interfaces.QueryExecutor
 }
 
-func NewDatabase() (*Database, error) {
+func NewConnection() (*Database, error) {
 	dbURL := os.Getenv("DB_URL")
 
 	pool, err := pgxpool.New(context.Background(), dbURL)

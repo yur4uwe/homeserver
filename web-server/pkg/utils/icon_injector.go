@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"homeserver/pkg/parser"
+	"homeserver/web-server/pkg/parser"
 	"strings"
 )
 

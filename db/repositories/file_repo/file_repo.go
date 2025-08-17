@@ -4,6 +4,9 @@ import (
 	"homeserver/db"
 )
 
+type InFileRepo interface {
+}
+
 type FileRepo struct {
 	db *db.Database
 }
