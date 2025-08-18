@@ -36,7 +36,7 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 
 	fields_to_read := strings.Join(write_fields, ", ")
 
-	placeholders := strings.Repeat("?, ", folschema.FieldNum(false)-1) + "now()"
+	placeholders := strings.Repeat("?, ", len(folschema.FieldsList(folconsts.CreatedAt))-1) + "now()"
 
 	inserted_folder := folschema.UserFolder{}
 	err := r.db.Pool.QueryRow(

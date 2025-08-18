@@ -40,7 +40,7 @@ func (r *FolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFol
 	err := r.db.Pool.QueryRow(
 		ctx,
 		fmt.Sprintf(
-			`UPDATE folders SET %s WHERE id = $%d RETURNING `+strings.Join(folschema.FieldsList(true), ", "),
+			`UPDATE folders SET %s WHERE id = $%d RETURNING `+strings.Join(folschema.FieldsList(), ", "),
 			fields_str, len(fields_to_update)+1),
 		args...,
 	).Scan(

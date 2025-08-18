@@ -3,9 +3,10 @@ package userrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants"
 	"homeserver/constants/uconsts"
+	querybuilder "homeserver/db/query_builder"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"strings"
 )
 
 func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User, error) {
@@ -26,11 +27,17 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 		}
 	}
 
-	query := fmt.Sprintf(
-		`SELECT %s FROM users WHERE %s`,
-		strings.Join(uschema.ReturnableFieldsList(), ", "),
-		whereClause,
-	)
+	query := querybuilder.New().
+		Select(uschema.FieldsList(uconsts.Password)...).
+		From(constants.DBUsersTable.Name).
+		Where(whereClause).
+		Build()
+
+	// query := fmt.Sprintf(
+	// 	`SELECT %s FROM users WHERE %s`,
+	// 	strings.Join(uschema.ReturnableFieldsList(), ", "),
+	// 	whereClause,
+	// )
 
 	var result uschema.User
 	err := r.db.Pool.QueryRow(ctx, query, vals...).

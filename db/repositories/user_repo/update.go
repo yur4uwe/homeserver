@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/uconsts"
+	querybuilder "homeserver/db/query_builder"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"slices"
-	"strings"
 )
 
 func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals map[string]any) error {
@@ -17,7 +17,7 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 		if !uschema.IsUserField(field) {
 			return fmt.Errorf("invalid field: %s", field)
 		}
-		if !slices.Contains(uschema.UpdateableFieldsList(), field) {
+		if !slices.Contains(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt), field) {
 			return fmt.Errorf("this field is not updatable: %s", field)
 		}
 		fields = append(fields, field)
@@ -32,18 +32,15 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 		return fmt.Errorf("invalid user data: %v", err)
 	}
 
-	placeholders := ""
-	for i := 0; i < len(fields); i++ {
-		if i > 0 {
-			placeholders += ", "
-		}
-		placeholders += fmt.Sprintf("%s = $%d", fields[i], i+1)
-	}
-
-	query := fmt.Sprintf(
-		`UPDATE users SET %s WHERE id = $%d RETURNING %s`,
-		placeholders, len(fields)+1, strings.Join(uschema.ReturnableFieldsList(), ", "),
-	)
+	query := querybuilder.New().
+		Update(fields...).
+		Where(fmt.Sprintf("id = $%d", len(fields)+1)).
+		Returning(uschema.FieldsList(uconsts.Password)...).
+		Build()
+	// query := fmt.Sprintf(
+	// 	`UPDATE users SET %s WHERE id = $%d RETURNING %s`,
+	// 	placeholders, len(fields)+1, strings.Join(uschema.FieldsList(uconsts.Password), ", "),
+	// )
 
 	vals = append(vals, user.ID)
 

@@ -1,7 +1,9 @@
 package uschema
 
 import (
+	"homeserver/constants"
 	"homeserver/constants/uconsts"
+	"homeserver/web-server/pkg/utils"
 	"slices"
 	"strings"
 	"time"
@@ -126,35 +128,6 @@ func IsUserField(field string) bool {
 	return slices.Contains(FieldsList(), field)
 }
 
-func FieldsList() []string {
-	return []string{
-		uconsts.ID,
-		uconsts.Username,
-		uconsts.Password,
-		uconsts.Email,
-		uconsts.AuthToken,
-		uconsts.CreatedAt,
-		uconsts.EmailVerified,
-	}
-}
-
-func UpdateableFieldsList() []string {
-	return []string{
-		uconsts.Username,
-		uconsts.Password,
-		uconsts.Email,
-		uconsts.AuthToken,
-		uconsts.EmailVerified,
-	}
-}
-
-func ReturnableFieldsList() []string {
-	return []string{
-		uconsts.ID,
-		uconsts.Username,
-		uconsts.Email,
-		uconsts.AuthToken,
-		uconsts.CreatedAt,
-		uconsts.EmailVerified,
-	}
+func FieldsList(without ...string) []string {
+	return utils.Without(constants.DBUsersTable.Fields, without...)
 }

@@ -1,5 +1,11 @@
 package constants
 
+import (
+	"homeserver/constants/fconsts"
+	"homeserver/constants/folconsts"
+	"homeserver/constants/uconsts"
+)
+
 type DBTable struct {
 	Name        string
 	Fields      []string
@@ -10,13 +16,13 @@ var (
 	DBUsersTable = &DBTable{
 		Name: "users",
 		Fields: []string{
-			"id",
-			"username",
-			"password",
-			"email",
-			"auth_token",
-			"created_at",
-			"email_verified",
+			uconsts.ID,
+			uconsts.Username,
+			uconsts.Password,
+			uconsts.Email,
+			uconsts.AuthToken,
+			uconsts.CreatedAt,
+			uconsts.EmailVerified,
 		},
 		SQLCreation: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -33,17 +39,17 @@ var (
 	DBFilesTable = &DBTable{
 		Name: "user_files",
 		Fields: []string{
-			"id",
-			"filename",
-			"path",
-			"extension",
-			"directory_id",
-			"size",
-			"content_type",
-			"owner_id",
-			"created_at",
-			"updated_at",
-			"metadata",
+			fconsts.ID,
+			fconsts.Filename,
+			fconsts.Extension,
+			fconsts.Path,
+			fconsts.Directory,
+			fconsts.Size,
+			fconsts.ContentType,
+			fconsts.OwnerID,
+			fconsts.CreatedAt,
+			fconsts.UpdatedAt,
+			fconsts.Metadata,
 		},
 		SQLCreation: `
 			CREATE TABLE IF NOT EXISTS user_files (
@@ -68,12 +74,12 @@ var (
 	DBFoldersTable = &DBTable{
 		Name: "user_folders",
 		Fields: []string{
-			"id",
-			"name",
-			"path",
-			"parent",
-			"owner_id",
-			"created_at",
+			folconsts.ID,
+			folconsts.FolderName,
+			folconsts.Path,
+			folconsts.Parent,
+			folconsts.OwnerID,
+			folconsts.CreatedAt,
 		},
 		SQLCreation: `
 			CREATE TABLE IF NOT EXISTS user_folders (

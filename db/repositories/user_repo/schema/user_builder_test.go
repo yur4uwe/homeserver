@@ -158,15 +158,9 @@ func TestUserBuilderSuite(t *testing.T) {
 		assert.ElementsMatch(t, expected, fields)
 	})
 
-	t.Run("TestUpdateableFieldsList", func(t *testing.T) {
-		fields := UpdateableFieldsList()
-		expected := []string{"username", "password", "email", "auth_token", "email_verified"}
-		assert.ElementsMatch(t, expected, fields)
-	})
-
-	t.Run("TestReturnableFieldsList", func(t *testing.T) {
-		fields := ReturnableFieldsList()
-		expected := []string{"id", "username", "email", "auth_token", "created_at", "email_verified"}
+	t.Run("TestFieldsListWithout", func(t *testing.T) {
+		fields := FieldsList("email", "auth_token")
+		expected := []string{"id", "username", "password", "created_at", "email_verified"}
 		assert.ElementsMatch(t, expected, fields)
 	})
 }

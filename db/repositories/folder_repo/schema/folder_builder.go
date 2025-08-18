@@ -3,7 +3,7 @@ package folschema
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/constants/folconsts"
+	"homeserver/web-server/pkg/utils"
 	"os"
 	"strings"
 	"time"
@@ -84,29 +84,6 @@ func (uf *UserFolder) AbsolutePath() string {
 	return fmt.Sprintf("%s%s/%s", storagePath, uf.Path, uf.Name)
 }
 
-func FieldsList(to_return_time_fields bool) []string {
-	if to_return_time_fields {
-		return []string{
-			folconsts.ID,
-			folconsts.FolderName,
-			folconsts.Path,
-			folconsts.Parent,
-			folconsts.OwnerID,
-			folconsts.CreatedAt,
-		}
-	}
-	return []string{
-		folconsts.ID,
-		folconsts.FolderName,
-		folconsts.Path,
-		folconsts.Parent,
-		folconsts.OwnerID,
-	}
-}
-
-func FieldNum(to_return_time_fields bool) int {
-	if to_return_time_fields {
-		return 6
-	}
-	return 5
+func FieldsList(without ...string) []string {
+	return utils.Without(constants.DBFoldersTable.Fields, without...)
 }

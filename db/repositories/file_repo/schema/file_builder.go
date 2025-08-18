@@ -3,7 +3,7 @@ package fschema
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/constants/fconsts"
+	"homeserver/web-server/pkg/utils"
 	"os"
 	"strings"
 	"time"
@@ -135,18 +135,6 @@ func (uf *UserFile) AbsolutePath() string {
 	return fmt.Sprintf("%s%s.%s", storage_path, file_path, uf.Extension)
 }
 
-func FieldsList() []string {
-	return []string{
-		fconsts.ID,
-		fconsts.Filename,
-		fconsts.Extension,
-		fconsts.Path,
-		fconsts.Directory,
-		fconsts.Size,
-		fconsts.ContentType,
-		fconsts.OwnerID,
-		fconsts.CreatedAt,
-		fconsts.UpdatedAt,
-		fconsts.Metadata,
-	}
+func FieldsList(without ...string) []string {
+	return utils.Without(constants.DBFilesTable.Fields, without...)
 }
