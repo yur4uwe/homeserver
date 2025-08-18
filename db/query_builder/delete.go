@@ -2,7 +2,6 @@ package querybuilder
 
 import (
 	"homeserver/constants/qbconsts"
-	"strings"
 )
 
 func (q *QueryBuilder) Delete() *QueryBuilder {
@@ -11,9 +10,13 @@ func (q *QueryBuilder) Delete() *QueryBuilder {
 }
 
 func (q *QueryBuilder) buildDelete() string {
+	if q.queryType != qbconsts.DELETE {
+		panic("QueryBuilder is not in DELETE mode")
+	}
+
 	query := "DELETE FROM " + q.table
-	if len(q.conditions) > 0 {
-		query += " WHERE " + strings.Join(q.conditions, " AND ")
+	if q.conditions != "" {
+		query += " WHERE " + q.conditions
 	}
 	return query
 }

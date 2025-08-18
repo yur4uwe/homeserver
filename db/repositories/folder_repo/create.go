@@ -3,21 +3,15 @@ package folderrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants"
 	"homeserver/constants/folconsts"
+	querybuilder "homeserver/db/query_builder"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"strings"
 )
 
 func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error) {
-	write_fields := []string{
-		folconsts.FolderName,
-		folconsts.Path,
-		folconsts.Parent,
-		folconsts.OwnerID,
-		folconsts.CreatedAt,
-	}
-
 	if err := folder.ShouldHaveFields(owner.Username)(folconsts.FolderName, folconsts.OwnerID); err != nil {
 		return nil, err
 	}
@@ -34,25 +28,37 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 		return nil, fmt.Errorf("root folder must have the same name as the owner")
 	}
 
-	fields_to_read := strings.Join(write_fields, ", ")
-
-	placeholders := strings.Repeat("?, ", len(folschema.FieldsList(folconsts.CreatedAt))-1) + "now()"
+	query := querybuilder.New().
+		Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
+		Into(constants.DBFoldersTable.Name).
+		Values(folder.Name, folder.Path, folder.Parent, folder.OwnerID).
+		Build()
 
 	inserted_folder := folschema.UserFolder{}
-	err := r.db.Pool.QueryRow(
+	rows, err := r.db.Pool.Query(
 		ctx,
-		"INSERT INTO folders ("+fields_to_read+") VALUES ("+placeholders+")",
+		query,
 		folder.Name, folder.Path, folder.Parent, folder.OwnerID,
-	).Scan(
-		&inserted_folder.ID,
-		&inserted_folder.Name,
-		&inserted_folder.Path,
-		&inserted_folder.Parent,
-		&inserted_folder.OwnerID,
-		&inserted_folder.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("failed to insert folder: no rows returned")
+	}
+
+	err = helpers.ScanRows(
+		rows,
+		&inserted_folder,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if rows.Next() {
+		return nil, fmt.Errorf("unexpected error: multiple rows returned")
 	}
 	return &inserted_folder, nil
 }

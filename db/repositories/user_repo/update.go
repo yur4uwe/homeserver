@@ -3,6 +3,7 @@ package userrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants"
 	"homeserver/constants/uconsts"
 	querybuilder "homeserver/db/query_builder"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -33,7 +34,8 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 	}
 
 	query := querybuilder.New().
-		Update(fields...).
+		Update(constants.DBUsersTable.Name).
+		Set(fields...).
 		Where(fmt.Sprintf("id = $%d", len(fields)+1)).
 		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()

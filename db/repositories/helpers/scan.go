@@ -7,11 +7,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const (
+	NilDestErr = "destination cannot be nil"
+)
+
 func ScanRows(rows pgx.Rows, dest any) error {
 	if rows == nil || !rows.Next() {
 		return pgx.ErrNoRows
 	} else if dest == nil {
-		return fmt.Errorf("destination cannot be nil")
+		return fmt.Errorf(NilDestErr)
 	}
 	v := reflect.ValueOf(dest).Elem()
 	t := v.Type()

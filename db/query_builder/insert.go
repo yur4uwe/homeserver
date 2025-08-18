@@ -7,6 +7,10 @@ import (
 )
 
 func (q *QueryBuilder) buildInsert() string {
+	if q.queryType != qbconsts.INSERT {
+		panic("QueryBuilder is not in INSERT mode")
+	}
+
 	query := "INSERT INTO " + q.table + " ("
 	query += strings.Join(q.columns, ", ") + ") VALUES ("
 	for i := 0; i < q.valuesNum; i++ {

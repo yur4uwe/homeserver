@@ -8,7 +8,7 @@ type QueryBuilder struct {
 	queryType  qbconsts.QueryType
 	table      string
 	columns    []string
-	conditions []string
+	conditions string
 	valuesNum  int
 	returning  []string
 	orderBy    qbconsts.QueryOrder
@@ -24,7 +24,7 @@ func (q *QueryBuilder) Reset() *QueryBuilder {
 	q.queryType = ""
 	q.table = ""
 	q.columns = nil
-	q.conditions = nil
+	q.conditions = ""
 	q.valuesNum = 0
 	q.returning = nil
 	q.orderBy = ""
@@ -34,6 +34,14 @@ func (q *QueryBuilder) Reset() *QueryBuilder {
 }
 
 func (q *QueryBuilder) Build() string {
+	if q.queryType == "" {
+		panic("empty query type")
+	} else if q.table == "" {
+		panic("empty table")
+	} else if (len(q.columns) == 0 || q.valuesNum == 0) && q.queryType != qbconsts.DELETE {
+		panic("empty columns")
+	}
+
 	switch q.queryType {
 	case qbconsts.SELECT:
 		return q.buildSelect()

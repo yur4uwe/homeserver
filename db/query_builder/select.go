@@ -6,9 +6,13 @@ import (
 )
 
 func (q *QueryBuilder) buildSelect() string {
+	if q.queryType != qbconsts.SELECT {
+		panic("QueryBuilder is not in SELECT mode")
+	}
+
 	query := "SELECT " + strings.Join(q.columns, ", ") + " FROM " + q.table
-	if len(q.conditions) > 0 {
-		query += " WHERE " + strings.Join(q.conditions, " AND ")
+	if q.conditions != "" {
+		query += " WHERE " + q.conditions
 	}
 	return query
 }

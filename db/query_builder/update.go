@@ -3,10 +3,13 @@ package querybuilder
 import (
 	"homeserver/constants/qbconsts"
 	"strconv"
-	"strings"
 )
 
 func (q *QueryBuilder) buildUpdate() string {
+	if q.queryType != qbconsts.UPDATE {
+		panic("QueryBuilder is not in UPDATE mode")
+	}
+
 	query := "UPDATE " + q.table + " SET "
 	for i, col := range q.columns {
 		if i > 0 {
@@ -14,15 +17,15 @@ func (q *QueryBuilder) buildUpdate() string {
 		}
 		query += col + " = $" + strconv.Itoa(i+1)
 	}
-	if len(q.conditions) > 0 {
-		query += " WHERE " + strings.Join(q.conditions, " AND ")
+	if q.conditions != "" {
+		query += " WHERE " + q.conditions
 	}
 	return query
 }
 
-func (q *QueryBuilder) Update(columns ...string) *QueryBuilder {
+func (q *QueryBuilder) Update(table string) *QueryBuilder {
 	q.queryType = qbconsts.UPDATE
-	q.columns = columns
+	q.table = table
 	return q
 }
 
