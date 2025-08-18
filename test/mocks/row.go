@@ -31,6 +31,10 @@ func RunScan(destSlice []any, values []any) {
 		}
 		ptrVal := reflect.ValueOf(destSlice[i])
 		if ptrVal.Kind() == reflect.Ptr {
+			if v == nil {
+				ptrVal.Elem().Set(reflect.Zero(ptrVal.Elem().Type()))
+				continue
+			}
 			val := reflect.ValueOf(v)
 			if val.Type().AssignableTo(ptrVal.Elem().Type()) {
 				ptrVal.Elem().Set(val)
