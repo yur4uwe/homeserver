@@ -31,11 +31,11 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 	query := querybuilder.New().
 		Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
 		Into(dbconsts.DBFoldersTable.Name).
-		Values(folder.Name, folder.Path, folder.Parent, folder.OwnerID).
+		Values(len(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt))).
 		Returning(folschema.FieldsList()...).
 		Build()
 
-	inserted_folder := folschema.UserFolder{}
+	inserted_folder := []folschema.UserFolder{}
 	rows, err := r.db.Pool.Query(
 		ctx,
 		query,
@@ -46,16 +46,13 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 	}
 	defer rows.Close()
 
-	if !rows.Next() {
-		return nil, fmt.Errorf("failed to insert folder: no rows returned")
-	}
-
 	if err = helpers.ScanRows(rows, &inserted_folder); err != nil {
 		return nil, err
 	}
 
-	if rows.Next() {
-		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	if len(inserted_folder) != 1 {
+		return nil, fmt.Errorf("unexpected error: %d rows returned", len(inserted_folder))
 	}
-	return &inserted_folder, nil
+
+	return &inserted_folder[0], nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"homeserver/db"
 	folderrepo "homeserver/db/repositories/folder_repo"
@@ -24,21 +23,25 @@ func TestCreateFolder_Success(t *testing.T) {
 	owner := makeOwner()
 
 	expected := &folschema.UserFolder{
-		ID:        10,
-		Name:      folder.Name,
-		Path:      folder.Path,
-		Parent:    folder.Parent,
-		OwnerID:   folder.OwnerID,
-		CreatedAt: time.Now(),
+		ID:      10,
+		Name:    folder.Name,
+		Path:    folder.Path,
+		Parent:  folder.Parent,
+		OwnerID: folder.OwnerID,
 	}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		values := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID, expected.CreatedAt}
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, values)
+		mocks.RunScan(dest, []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID})
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	inserted, err := repo.CreateFolder(context.Background(), folder, owner)
 	assert.NoError(t, err)
@@ -127,9 +130,15 @@ func TestCreateFolder_DBError(t *testing.T) {
 	folder := makeUserFolder()
 	owner := makeOwner()
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	inserted, err := repo.CreateFolder(context.Background(), folder, owner)
 	assert.Error(t, err)

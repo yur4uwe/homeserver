@@ -3,11 +3,13 @@ package filerepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
+	querybuilder "homeserver/db/query_builder"
 	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"slices"
-	"strings"
 )
 
 var (
@@ -51,30 +53,39 @@ func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschem
 		fields_str += fmt.Sprintf("%s = $%d", field, i+1)
 	}
 
-	query := fmt.Sprintf(`
-		UPDATE user_files
-		SET %s
-		WHERE id = $%d
-		RETURNING`+strings.Join(fschema.FieldsList(), ", "),
-		fields_str, len(fields_to_update)+1)
+	query := querybuilder.New().
+		Update(dbconsts.DBFilesTable.Name).
+		Set(fields_to_update...).
+		Where("id = $" + fmt.Sprint(len(fields_to_update)+1)).
+		Returning(fschema.FieldsList()...).
+		Build()
+
+	// query := fmt.Sprintf(`
+	// 	UPDATE user_files
+	// 	SET %s
+	// 	WHERE id = $%d
+	// 	RETURNING`+strings.Join(fschema.FieldsList(), ", "),
+	// 	fields_str, len(fields_to_update)+1)
 
 	query_args := make([]any, len(fields_to_update)+1)
 	copy(query_args, OrderFileUpdateFields(fields_to_update, modified_file))
 	query_args[len(fields_to_update)] = modified_file.ID
 
-	err = repo.db.Pool.QueryRow(
-		ctx,
-		query,
-		query_args...,
-	).Scan(
-		&modified_file.ID, &modified_file.Filename, &modified_file.Extension,
-		&modified_file.Path, &modified_file.Directory, &modified_file.Size,
-		&modified_file.ContentType, &modified_file.OwnerID, &modified_file.CreatedAt,
-		&modified_file.UpdatedAt, &modified_file.Metadata,
-	)
+	rows, err := repo.db.Pool.Query(ctx, query, query_args...)
 	if err != nil {
 		return fmt.Errorf("error updating file entry: %v", err)
 	}
+
+	var modified_files []fschema.UserFile
+	if err := helpers.ScanRows(rows, &modified_files); err != nil {
+		return fmt.Errorf("error scanning updated file entry: %v", err)
+	}
+
+	if len(modified_files) != 1 {
+		return fmt.Errorf("expected 1 modified file, got %d", len(modified_files))
+	}
+
+	*modified_file = modified_files[0]
 
 	return nil
 }

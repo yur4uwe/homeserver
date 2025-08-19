@@ -39,18 +39,21 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
-	newValues := []any{
-		file.ID + 1, file.Filename, file.Extension, file.Path, file.Directory,
-		file.Size, file.ContentType, file.OwnerID, file.CreatedAt, file.UpdatedAt,
-	}
+	expected := *file
+	expected.ID += 1
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, newValues)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), &expected))
 	})
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
 	assert.NoError(t, err)
@@ -108,11 +111,15 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything).Return(fmt.Errorf("update error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(fmt.Errorf("update error"))
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "error updating file entry")
+	assert.Contains(t, err.Error(), "update error")
 }

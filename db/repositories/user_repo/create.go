@@ -18,7 +18,7 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 	query := querybuilder.New().
 		Insert(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt)...).
 		Into(dbconsts.DBUsersTable.Name).
-		Values(user.Username, user.Email, user.Password, user.AuthToken, user.EmailVerified).
+		Values(len(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt))).
 		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
 

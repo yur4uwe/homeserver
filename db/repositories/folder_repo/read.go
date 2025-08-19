@@ -3,77 +3,101 @@ package folderrepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants/folconsts"
+	"homeserver/constants/dbconsts"
+	querybuilder "homeserver/db/query_builder"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/db/repositories/helpers"
-	"strings"
 )
 
 func (r *FolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.UserFolder, error) {
-	fields_to_read := strings.Join(folschema.FieldsList(folconsts.CreatedAt), ", ")
+	query := querybuilder.New().
+		Select(folschema.FieldsList()...).
+		From(dbconsts.DBFoldersTable.Name).
+		Where("id = $1").
+		Build()
 
-	var folder folschema.UserFolder
-	rows, err := r.db.Pool.Query(ctx, "SELECT "+fields_to_read+" FROM folders WHERE id = ?", id)
+	var folder []folschema.UserFolder
+	rows, err := r.db.Pool.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
-	if !rows.Next() {
-		return nil, fmt.Errorf("folder not found")
-	}
 
 	if err = helpers.ScanRows(rows, &folder); err != nil {
 		return nil, err
 	}
 
-	if rows.Next() {
-		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	if len(folder) != 1 {
+		return nil, fmt.Errorf("unexpected error: %d rows returned", len(folder))
 	}
 
-	return &folder, nil
+	return &folder[0], nil
 }
 
 func (r *FolderRepo) GetFolderByPath(ctx context.Context, file *folschema.UserFolder) (*folschema.UserFolder, error) {
-	fields_to_read := strings.Join(folschema.FieldsList(folconsts.CreatedAt), ", ")
+	query := querybuilder.New().
+		Select(folschema.FieldsList()...).
+		From(dbconsts.DBFoldersTable.Name).
+		Where("path = $1 AND name = $2").
+		Build()
 
-	var folder folschema.UserFolder
-	err := r.db.Pool.QueryRow(ctx, "SELECT "+fields_to_read+" FROM folders WHERE path = ? AND name = ?", file.Path, file.Name).
-		Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID)
-	if err != nil {
-		return nil, err
-	}
-	return &folder, nil
-}
-
-func (r *FolderRepo) GetFolderByOwner(ctx context.Context, ownerID int) (*folschema.UserFolder, error) {
-	fields_to_read := strings.Join(folschema.FieldsList(folconsts.CreatedAt), ", ")
-
-	var folder folschema.UserFolder
-	err := r.db.Pool.QueryRow(ctx, "SELECT "+fields_to_read+" FROM folders WHERE owner_id = ?", ownerID).
-		Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID)
-	if err != nil {
-		return nil, err
-	}
-	return &folder, nil
-}
-
-func (r *FolderRepo) GetChildren(ctx context.Context, parentID int) ([]*folschema.UserFolder, error) {
-	fields_to_read := strings.Join(folschema.FieldsList(folconsts.CreatedAt), ", ")
-
-	rows, err := r.db.Pool.Query(ctx, "SELECT "+fields_to_read+" FROM folders WHERE parent = ?", parentID)
+	var folder []folschema.UserFolder
+	rows, err := r.db.Pool.Query(ctx, query, file.Path, file.Name)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var children []*folschema.UserFolder
-	for rows.Next() {
-		var folder folschema.UserFolder
-		if err := rows.Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID); err != nil {
-			return nil, err
-		}
-		children = append(children, &folder)
+	if err = helpers.ScanRows(rows, &folder); err != nil {
+		return nil, err
 	}
+
+	if len(folder) != 1 {
+		return nil, fmt.Errorf("unexpected error: %d rows returned", len(folder))
+	}
+
+	return &folder[0], nil
+}
+
+func (r *FolderRepo) GetFoldersByOwner(ctx context.Context, ownerID int) ([]folschema.UserFolder, error) {
+	query := querybuilder.New().
+		Select(folschema.FieldsList()...).
+		From(dbconsts.DBFoldersTable.Name).
+		Where("owner_id = $1").
+		Build()
+
+	var folders []folschema.UserFolder
+	rows, err := r.db.Pool.Query(ctx, query, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	if err = helpers.ScanRows(rows, &folders); err != nil {
+		return nil, err
+	}
+
+	return folders, nil
+}
+
+func (r *FolderRepo) GetChildren(ctx context.Context, parentID int) ([]folschema.UserFolder, error) {
+	query := querybuilder.New().
+		Select(folschema.FieldsList()...).
+		From(dbconsts.DBFoldersTable.Name).
+		Where("parent = $1").
+		Build()
+
+	rows, err := r.db.Pool.Query(ctx, query, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var children []folschema.UserFolder
+
+	if err = helpers.ScanRows(rows, &children); err != nil {
+		return nil, err
+	}
+
 	return children, nil
 }

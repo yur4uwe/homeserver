@@ -3,11 +3,13 @@ package filerepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
 	"homeserver/constants/uconsts"
+	querybuilder "homeserver/db/query_builder"
 	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"strings"
 )
 
 func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {
@@ -15,11 +17,7 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
-	fields := []string{
-		fconsts.Filename, fconsts.Extension,
-		fconsts.Path, fconsts.Directory, fconsts.Size,
-		fconsts.ContentType, fconsts.OwnerID,
-	}
+	fields := fschema.FieldsList(fconsts.ID, fconsts.CreatedAt, fconsts.UpdatedAt, fconsts.Metadata)
 
 	if err := file.ShouldHaveFields(owner.Username)(fields...); err != nil {
 		return nil, err
@@ -30,30 +28,30 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
-	fields_to_extract := strings.Join(fields, ", ")
-	insert_points := ""
-	for i := 1; i <= len(fields); i++ {
-		insert_points += fmt.Sprintf("$%d", i)
-		if i < len(fields) {
-			insert_points += ", "
-		}
-	}
+	query := querybuilder.New().
+		Insert(fields...).
+		Into(dbconsts.DBFilesTable.Name).
+		Values(len(fields)).
+		Returning(fschema.FieldsList()...).
+		Build()
 
-	var inserted_file fschema.UserFile
-	err = repo.db.Pool.QueryRow(
+	var inserted_file []fschema.UserFile
+	rows, err := repo.db.Pool.Query(
 		ctx,
-		"INSERT INTO files ("+fields_to_extract+") VALUES ("+insert_points+") RETURNING "+fields_to_extract,
+		query,
 		file.ID, file.Filename, file.Extension, file.Path, file.Directory, file.Size, file.ContentType, file.OwnerID, file.Metadata,
-	).Scan(
-		&inserted_file.ID, &inserted_file.Filename, &inserted_file.Extension,
-		&inserted_file.Path, &inserted_file.Directory, &inserted_file.Size,
-		&inserted_file.ContentType, &inserted_file.OwnerID, &inserted_file.CreatedAt,
-		&inserted_file.UpdatedAt, &inserted_file.Metadata,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &inserted_file, nil
+	if err = helpers.ScanRows(rows, &inserted_file); err != nil {
+		return nil, err
+	}
+
+	if len(inserted_file) != 1 {
+		return nil, fmt.Errorf("unexpected error: %d rows returned", len(inserted_file))
+	}
+
+	return &inserted_file[0], nil
 }

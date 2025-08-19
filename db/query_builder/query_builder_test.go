@@ -9,13 +9,13 @@ import (
 
 func TestQueryBuilder(t *testing.T) {
 	t.Run("Insert Query", func(t *testing.T) {
-		query := New().Insert("username", "email").Into("users").Values("John", 30).Build()
+		query := New().Insert("username", "email").Into("users").Values(2).Build()
 		assert.Equal(t, "INSERT INTO users (username, email) VALUES ($1, $2)", query)
 	})
 
 	t.Run("Insert Query - No Columns", func(t *testing.T) {
 		assert.Panics(t, func() {
-			New().Insert().Into("users").Values().Build()
+			New().Insert().Into("users").Values(0).Build()
 		})
 	})
 
@@ -105,13 +105,13 @@ func TestQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Returning Clause", func(t *testing.T) {
-		qb := New().Insert("username").Into("users").Values("John").Returning("id")
+		qb := New().Insert("username").Into("users").Values(1).Returning("id")
 		assert.NotPanics(t, func() { qb.Build() })
 		assert.Equal(t, "INSERT INTO users (username) VALUES ($1) RETURNING id", qb.Build())
 	})
 
 	t.Run("Returning Clause with Multiple Columns", func(t *testing.T) {
-		qb := New().Insert("username", "email").Into("users").Values("John", "john@example.com").Returning("id", "created_at")
+		qb := New().Insert("username", "email").Into("users").Values(2).Returning("id", "created_at")
 		assert.NotPanics(t, func() { qb.Build() })
 		assert.Equal(t, "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id, created_at", qb.Build())
 	})

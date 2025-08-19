@@ -2,7 +2,7 @@ package foltests
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -44,16 +44,21 @@ func TestUpdateFolder_Success(t *testing.T) {
 
 	newParent := 2
 	newValues := []any{
-		folder.ID, "john_doe/newdocs", "newdocs", &newParent, folder.OwnerID, folder.CreatedAt,
+		folder.ID, "newdocs", "john_doe/newdocs", &newParent, folder.OwnerID, folder.CreatedAt,
 	}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := new(mocks.MockRows)
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		mocks.RunScan(dest, newValues)
 	})
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
 	assert.NoError(t, err)
@@ -120,9 +125,15 @@ func TestUpdateFolder_DBError(t *testing.T) {
 	owner := makeOwner()
 	fieldsToUpdate := []string{folconsts.FolderName, folconsts.Path}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("update error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("error updating folder"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
 	assert.Error(t, err)

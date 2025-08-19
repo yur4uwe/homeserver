@@ -43,11 +43,18 @@ func TestGetFileByID_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	mockRow := mocks.MockRowReturn(
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	)
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
+	})
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	file, err := repo.GetFileByID(context.Background(), "1")
 	assert.NoError(t, err)
@@ -60,9 +67,14 @@ func TestGetFileByID_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := filerepo.NewFileRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
-	mockRow.On("Scan", mock.Anything).Return(errors.New("db error"))
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
 
 	file, err := repo.GetFileByID(context.Background(), "1")
 	assert.Error(t, err)
@@ -75,11 +87,18 @@ func TestGetFullFileInfo_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	mockRow := mocks.MockRowReturn(
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	)
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything, mock.Anything, mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
+	})
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	owner := makeOwner()
 	file, err := repo.GetFullFileInfo(context.Background(), expected, owner)
@@ -93,9 +112,14 @@ func TestGetFullFileInfo_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := filerepo.NewFileRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything, mock.Anything, mock.Anything).Return(mockRow)
-	mockRow.On("Scan", mock.Anything).Return(errors.New("db error"))
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
 
 	owner := makeOwner()
 	file := makeUserFile()
@@ -110,17 +134,15 @@ func TestGetFilesByUser_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	expected_values := []any{
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	}
 	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
-	mockRows.On("Close").Return(nil)
+
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		destSlice := args.Get(0).([]any)
-		mocks.RunScan(destSlice, expected_values)
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
 	})
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
@@ -151,20 +173,18 @@ func TestFuzzySearch_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	expected_values := []any{
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	}
 	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
-	mockRows.On("Close").Return(nil)
+
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		destSlice := args.Get(0).([]any)
-		mocks.RunScan(destSlice, expected_values)
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
 	})
 
-	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything, mock.Anything).Return(mockRows, nil)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	owner := makeOwner()
 	files, err := repo.FuzzySearch(context.Background(), "file", "john_doe/docs", owner)
@@ -192,20 +212,18 @@ func TestGetFilesByDirectory_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	expected_values := []any{
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	}
 	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
-	mockRows.On("Close").Return(nil)
+
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		destSlice := args.Get(0).([]any)
-		mocks.RunScan(destSlice, expected_values)
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
 	})
 
-	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything, mock.Anything).Return(mockRows, nil)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	owner := makeOwner()
 	files, err := repo.GetFilesByDirectory(context.Background(), "john_doe/docs", owner)
@@ -233,17 +251,15 @@ func TestGetFiles_Success(t *testing.T) {
 	repo := filerepo.NewFileRepo(mockDB)
 
 	expected := makeUserFile()
-	expected_values := []any{
-		expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory,
-		expected.Size, expected.ContentType, expected.OwnerID, expected.CreatedAt, expected.UpdatedAt, *expected.Metadata,
-	}
 	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
-	mockRows.On("Close").Return(nil)
+
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		destSlice := args.Get(0).([]any)
-		mocks.RunScan(destSlice, expected_values)
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), expected))
 	})
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)

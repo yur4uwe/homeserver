@@ -2,45 +2,41 @@ package filerepo_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
-	"time"
 
 	"homeserver/db"
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
-	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test/mocks"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var fieldDescs = []pgconn.FieldDescription{
+	{Name: "id"},
+	{Name: "filename"},
+	{Name: "extension"},
+	{Name: "path"},
+	{Name: "directory_id"},
+	{Name: "size"},
+	{Name: "content_type"},
+	{Name: "owner_id"},
+	{Name: "created_at"},
+	{Name: "updated_at"},
+	{Name: "metadata"},
+}
 
 func TestCreateFile_Success(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
 	mockDB := &db.Database{Pool: mockPool}
 	repo := filerepo.NewFileRepo(mockDB)
 
-	mockRow := mocks.MockRowReturn(
-		1,
-		"file",
-		"txt",
-		"john_doe/docs",
-		1,
-		int64(1234),
-		"text/plain",
-		42,
-		time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-		time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-		"some metadata",
-	)
+	expected := makeUserFile()
 
-	mockPool.On("QueryRow",
-		mock.AnythingOfType("backgroundCtx"),
-		mock.AnythingOfType("string"),
-		mock.Anything).Return(mockRow)
-
-	owner := &uschema.User{ID: 42, Username: "john_doe"}
+	owner := makeOwner()
 	file := &fschema.UserFile{
 		Filename:    "file",
 		Extension:   "txt",
@@ -51,16 +47,29 @@ func TestCreateFile_Success(t *testing.T) {
 		OwnerID:     42,
 	}
 
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		dest := args.Get(0).([]any)
+		mocks.RunScan(dest, []any{expected.ID, expected.Filename, expected.Extension, expected.Path, expected.Directory, expected.Size, expected.ContentType, expected.OwnerID})
+	})
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+
 	created, err := repo.CreateFile(context.Background(), file, owner)
 	assert.NoError(t, err)
 	assert.NotNil(t, created)
-	assert.Equal(t, 1, created.ID)
-	assert.Equal(t, "file", created.Filename)
-	assert.Equal(t, "txt", created.Extension)
-	assert.Equal(t, "john_doe/docs", created.Path)
-	assert.Equal(t, int64(1234), created.Size)
-	assert.Equal(t, "text/plain", created.ContentType)
-	assert.Equal(t, 42, created.OwnerID)
+	assert.Equal(t, expected.ID, created.ID)
+	assert.Equal(t, expected.Filename, created.Filename)
+	assert.Equal(t, expected.Extension, created.Extension)
+	assert.Equal(t, expected.Path, created.Path)
+	assert.Equal(t, expected.Size, created.Size)
+	assert.Equal(t, expected.ContentType, created.ContentType)
+	assert.Equal(t, expected.OwnerID, created.OwnerID)
 }
 
 func TestCreateFile_DBError(t *testing.T) {
@@ -68,15 +77,17 @@ func TestCreateFile_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := filerepo.NewFileRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything).Return(fmt.Errorf("DB error"))
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
 
-	mockPool.On("QueryRow",
-		mock.AnythingOfType("backgroundCtx"),
-		mock.AnythingOfType("string"),
-		mock.Anything).Return(mockRow)
+	mockRows.On("Scan", mock.Anything).Return(errors.New("DB error"))
 
-	owner := &uschema.User{ID: 42, Username: "john_doe"}
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+
+	owner := makeOwner()
 	file := &fschema.UserFile{
 		Filename:    "file.txt",
 		Extension:   "txt",

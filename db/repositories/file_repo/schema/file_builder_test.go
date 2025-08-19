@@ -1,6 +1,8 @@
 package fschema
 
 import (
+	"homeserver/test"
+	"homeserver/test/mocks/mocksos"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -125,5 +127,57 @@ func TestFileBuilderSuite(t *testing.T) {
 		assert.Panics(t, func() {
 			NewUserFileBuilder().WithMetadata(&emptyMetadata)
 		}, "Setting metadata to an empty string should panic")
+	})
+
+	t.Run("TestWithFullName", func(t *testing.T) {
+		newFile := NewUserFileBuilder().WithFullName("archive.tar.gz")
+		assert.Equal(t, "archive.tar", newFile.Filename, "Filename should be 'archive.tar'")
+		assert.Equal(t, "gz", newFile.Extension, "Extension should be 'gz'")
+
+		newFile2 := NewUserFileBuilder().WithFullName("file.txt")
+		assert.Equal(t, "file", newFile2.Filename, "Filename should be 'file'")
+		assert.Equal(t, "txt", newFile2.Extension, "Extension should be 'txt'")
+
+		assert.Panics(t, func() {
+			NewUserFileBuilder().WithFullName("")
+		}, "Setting an empty full name should panic")
+	})
+
+	t.Run("TestAbsolutePath", func(t *testing.T) {
+		mockOS := &mocksos.MockOS{}
+		mockOS.On("Getenv", "STORAGE_PATH").Return("/storage/")
+		test.MockFunction(&Getenv, mockOS.Getenv, func() {})
+
+		newFile := NewUserFileBuilder().
+			WithFilename("report").
+			WithExtension("pdf").
+			WithPath("john/reports")
+		expected := "/storage/john/reports/report.pdf"
+		assert.Equal(t, expected, newFile.AbsolutePath())
+
+		newFile2 := NewUserFileBuilder().
+			WithFilename("file").
+			WithExtension("txt")
+		expected2 := "/storage/file.txt"
+		assert.Equal(t, expected2, newFile2.AbsolutePath())
+	})
+
+	t.Run("TestFieldsList", func(t *testing.T) {
+		fields := FieldsList()
+		assert.Contains(t, fields, "id")
+		assert.Contains(t, fields, "filename")
+		assert.Contains(t, fields, "extension")
+		assert.Contains(t, fields, "path")
+		assert.Contains(t, fields, "directory_id")
+		assert.Contains(t, fields, "size")
+		assert.Contains(t, fields, "content_type")
+		assert.Contains(t, fields, "owner_id")
+		assert.Contains(t, fields, "created_at")
+		assert.Contains(t, fields, "updated_at")
+		assert.Contains(t, fields, "metadata")
+
+		withoutFields := FieldsList("id", "metadata")
+		assert.NotContains(t, withoutFields, "id")
+		assert.NotContains(t, withoutFields, "metadata")
 	})
 }

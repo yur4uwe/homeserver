@@ -2,7 +2,7 @@ package scripts
 
 import (
 	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/mocks/mocksos"
 	"os"
 	"testing"
 
@@ -10,14 +10,14 @@ import (
 )
 
 func TestChangeClassNames(t *testing.T) {
-	mockOS := new(mocks.MockOS)
+	mockOS := new(mocksos.MockOS)
 	cleanupReadFile := test.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
 	cleanupReadDir := test.MockFunction(&ReadDir, mockOS.ReadDir, func() {})
 	cleanupWriteFile := test.MockFunction(&WriteFile, mockOS.WriteFile, func() {})
 
 	mockSvg := []byte(`<svg><style>.st0{fill:#000;}</style></svg>`)
 
-	mockDirEntry := new(mocks.MockDirEntry)
+	mockDirEntry := new(mocksos.MockDirEntry)
 
 	resetter := test.NewMocksResetter(
 		&mockOS.Mock,

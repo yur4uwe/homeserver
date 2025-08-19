@@ -34,7 +34,7 @@ func (q *QueryBuilder) Into(table string) *QueryBuilder {
 	return q
 }
 
-func (q *QueryBuilder) Values(values ...any) *QueryBuilder {
-	q.valuesNum = len(values)
+func (q *QueryBuilder) Values(valuesNum int) *QueryBuilder {
+	q.valuesNum = valuesNum
 	return q
 }

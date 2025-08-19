@@ -26,8 +26,11 @@ func makeUser() *uschema.User {
 var fieldDescs = []pgconn.FieldDescription{
 	{Name: "id"},
 	{Name: "username"},
+	{Name: "password"},
 	{Name: "email"},
+	{Name: "auth_token"},
 	{Name: "created_at"},
+	{Name: "email_verified"},
 }
 
 func TestCreateUser_Success(t *testing.T) {
@@ -50,7 +53,7 @@ func TestCreateUser_Success(t *testing.T) {
 
 	mockRows.On("Scan", mock.Anything).Return(nil).Once().Run(func(args mock.Arguments) {
 		ptrs := args.Get(0).([]any)
-		mocks.RunScan(ptrs, []any{expected.ID, expected.Username, expected.Email})
+		mocks.RunScan(ptrs, []any{expected.ID, expected.Username, "", expected.Email})
 	})
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)

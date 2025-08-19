@@ -39,14 +39,19 @@ func TestUpdateUser_Success(t *testing.T) {
 		Email:         "john_updated@example.com",
 		AuthToken:     nil,
 		CreatedAt:     time.Now(),
-		EmailVerified: true,
+		EmailVerified: false,
 	}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		values := []any{
 			expected.ID,
 			expected.Username,
+			"",
 			expected.Email,
 			expected.AuthToken,
 			expected.CreatedAt,
@@ -55,7 +60,7 @@ func TestUpdateUser_Success(t *testing.T) {
 		mocks.RunScan(args[0].([]any), values)
 	})
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.Update(context.Background(), user, fieldsToUpdate)
 	assert.NoError(t, err)
@@ -82,13 +87,17 @@ func TestUpdateUser_DBError(t *testing.T) {
 	user := makeUserForUpdate()
 	fieldsToUpdate := map[string]any{"username": "john_updated", "email": "john_updated@example.com"}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.Update(context.Background(), user, fieldsToUpdate)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to update user: db error")
+	assert.Contains(t, err.Error(), "db error")
 }
 
 func TestUpdateUser_InvalidUserData(t *testing.T) {
@@ -114,20 +123,14 @@ func TestUpdateUser_UsernameAlreadyExists(t *testing.T) {
 
 	fieldsToUpdate := map[string]any{"username": "john_updated"}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("username already exists")).Run(func(args mock.Arguments) {
-		values := []any{
-			existingUser.ID,
-			existingUser.Username,
-			existingUser.Email,
-			existingUser.AuthToken,
-			existingUser.CreatedAt,
-			existingUser.EmailVerified,
-		}
-		mocks.RunScan(args[0].([]any), values)
-	})
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(errors.New("username already exists"))
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.Update(context.Background(), user, fieldsToUpdate)
 	assert.Error(t, err)
@@ -145,20 +148,14 @@ func TestUpdateUser_EmailAlreadyExists(t *testing.T) {
 
 	fieldsToUpdate := map[string]any{"email": "john_updated@example.com"}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("email already exists")).Run(func(args mock.Arguments) {
-		values := []any{
-			existingUser.ID,
-			existingUser.Username,
-			existingUser.Email,
-			existingUser.AuthToken,
-			existingUser.CreatedAt,
-			existingUser.EmailVerified,
-		}
-		mocks.RunScan(args[0].([]any), values)
-	})
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(errors.New("email already exists"))
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.Update(context.Background(), user, fieldsToUpdate)
 	assert.Error(t, err)

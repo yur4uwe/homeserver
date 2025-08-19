@@ -12,8 +12,8 @@ type InFileRepo interface {
 
 	GetFileByID(ctx context.Context, id string) (*fschema.UserFile, error)
 	GetFullFileInfo(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
-	GetFilesByUser(ctx context.Context, owner *uschema.User) ([]*fschema.UserFile, error)
-	FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]*fschema.UserFile, error)
+	GetFilesByUser(ctx context.Context, owner *uschema.User) ([]fschema.UserFile, error)
+	FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]fschema.UserFile, error)
 
 	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error
 	DeleteFileByID(ctx context.Context, fileID string, owner *uschema.User) error

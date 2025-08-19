@@ -10,9 +10,19 @@ import (
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/test/mocks"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var fieldDescs = []pgconn.FieldDescription{
+	{Name: "id"},
+	{Name: "name"},
+	{Name: "path"},
+	{Name: "parent"},
+	{Name: "owner_id"},
+	{Name: "created_at"},
+}
 
 func TestGetFolderByID_Success(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
@@ -20,13 +30,19 @@ func TestGetFolderByID_Success(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 
 	expected := makeUserFolder()
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		values := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID}
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, values)
+		vals := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID, expected.CreatedAt}
+		mocks.RunScan(dest, vals)
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	folder, err := repo.GetFolderByID(context.Background(), expected.ID)
 	assert.NoError(t, err)
@@ -42,9 +58,14 @@ func TestGetFolderByID_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := folderrepo.NewFolderRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	folder, err := repo.GetFolderByID(context.Background(), 1)
 	assert.Error(t, err)
@@ -57,13 +78,19 @@ func TestGetFolderByPath_Success(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 
 	expected := makeUserFolder()
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		values := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID}
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, values)
+		vals := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID, expected.CreatedAt}
+		mocks.RunScan(dest, vals)
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	folder, err := repo.GetFolderByPath(context.Background(), expected)
 	assert.NoError(t, err)
@@ -79,9 +106,15 @@ func TestGetFolderByPath_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := folderrepo.NewFolderRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	folder, err := repo.GetFolderByPath(context.Background(), &folschema.UserFolder{Path: "p", Name: "n"})
 	assert.Error(t, err)
@@ -94,21 +127,27 @@ func TestGetFolderByOwner_Success(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 
 	expected := makeUserFolder()
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		values := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID}
-		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, values)
-	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
 
-	folder, err := repo.GetFolderByOwner(context.Background(), expected.OwnerID)
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		dest := args.Get(0).([]any)
+		vals := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID, expected.CreatedAt}
+		mocks.RunScan(dest, vals)
+	})
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+
+	folder, err := repo.GetFoldersByOwner(context.Background(), expected.OwnerID)
 	assert.NoError(t, err)
-	assert.Equal(t, expected.ID, folder.ID)
-	assert.Equal(t, expected.Name, folder.Name)
-	assert.Equal(t, expected.Path, folder.Path)
-	assert.Equal(t, *expected.Parent, *folder.Parent)
-	assert.Equal(t, expected.OwnerID, folder.OwnerID)
+	assert.Equal(t, expected.ID, folder[0].ID)
+	assert.Equal(t, expected.Name, folder[0].Name)
+	assert.Equal(t, expected.Path, folder[0].Path)
+	assert.Equal(t, *expected.Parent, *folder[0].Parent)
+	assert.Equal(t, expected.OwnerID, folder[0].OwnerID)
 }
 
 func TestGetFolderByOwner_DBError(t *testing.T) {
@@ -116,11 +155,17 @@ func TestGetFolderByOwner_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := folderrepo.NewFolderRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
 
-	folder, err := repo.GetFolderByOwner(context.Background(), 42)
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
+
+	folder, err := repo.GetFoldersByOwner(context.Background(), 42)
 	assert.Error(t, err)
 	assert.Nil(t, folder)
 }
@@ -132,11 +177,11 @@ func TestGetChildren_Success(t *testing.T) {
 
 	expected := makeUserFolder()
 	mockRows := &mocks.MockRows{}
-	// Simulate one row, then end
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 	mockRows.On("Close").Return(nil)
-	mockRows.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		values := []any{expected.ID, expected.Name, expected.Path, expected.Parent, expected.OwnerID}
 		dest := args.Get(0).([]any)
 		mocks.RunScan(dest, values)

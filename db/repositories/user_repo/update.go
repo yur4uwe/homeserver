@@ -54,8 +54,8 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 		return err
 	}
 
-	if len(updated_user) > 1 {
-		return fmt.Errorf("unexpected error: multiple rows returned")
+	if len(updated_user) != 1 {
+		return fmt.Errorf("unexpected error: %d rows returned", len(updated_user))
 	}
 
 	*user = updated_user[0]

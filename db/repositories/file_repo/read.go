@@ -3,36 +3,37 @@ package filerepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants/fconsts"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
+	querybuilder "homeserver/db/query_builder"
 	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"strings"
 )
 
 func (repo *FileRepo) GetFileByID(ctx context.Context, id string) (*fschema.UserFile, error) {
-	fields_to_extract := strings.Join([]string{
-		fconsts.ID, fconsts.Filename, fconsts.Extension,
-		fconsts.Path, fconsts.Directory, fconsts.Size,
-		fconsts.ContentType, fconsts.OwnerID, fconsts.CreatedAt,
-		fconsts.UpdatedAt, fconsts.Metadata,
-	}, ", ")
+	query := querybuilder.New().Select(fschema.FieldsList()...).From(dbconsts.DBFilesTable.Name).Where("id = $1").Build()
 
-	var file fschema.UserFile
-	err := repo.db.Pool.QueryRow(
+	var file []fschema.UserFile
+	rows, err := repo.db.Pool.Query(
 		ctx,
-		"SELECT "+fields_to_extract+" FROM files WHERE id = $1",
+		query,
 		id,
-	).Scan(
-		&file.ID, &file.Filename, &file.Extension,
-		&file.Path, &file.Directory, &file.Size,
-		&file.ContentType, &file.OwnerID, &file.CreatedAt,
-		&file.UpdatedAt, &file.Metadata,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &file, nil
+
+	if err := helpers.ScanRows(rows, &file); err != nil {
+		return nil, fmt.Errorf("error scanning file by ID: %v", err)
+	}
+
+	if len(file) != 1 {
+		return nil, fmt.Errorf("expected 1 file, got %d", len(file))
+	}
+
+	return &file[0], nil
 }
 
 func (repo *FileRepo) GetFullFileInfo(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {
@@ -44,32 +45,48 @@ func (repo *FileRepo) GetFullFileInfo(ctx context.Context, file *fschema.UserFil
 		return nil, err
 	}
 
-	var fullFileInfo fschema.UserFile
-	err := repo.db.Pool.QueryRow(
+	query := querybuilder.New().
+		Select(fschema.FieldsList()...).
+		From(dbconsts.DBFilesTable.Name).
+		Where("filename = $1 AND path = $2 AND owner_id = $3").
+		Build()
+
+	var fullFileInfo []fschema.UserFile
+	rows, err := repo.db.Pool.Query(
 		ctx,
-		"SELECT "+strings.Join(fschema.FieldsList(), ", ")+" FROM files WHERE filename = $1 AND path = $2 AND owner_id = $3",
+		query,
 		file.Filename, file.Path, owner.ID,
-	).Scan(
-		&fullFileInfo.ID, &fullFileInfo.Filename, &fullFileInfo.Extension,
-		&fullFileInfo.Path, &fullFileInfo.Directory, &fullFileInfo.Size,
-		&fullFileInfo.ContentType, &fullFileInfo.OwnerID, &fullFileInfo.CreatedAt,
-		&fullFileInfo.UpdatedAt, &fullFileInfo.Metadata,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &fullFileInfo, nil
+
+	if err := helpers.ScanRows(rows, &fullFileInfo); err != nil {
+		return nil, fmt.Errorf("error scanning full file info: %v", err)
+	}
+
+	if len(fullFileInfo) != 1 {
+		return nil, fmt.Errorf("expected 1 file, got %d", len(fullFileInfo))
+	}
+
+	return &fullFileInfo[0], nil
 }
 
-func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) ([]*fschema.UserFile, error) {
+func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) ([]fschema.UserFile, error) {
 	if err := owner.ShouldHaveFields(uconsts.ID); err != nil {
 		return nil, err
 	}
 
-	var files []*fschema.UserFile
+	query := querybuilder.New().
+		Select(fschema.FieldsList()...).
+		From(dbconsts.DBFilesTable.Name).
+		Where("owner_id = $1").
+		Build()
+
+	var files []fschema.UserFile
 	rows, err := repo.db.Pool.Query(
 		ctx,
-		"SELECT "+strings.Join(fschema.FieldsList(), ", ")+" FROM files WHERE owner_id = $1",
+		query,
 		owner.ID,
 	)
 	if err != nil {
@@ -77,22 +94,14 @@ func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) (
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var file fschema.UserFile
-		if err := rows.Scan(
-			&file.ID, &file.Filename, &file.Extension,
-			&file.Path, &file.Directory, &file.Size,
-			&file.ContentType, &file.OwnerID, &file.CreatedAt,
-			&file.UpdatedAt, &file.Metadata,
-		); err != nil {
-			return nil, err
-		}
-		files = append(files, &file)
+	if err := helpers.ScanRows(rows, &files); err != nil {
+		return nil, fmt.Errorf("error scanning files: %v", err)
 	}
+
 	return files, nil
 }
 
-func (repo *FileRepo) FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]*fschema.UserFile, error) {
+func (repo *FileRepo) FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]fschema.UserFile, error) {
 	if err := owner.ShouldHaveFields(uconsts.ID); err != nil {
 		return nil, err
 	}
@@ -110,27 +119,15 @@ func (repo *FileRepo) FuzzySearch(ctx context.Context, search_query string, dire
 	    ORDER BY similarity(f.filename, $1) DESC
 	    LIMIT 20;`
 
-	var files []*fschema.UserFile
+	var files []fschema.UserFile
 	rows, err := repo.db.Pool.Query(ctx, query, search_query, owner.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error searching files: %v", err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var file fschema.UserFile
-		if err := rows.Scan(
-			&file.ID, &file.Filename, &file.Extension,
-			&file.Path, &file.Directory, &file.Size,
-			&file.ContentType, &file.OwnerID, &file.CreatedAt,
-			&file.UpdatedAt, &file.Metadata,
-		); err != nil {
-			return nil, err
-		}
-
-		if strings.HasPrefix(file.Path, directory) {
-			files = append(files, &file)
-		}
+	if err := helpers.ScanRows(rows, &files); err != nil {
+		return nil, fmt.Errorf("error scanning files: %v", err)
 	}
 
 	return files, nil

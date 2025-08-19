@@ -38,11 +38,16 @@ func TestQueryUser_Success(t *testing.T) {
 		EmailVerified: true,
 	}
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		values := []any{
 			expected.ID,
 			expected.Username,
+			"",
 			expected.Email,
 			expected.AuthToken,
 			expected.CreatedAt,
@@ -52,7 +57,7 @@ func TestQueryUser_Success(t *testing.T) {
 		mocks.RunScan(dest, values)
 	})
 
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	result, err := repo.Query(context.Background(), user)
 	assert.NoError(t, err)
@@ -80,12 +85,16 @@ func TestQueryUser_DBError(t *testing.T) {
 
 	user := makeUserForRead()
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	result, err := repo.Query(context.Background(), user)
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "error querying user")
+	assert.Contains(t, err.Error(), "db error")
 }

@@ -6,7 +6,7 @@ import (
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/mocks/mocksos"
 	"os"
 	"testing"
 
@@ -14,7 +14,7 @@ import (
 )
 
 func TestPreventDuplicateFileNames(t *testing.T) {
-	mockOS := new(mocks.MockOS)
+	mockOS := new(mocksos.MockOS)
 
 	restore := test.MockFunction(&filerepo.Stat, mockOS.Stat, func() {})
 	defer restore()

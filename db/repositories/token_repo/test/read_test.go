@@ -11,9 +11,19 @@ import (
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test/mocks"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var fieldDescs = []pgconn.FieldDescription{
+	{Name: "id"},
+	{Name: "username"},
+	{Name: "email"},
+	{Name: "auth_token"},
+	{Name: "email_verified"},
+	{Name: "created_at"},
+}
 
 func makeUser() *uschema.User {
 	token := "token123"
@@ -76,16 +86,21 @@ func TestQueryToken_Success(t *testing.T) {
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
 	expected := makeUser()
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		values := []any{
-			expected.ID, expected.Username, expected.Password, expected.Email,
-			expected.AuthToken, expected.CreatedAt, expected.EmailVerified,
+			expected.ID, expected.Username, expected.Email,
+			expected.AuthToken, expected.EmailVerified, expected.CreatedAt,
 		}
 		dest := args.Get(0).([]any)
 		mocks.RunScan(dest, values)
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	user, err := repo.QueryToken(context.Background(), "token123")
 	assert.NoError(t, err)
@@ -112,9 +127,14 @@ func TestQueryToken_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("failed to insert user"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	user, err := repo.QueryToken(context.Background(), "token123")
 	assert.Error(t, err)

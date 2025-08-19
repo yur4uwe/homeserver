@@ -10,6 +10,7 @@ import (
 	tokenrepo "homeserver/db/repositories/token_repo"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/test/mocks/mocksos"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
@@ -21,21 +22,26 @@ func TestVerifyToken_Success(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockOS := &mocks.MockOS{}
+	mockOS := &mocksos.MockOS{}
 	defer test.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
 	defer test.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
 
 	mockOS.On("Mkdir", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("Getenv", mock.Anything).Return("/storage/")
 
-	// Mock SELECT
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		*dest[0].(*int) = 42
 		*dest[1].(*string) = "john_doe"
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	// Mock UPDATE
 	mockTag := pgconn.NewCommandTag("UPDATE 1")
@@ -59,9 +65,14 @@ func TestVerifyToken_SelectError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(errors.New("db error"))
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(errors.New("error verifying token"))
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.VerifyToken(context.Background(), "token123")
 	assert.Error(t, err)
@@ -73,13 +84,19 @@ func TestVerifyToken_InvalidUserID(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		*dest[0].(*int) = 0
 		*dest[1].(*string) = "john_doe"
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	err := repo.VerifyToken(context.Background(), "token123")
 	assert.Error(t, err)
@@ -91,13 +108,19 @@ func TestVerifyToken_UpdateError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		*dest[0].(*int) = 42
 		*dest[1].(*string) = "john_doe"
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	mockPool.On("Exec", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(pgconn.CommandTag{}, errors.New("update error"))
 
@@ -111,13 +134,19 @@ func TestVerifyToken_AffectedRowsMismatch(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		*dest[0].(*int) = 42
 		*dest[1].(*string) = "john_doe"
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	mockTag := pgconn.NewCommandTag("UPDATE 0")
 	mockPool.On("Exec", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockTag, nil)
@@ -132,20 +161,26 @@ func TestVerifyToken_MkdirError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
-	mockOS := &mocks.MockOS{}
+	mockOS := &mocksos.MockOS{}
 	defer test.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
 	defer test.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
 
 	mockOS.On("Mkdir", mock.Anything, mock.Anything).Return(errors.New("error creating directory"))
 	mockOS.On("Getenv", mock.Anything).Return("/storage/")
 
-	mockRow := &mocks.MockRow{}
-	mockRow.On("Scan", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockRows := &mocks.MockRows{}
+	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
+	mockRows.On("Next").Return(true).Once()
+	mockRows.On("Next").Return(false).Once()
+
+	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
 		*dest[0].(*int) = 42
 		*dest[1].(*string) = "john_doe"
 	})
-	mockPool.On("QueryRow", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRow)
+
+	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
 	mockTag := pgconn.NewCommandTag("UPDATE 1")
 	mockPool.On("Exec", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockTag, nil)

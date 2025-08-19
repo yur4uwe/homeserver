@@ -33,6 +33,8 @@ func OrderFileUpdateFields(fields_to_update []string, file *fschema.UserFile) []
 	var args = make([]any, 0, len(fields_to_update))
 	for _, field := range fields_to_update {
 		switch field {
+		case fconsts.ID:
+			args = append(args, file.ID)
 		case fconsts.Filename:
 			args = append(args, file.Filename)
 		case fconsts.Extension:
@@ -47,9 +49,13 @@ func OrderFileUpdateFields(fields_to_update []string, file *fschema.UserFile) []
 			args = append(args, file.ContentType)
 		case fconsts.OwnerID:
 			args = append(args, file.OwnerID)
+		case fconsts.CreatedAt:
+			args = append(args, file.CreatedAt)
+		case fconsts.UpdatedAt:
+			args = append(args, file.UpdatedAt)
 		case fconsts.Metadata:
 			args = append(args, file.Metadata)
-		// Add more fields as needed
+			// Add more fields as needed
 		}
 	}
 	return args

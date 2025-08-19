@@ -51,8 +51,8 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 		return nil, err
 	}
 
-	if len(result) > 1 {
-		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	if len(result) != 1 {
+		return nil, fmt.Errorf("unexpected error: %d rows returned", len(result))
 	}
 
 	return &result[0], nil

@@ -3,11 +3,14 @@ package folderrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
+	querybuilder "homeserver/db/query_builder"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"slices"
-	"strings"
+	"strconv"
 )
 
 func (r *FolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fields_to_update []string, owner *uschema.User) error {
@@ -37,23 +40,29 @@ func (r *FolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFol
 	copy(args, OrderUpdateFields(fields_to_update, folder))
 	args[len(fields_to_update)] = folder.ID
 
-	err := r.db.Pool.QueryRow(
-		ctx,
-		fmt.Sprintf(
-			`UPDATE folders SET %s WHERE id = $%d RETURNING `+strings.Join(folschema.FieldsList(), ", "),
-			fields_str, len(fields_to_update)+1),
-		args...,
-	).Scan(
-		&folder.ID,
-		&folder.Path,
-		&folder.Name,
-		&folder.Parent,
-		&folder.OwnerID,
-		&folder.CreatedAt,
-	)
+	query := querybuilder.New().
+		Update(dbconsts.DBFoldersTable.Name).
+		Set(fields_to_update...).
+		Where("id = $" + strconv.Itoa(len(fields_to_update)+1)).
+		Returning(folschema.FieldsList()...).
+		Build()
+
+	rows, err := r.db.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("error updating folder: %v", err)
 	}
+	defer rows.Close()
+
+	var updated_folder []folschema.UserFolder
+	if err = helpers.ScanRows(rows, &updated_folder); err != nil {
+		return fmt.Errorf("error scanning folder: %v", err)
+	}
+
+	if len(updated_folder) != 1 {
+		return fmt.Errorf("error updating folder: %v", err)
+	}
+
+	*folder = updated_folder[0]
 
 	return nil
 }
