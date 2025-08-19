@@ -2,8 +2,10 @@ package folderrepo
 
 import (
 	"context"
+	"fmt"
 	"homeserver/constants/folconsts"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db/repositories/helpers"
 	"strings"
 )
 
@@ -11,11 +13,24 @@ func (r *FolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.User
 	fields_to_read := strings.Join(folschema.FieldsList(folconsts.CreatedAt), ", ")
 
 	var folder folschema.UserFolder
-	err := r.db.Pool.QueryRow(ctx, "SELECT "+fields_to_read+" FROM folders WHERE id = ?", id).
-		Scan(&folder.ID, &folder.Name, &folder.Path, &folder.Parent, &folder.OwnerID)
+	rows, err := r.db.Pool.Query(ctx, "SELECT "+fields_to_read+" FROM folders WHERE id = ?", id)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("folder not found")
+	}
+
+	if err = helpers.ScanRows(rows, &folder); err != nil {
+		return nil, err
+	}
+
+	if rows.Next() {
+		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	}
+
 	return &folder, nil
 }
 

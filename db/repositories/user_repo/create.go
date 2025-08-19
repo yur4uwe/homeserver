@@ -3,9 +3,10 @@ package userrepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -14,11 +15,10 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 		return nil, fmt.Errorf("invalid user data: %v", err)
 	}
 
-	var inserted_user uschema.User
 	query := querybuilder.New().
-		Insert(uschema.FieldsList(uconsts.ID)...).
-		Into(constants.DBUsersTable.Name).
-		Values(user.Username, user.Email, user.Password, user.CreatedAt).
+		Insert(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt)...).
+		Into(dbconsts.DBUsersTable.Name).
+		Values(user.Username, user.Email, user.Password, user.AuthToken, user.EmailVerified).
 		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
 
@@ -27,10 +27,20 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 	// 	strings.Join(uschema.FieldsList(uconsts.ID, uconsts.UpdatedAt, uconsts.CreatedAt), ", "),
 	// 	placeholders,
 	// 	strings.Join(uschema.FieldsList(uconsts.Password), ", "))
-	if err := r.db.Pool.QueryRow(ctx, query, user.Username, user.Password, user.Email, nil, false).
-		Scan(&inserted_user.ID, &inserted_user.Username, &inserted_user.Email); err != nil {
+	rows, err := r.db.Pool.Query(ctx, query, user.Username, user.Password, user.Email, nil, false)
+	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %v", err)
 	}
+	defer rows.Close()
 
-	return &inserted_user, nil
+	var inserted_user []uschema.User
+	if err = helpers.ScanRows(rows, &inserted_user); err != nil {
+		return nil, err
+	}
+
+	if len(inserted_user) > 1 {
+		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	}
+
+	return &inserted_user[0], nil
 }

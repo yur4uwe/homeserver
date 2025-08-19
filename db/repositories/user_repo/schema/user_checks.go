@@ -2,7 +2,7 @@ package uschema
 
 import (
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	"slices"
 	"strings"
@@ -16,7 +16,7 @@ func (u *User) ShouldHaveFields(fields ...string) error {
 	var errorMessages = make(map[string]string)
 
 	for _, field := range fields {
-		if !slices.Contains(constants.DBUsersTable.Fields, field) {
+		if !slices.Contains(dbconsts.DBUsersTable.Fields, field) {
 			errorMessages[field] = fmt.Sprintf(uconsts.InvalidUserFieldError, field)
 			continue
 		}

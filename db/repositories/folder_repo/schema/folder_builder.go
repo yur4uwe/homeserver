@@ -3,6 +3,7 @@ package folschema
 import (
 	"fmt"
 	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/web-server/pkg/utils"
 	"os"
 	"strings"
@@ -85,5 +86,5 @@ func (uf *UserFolder) AbsolutePath() string {
 }
 
 func FieldsList(without ...string) []string {
-	return utils.Without(constants.DBFoldersTable.Fields, without...)
+	return utils.Without(dbconsts.DBFoldersTable.Fields, without...)
 }

@@ -1,7 +1,10 @@
 package querybuilder
 
 import (
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/qbconsts"
+	"slices"
+	"strings"
 )
 
 type QueryBuilder struct {
@@ -34,24 +37,62 @@ func (q *QueryBuilder) Reset() *QueryBuilder {
 }
 
 func (q *QueryBuilder) Build() string {
+	var table dbconsts.DBTable
+
+	switch q.table {
+	case dbconsts.DBUsersTable.Name:
+		table = *dbconsts.DBUsersTable
+	case dbconsts.DBFilesTable.Name:
+		table = *dbconsts.DBFilesTable
+	case dbconsts.DBFoldersTable.Name:
+		table = *dbconsts.DBFoldersTable
+	default:
+		panic("unknown table")
+	}
+
+	for _, col := range q.columns {
+		if !slices.Contains(table.Fields, col) {
+			panic("unknown column: " + col)
+		}
+	}
+
+	for _, col := range q.returning {
+		if !slices.Contains(table.Fields, col) {
+			panic("unknown returning column: " + col)
+		}
+	}
+
 	if q.queryType == "" {
 		panic("empty query type")
 	} else if q.table == "" {
 		panic("empty table")
-	} else if (len(q.columns) == 0 || q.valuesNum == 0) && q.queryType != qbconsts.DELETE {
+	} else if len(q.columns) == 0 && q.queryType != qbconsts.DELETE {
 		panic("empty columns")
 	}
 
+	if len(q.columns) > len(table.Fields) {
+		panic("too many columns")
+	} else if len(q.returning) > len(table.Fields) {
+		panic("too many returning columns")
+	}
+
+	query := ""
 	switch q.queryType {
 	case qbconsts.SELECT:
-		return q.buildSelect()
+		query += q.buildSelect()
 	case qbconsts.INSERT:
-		return q.buildInsert()
+		query += q.buildInsert()
 	case qbconsts.UPDATE:
-		return q.buildUpdate()
+		query += q.buildUpdate()
 	case qbconsts.DELETE:
-		return q.buildDelete()
+		query += q.buildDelete()
 	default:
-		return ""
+		panic("unknown query type")
 	}
+
+	if q.queryType != qbconsts.SELECT && len(q.returning) > 0 {
+		query += " RETURNING " + strings.Join(q.returning, ", ")
+	}
+
+	return query
 }

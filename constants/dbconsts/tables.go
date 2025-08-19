@@ -1,4 +1,4 @@
-package constants
+package dbconsts
 
 import (
 	"homeserver/constants/fconsts"

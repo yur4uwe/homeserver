@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"homeserver/constants/qbconsts"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +15,19 @@ func (q *QueryBuilder) buildSelect() string {
 	if q.conditions != "" {
 		query += " WHERE " + q.conditions
 	}
+
+	if q.orderBy != "" {
+		query += " ORDER BY " + string(q.orderBy)
+	}
+
+	if q.limit > 0 {
+		query += " LIMIT " + strconv.Itoa(q.limit)
+	}
+
+	if q.offset > 0 {
+		query += " OFFSET " + strconv.Itoa(q.offset)
+	}
+
 	return query
 }
 

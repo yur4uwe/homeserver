@@ -1,44 +1,77 @@
 package helpers
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 
 	"github.com/jackc/pgx/v5"
 )
 
 const (
-	NilDestErr = "destination cannot be nil"
+	NilRowErr     = "rows cannot be nil"
+	NilDestErr    = "destination cannot be nil"
+	NotPtrToSlice = "dest must be a pointer to a slice"
 )
 
 func ScanRows(rows pgx.Rows, dest any) error {
-	if rows == nil || !rows.Next() {
-		return pgx.ErrNoRows
+	if rows == nil {
+		return errors.New(NilRowErr)
 	} else if dest == nil {
-		return fmt.Errorf(NilDestErr)
+		return errors.New(NilDestErr)
 	}
-	v := reflect.ValueOf(dest).Elem()
-	t := v.Type()
+
+	destVal := reflect.ValueOf(dest)
+	if destVal.Kind() != reflect.Ptr {
+		return errors.New(NotPtrToSlice)
+	}
+	sliceVal := destVal.Elem()
+	if sliceVal.Kind() != reflect.Slice {
+		return errors.New(NotPtrToSlice)
+	}
+	elemType := sliceVal.Type().Elem()
+
+	descs := rows.FieldDescriptions()
 	fieldMap := map[string]int{}
-	for i := 0; i < t.NumField(); i++ {
-		tag := t.Field(i).Tag.Get("db")
+	structType := elemType
+	if elemType.Kind() == reflect.Ptr {
+		structType = elemType.Elem()
+	}
+	for i := 0; i < structType.NumField(); i++ {
+		tag := structType.Field(i).Tag.Get("db")
 		if tag != "" {
 			fieldMap[tag] = i
 		}
 	}
 
-	descs := rows.FieldDescriptions()
-	scanArgs := make([]any, len(descs))
-	for i, desc := range descs {
-		if idx, ok := fieldMap[desc.Name]; ok {
-			scanArgs[i] = v.Field(idx).Addr().Interface()
+	for rows.Next() {
+		var elem reflect.Value
+		if elemType.Kind() == reflect.Ptr {
+			elem = reflect.New(structType)
 		} else {
-			var dummy any
-			scanArgs[i] = &dummy
+			elem = reflect.New(structType).Elem()
 		}
+
+		structVal := elem
+		if elemType.Kind() == reflect.Ptr {
+			structVal = elem.Elem()
+		}
+
+		scanArgs := make([]any, len(descs))
+		for i, desc := range descs {
+			if idx, ok := fieldMap[desc.Name]; ok {
+				scanArgs[i] = structVal.Field(idx).Addr().Interface()
+			} else {
+				var dummy any
+				scanArgs[i] = &dummy
+			}
+		}
+
+		if err := rows.Scan(scanArgs...); err != nil {
+			return err
+		}
+
+		sliceVal.Set(reflect.Append(sliceVal, elem))
 	}
-	if rows.Next() {
-		return rows.Scan(scanArgs...)
-	}
-	return pgx.ErrNoRows
+
+	return nil
 }

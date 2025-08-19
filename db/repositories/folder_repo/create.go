@@ -3,7 +3,7 @@ package folderrepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
 	querybuilder "homeserver/db/query_builder"
 	folschema "homeserver/db/repositories/folder_repo/schema"
@@ -30,8 +30,9 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 
 	query := querybuilder.New().
 		Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
-		Into(constants.DBFoldersTable.Name).
+		Into(dbconsts.DBFoldersTable.Name).
 		Values(folder.Name, folder.Path, folder.Parent, folder.OwnerID).
+		Returning(folschema.FieldsList()...).
 		Build()
 
 	inserted_folder := folschema.UserFolder{}
@@ -49,11 +50,7 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 		return nil, fmt.Errorf("failed to insert folder: no rows returned")
 	}
 
-	err = helpers.ScanRows(
-		rows,
-		&inserted_folder,
-	)
-	if err != nil {
+	if err = helpers.ScanRows(rows, &inserted_folder); err != nil {
 		return nil, err
 	}
 

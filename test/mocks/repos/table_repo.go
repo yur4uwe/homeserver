@@ -2,7 +2,7 @@ package repomocks
 
 import (
 	"context"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -25,7 +25,7 @@ func (m *MockTableRepo) TableExists(ctx context.Context, table_name string) (boo
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockTableRepo) CreateTable(ctx context.Context, table *constants.DBTable) error {
+func (m *MockTableRepo) CreateTable(ctx context.Context, table *dbconsts.DBTable) error {
 	args := m.Called(ctx, table)
 	return args.Error(0)
 }

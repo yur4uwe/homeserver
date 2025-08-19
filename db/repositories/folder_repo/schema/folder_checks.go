@@ -2,7 +2,7 @@ package folschema
 
 import (
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
 	"slices"
 	"strings"
@@ -17,7 +17,7 @@ func (uf *UserFolder) ShouldHaveFields(ownerName string) func(...string) error {
 		var errorMessages = make(map[string]string)
 
 		for _, field := range fields {
-			if !slices.Contains(constants.DBFoldersTable.Fields, field) {
+			if !slices.Contains(dbconsts.DBFoldersTable.Fields, field) {
 				errorMessages[field] = fmt.Sprintf(folconsts.InvalidFolderFieldError, field)
 				continue
 			}

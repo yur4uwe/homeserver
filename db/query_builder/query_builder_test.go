@@ -9,8 +9,8 @@ import (
 
 func TestQueryBuilder(t *testing.T) {
 	t.Run("Insert Query", func(t *testing.T) {
-		query := New().Insert("name", "age").Into("users").Values("John", 30).Build()
-		assert.Equal(t, "INSERT INTO users (name, age) VALUES ($1, $2)", query)
+		query := New().Insert("username", "email").Into("users").Values("John", 30).Build()
+		assert.Equal(t, "INSERT INTO users (username, email) VALUES ($1, $2)", query)
 	})
 
 	t.Run("Insert Query - No Columns", func(t *testing.T) {
@@ -20,8 +20,8 @@ func TestQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Select Query", func(t *testing.T) {
-		query := New().Select("id", "name").From("users").Where("age > 18").Build()
-		assert.Equal(t, "SELECT id, name FROM users WHERE age > 18", query)
+		query := New().Select("id", "username").From("users").Where("email = 'test@example.com'").Build()
+		assert.Equal(t, "SELECT id, username FROM users WHERE email = 'test@example.com'", query)
 	})
 
 	t.Run("Select Query - No Columns", func(t *testing.T) {
@@ -37,8 +37,8 @@ func TestQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Update Query", func(t *testing.T) {
-		query := New().Update("users").Set("name", "age").Where("id = $1").Build()
-		assert.Equal(t, "UPDATE users SET name = $1, age = $2 WHERE id = $1", query)
+		query := New().Update("users").Set("username", "email").Where("id = $1").Build()
+		assert.Equal(t, "UPDATE users SET username = $1, email = $2 WHERE id = $1", query)
 	})
 
 	t.Run("Update Query - No Columns", func(t *testing.T) {
@@ -94,19 +94,99 @@ func TestQueryBuilder(t *testing.T) {
 
 	t.Run("Chained Where and OrderBy", func(t *testing.T) {
 		qb := New().Select("id").From("users").Where("active = true").OrderBy(qbconsts.ASCENDING)
-		// OrderBy is a no-op in buildSelect, but should not panic
 		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "SELECT id FROM users WHERE active = true ORDER BY ASC", qb.Build())
 	})
 
 	t.Run("Chained Limit and Offset", func(t *testing.T) {
 		qb := New().Select("id").From("users").Limit(10).Offset(5)
-		// Limit/Offset are no-ops in buildSelect, but should not panic
 		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "SELECT id FROM users LIMIT 10 OFFSET 5", qb.Build())
 	})
 
 	t.Run("Returning Clause", func(t *testing.T) {
-		qb := New().Insert("name").Into("users").Values("John").Returning("id")
-		// Returning is a no-op in buildInsert, but should not panic
+		qb := New().Insert("username").Into("users").Values("John").Returning("id")
+		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "INSERT INTO users (username) VALUES ($1) RETURNING id", qb.Build())
+	})
+
+	t.Run("Returning Clause with Multiple Columns", func(t *testing.T) {
+		qb := New().Insert("username", "email").Into("users").Values("John", "john@example.com").Returning("id", "created_at")
+		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id, created_at", qb.Build())
+	})
+
+	t.Run("Returning Clause on Select", func(t *testing.T) {
+		qb := New().Select("id").From("users")
+		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "SELECT id FROM users", qb.Build())
+	})
+
+	t.Run("Returning Clause on Update", func(t *testing.T) {
+		qb := New().Update("users").Set("username").Where("id = $1").Returning("id", "username")
+		assert.NotPanics(t, func() { qb.Build() })
+		assert.Equal(t, "UPDATE users SET username = $1 WHERE id = $1 RETURNING id, username", qb.Build())
+	})
+
+	t.Run("Panic on Unknown Query Type", func(t *testing.T) {
+		qb := New()
+		qb.queryType = "UNKNOWN_TYPE"
+		qb.table = "users"
+		qb.columns = []string{"id"}
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Unknown Table", func(t *testing.T) {
+		qb := New().Select("id").From("not_a_table")
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Empty Query Type", func(t *testing.T) {
+		qb := New()
+		qb.table = "users"
+		qb.columns = []string{"id"}
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Empty Table", func(t *testing.T) {
+		qb := New()
+		qb.queryType = qbconsts.SELECT
+		qb.columns = []string{"id"}
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Too Many Columns", func(t *testing.T) {
+		qb := New().Select("id", "username", "password", "email", "auth_token", "created_at", "email_verified", "extra_column").From("users")
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Too Many Returning Columns", func(t *testing.T) {
+		qb := New().Select("id").From("users").Returning("id", "username", "password", "email", "auth_token", "created_at", "email_verified", "extra_column")
+		assert.Panics(t, func() { qb.Build() })
+	})
+
+	t.Run("Panic on Unknown Column", func(t *testing.T) {
+		qb := New().Select("id", "not_a_field").From("users")
+		assert.PanicsWithValue(t, "unknown column: not_a_field", func() { qb.Build() })
+	})
+
+	t.Run("Panic on Unknown Returning Column", func(t *testing.T) {
+		qb := New().Select("id").From("users").Returning("not_a_field")
+		assert.PanicsWithValue(t, "unknown returning column: not_a_field", func() { qb.Build() })
+	})
+
+	t.Run("Panic on Multiple Unknown Columns", func(t *testing.T) {
+		qb := New().Select("id", "foo", "bar").From("users")
+		assert.PanicsWithValue(t, "unknown column: foo", func() { qb.Build() })
+	})
+
+	t.Run("Panic on Multiple Unknown Returning Columns", func(t *testing.T) {
+		qb := New().Select("id").From("users").Returning("foo", "bar")
+		assert.PanicsWithValue(t, "unknown returning column: foo", func() { qb.Build() })
+	})
+
+	t.Run("No Panic on All Valid Columns and Returning", func(t *testing.T) {
+		qb := New().Select("id", "username").From("users").Returning("id")
 		assert.NotPanics(t, func() { qb.Build() })
 	})
 }

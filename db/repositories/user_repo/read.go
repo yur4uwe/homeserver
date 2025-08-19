@@ -3,9 +3,10 @@ package userrepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -29,7 +30,7 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 
 	query := querybuilder.New().
 		Select(uschema.FieldsList(uconsts.Password)...).
-		From(constants.DBUsersTable.Name).
+		From(dbconsts.DBUsersTable.Name).
 		Where(whereClause).
 		Build()
 
@@ -39,19 +40,20 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 	// 	whereClause,
 	// )
 
-	var result uschema.User
-	err := r.db.Pool.QueryRow(ctx, query, vals...).
-		Scan(
-			&result.ID,
-			&result.Username,
-			&result.Email,
-			&result.AuthToken,
-			&result.CreatedAt,
-			&result.EmailVerified,
-		)
+	var result []uschema.User
+	rows, err := r.db.Pool.Query(ctx, query, vals...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying user: %v", err)
 	}
+	defer rows.Close()
 
-	return &result, nil
+	if err = helpers.ScanRows(rows, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result) > 1 {
+		return nil, fmt.Errorf("unexpected error: multiple rows returned")
+	}
+
+	return &result[0], nil
 }

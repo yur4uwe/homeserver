@@ -2,7 +2,7 @@ package fschema
 
 import (
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
 	"slices"
 	"strings"
@@ -17,7 +17,7 @@ func (uf *UserFile) ShouldHaveFields(ownerName string) func(...string) error {
 		var errorMessages []string
 
 		for _, field := range fields {
-			if !slices.Contains(constants.DBFilesTable.Fields, field) {
+			if !slices.Contains(dbconsts.DBFilesTable.Fields, field) {
 				errorMessages = append(errorMessages, fmt.Sprintf(fconsts.InvalidFileFieldError, field))
 				continue
 			}

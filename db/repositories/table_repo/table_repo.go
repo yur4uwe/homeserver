@@ -3,14 +3,14 @@ package tablerepo
 import (
 	"context"
 	"fmt"
-	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/db"
 )
 
 type InTableRepo interface {
 	DropTable(ctx context.Context, table_name string) error
 	TableExists(ctx context.Context, table_name string) (bool, error)
-	CreateTable(ctx context.Context, table *constants.DBTable) error
+	CreateTable(ctx context.Context, table *dbconsts.DBTable) error
 }
 
 type TableRepo struct {
@@ -43,7 +43,7 @@ func (repo *TableRepo) TableExists(ctx context.Context, table_name string) (bool
 	return exists, nil
 }
 
-func (repo *TableRepo) CreateTable(ctx context.Context, table *constants.DBTable) error {
+func (repo *TableRepo) CreateTable(ctx context.Context, table *dbconsts.DBTable) error {
 	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (%s);`, table.Name, table.SQLCreation)
 	_, err := repo.db.Pool.Exec(ctx, query)
 	if err != nil {

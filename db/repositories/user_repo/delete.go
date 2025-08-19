@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/uconsts"
+	querybuilder "homeserver/db/query_builder"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -12,7 +13,9 @@ func (r *UserRepo) Delete(ctx context.Context, user *uschema.User) error {
 		return fmt.Errorf("invalid user data: %v", err)
 	}
 
-	tag, err := r.db.Pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, user.ID)
+	query := querybuilder.New().Delete().From("users").Where("id = $1").Build()
+
+	tag, err := r.db.Pool.Exec(ctx, query, user.ID)
 	if err != nil {
 		return fmt.Errorf("error deleting user entry: %v", err)
 	}
