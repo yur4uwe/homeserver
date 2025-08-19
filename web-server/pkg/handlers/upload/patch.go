@@ -6,14 +6,26 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/web-server/pkg/middleware"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Patch file request received")
 
-		newFileName := r.URL.Query().Get("new_name")
-		oldFileName := r.URL.Query().Get("old_name")
+		newFileName, err := url.QueryUnescape(r.URL.Query().Get("new_name"))
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Error unescaping new filename: "+err.Error(), "PatchFile")
+			ErrorResponse(w, "Error unescaping new filename", http.StatusBadRequest)
+			return
+		}
+		oldFileName, err := url.QueryUnescape(r.URL.Query().Get("old_name"))
+		if err != nil {
+			reqCont.LogHistory.ErrLog("Error unescaping old filename: "+err.Error(), "PatchFile")
+			ErrorResponse(w, "Error unescaping old filename", http.StatusBadRequest)
+			return
+		}
 
 		if newFileName == "" || oldFileName == "" {
 			reqCont.LogHistory.ErrLog("Missing filename parameter", "PatchFile")
@@ -26,7 +38,13 @@ func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalR
 			WithPath(reqCont.Requester.Username).
 			WithOwnerID(reqCont.Requester.ID)
 
-		err := repos.FileRepo.UpdateFileEntry(r.Context(), file, []string{fconsts.Filename}, reqCont.Requester)
+		sig := strings.Split(newFileName, ".")
+
+		fvp := map[string]any{
+			fconsts.Filename: sig[0],
+		}
+
+		err = repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
 			ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)

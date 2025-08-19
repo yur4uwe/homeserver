@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"homeserver/db/repositories"
-	"homeserver/pkg/schemas/user_schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/web-server/pkg/templates"
 	"strings"
 )
 
-func BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *uschema.User) (*templates.SearchPageData, error) {
 	user_relative_directory := directory[1:]
 
 	data := &templates.SearchPageData{
@@ -19,12 +19,18 @@ func BrowseHandler(ctx context.Context, repos *repositories.Repositories, direct
 		Entries:      []templates.SearchEntry{},
 	}
 
-	file_entries, err := connection.ExtractFilesFromDirectory(ctx, strings.Join(directory, "/"), requester)
+	file_entries, err := repos.FileRepo.GetFilesByDirectory(ctx, strings.Join(directory, "/"), requester)
+	// file_entries, err := connection.ExtractFilesFromDirectory(ctx, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user files: %v", err)
 	}
 
-	folder_entries, err := connection.ExtractFoldersFromDirectory(ctx, directory, requester)
+	folder_entries, err := repos.FolderRepo.GetChildren(
+		ctx,
+		strings.Join(directory[:len(directory)-1], "/"),
+		directory[len(directory)-1],
+		requester,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user folders: %v", err)
 	}

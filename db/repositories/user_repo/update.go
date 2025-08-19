@@ -30,7 +30,7 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 		return fmt.Errorf("no fields to update")
 	}
 
-	if err := user.ShouldHaveFields(append(fields, uconsts.ID)...); err != nil {
+	if err := user.ShouldHaveFields(uconsts.ID); err != nil {
 		return fmt.Errorf("invalid user data: %v", err)
 	}
 

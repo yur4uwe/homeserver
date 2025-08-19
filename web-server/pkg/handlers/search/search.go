@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"homeserver/db/repositories"
-	"homeserver/pkg/schemas/user_schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/web-server/pkg/templates"
 	"strings"
 )
 
-func FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *user_schema.User) (*templates.SearchPageData, error) {
+func FileSearchHandler(ctx context.Context, repos *repositories.Repositories, query string, directory []string, requester *uschema.User) (*templates.SearchPageData, error) {
 	data := &templates.SearchPageData{
 		Query:        query,
 		Directory:    strings.Join(directory[1:], "/"),
 		URIDirectory: ParseQuerySlice(directory[1:]),
 	}
 
-	search_results, err := connection.SearchFiles(ctx, query, requester, directory)
+	search_results, err := repos.FileRepo.FuzzySearch(ctx, query, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error searching files: %v", err)
 	}

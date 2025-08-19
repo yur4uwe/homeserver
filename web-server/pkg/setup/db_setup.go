@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
+	"homeserver/constants/dbconsts"
 	"homeserver/db"
 	"homeserver/db/repositories"
+	folschema "homeserver/db/repositories/folder_repo/schema"
+	"os"
 )
 
-var RequiredDBTables = []*constants.DBTable{
-	constants.DBUsersTable,
-	constants.DBFoldersTable,
-	constants.DBFilesTable,
+var RequiredDBTables = []*dbconsts.DBTable{
+	dbconsts.DBUsersTable,
+	dbconsts.DBFoldersTable,
+	dbconsts.DBFilesTable,
 }
 
 func CheckDatabaseTables(repos *repositories.Repositories, enable_logs ...bool) error {
@@ -42,42 +45,41 @@ func CheckDatabaseTables(repos *repositories.Repositories, enable_logs ...bool) 
 	return nil
 }
 
-// func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) error {
-// 	ctx := context.Background()
+func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) error {
+	ctx := context.Background()
 
-// 	to_log := len(enable_logs) > 0 && enable_logs[0]
+	to_log := len(enable_logs) > 0 && enable_logs[0]
 
-// 	storage_path := os.Getenv(constants.StoragePath)
+	storage_path := os.Getenv(constants.StoragePath)
 
-// 	users, err := connection.ExtractUserEntries(ctx)
-// 	if err != nil {
-// 		return fmt.Errorf("error extracting user entries: %v", err)
-// 	}
+	users, err := repos.UserRepo.QueryAll(ctx)
+	if err != nil {
+		return fmt.Errorf("error querying users: %v", err)
+	}
 
-// 	for _, user := range users {
-// 		err := connection.CheckUserFolder(ctx, user)
-// 		if err != nil {
-// 			return fmt.Errorf("error checking folder for user %s: %v", user.Username, err)
-// 		}
+	for _, user := range users {
+		if err := os.MkdirAll(fmt.Sprintf("%s%s", storage_path, user.Username), os.ModePerm); err != nil {
+			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
+		}
 
-// 		if info, err := os.Stat(fmt.Sprintf("%s%s", storage_path, user.Username)); err != nil {
-// 			if os.IsNotExist(err) {
-// 				if err := os.MkdirAll(fmt.Sprintf("%s%s", storage_path, user.Username), os.ModePerm); err != nil {
-// 					return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
-// 				}
-// 			} else {
-// 				return fmt.Errorf("error checking folder for user %s: %v", user.Username, err)
-// 			}
-// 		} else if !info.IsDir() {
-// 			return fmt.Errorf("storage path for user %s is not a directory", user.Username)
-// 		}
-// 	}
+		rootFolder := folschema.NewUserFolderBuilder().
+			WithName(user.Username).
+			WithOwnerID(user.ID)
 
-// 	if to_log {
-// 		fmt.Println("All user folders have been created.")
-// 	}
-// 	return nil
-// }
+		if folder, err := repos.FolderRepo.GetFolder(ctx, rootFolder); err != nil {
+			return fmt.Errorf("error getting folder for user %s: %v", user.Username, err)
+		} else if folder == nil {
+			if _, err := repos.FolderRepo.CreateFolder(ctx, rootFolder, &user); err != nil {
+				return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
+			}
+		}
+	}
+
+	if to_log {
+		fmt.Println("All user folders have been created.")
+	}
+	return nil
+}
 
 func CheckDatabaseExtensions(connection *db.Database) error {
 	if _, err := connection.Pool.Exec(context.Background(), "CREATE EXTENSION IF NOT EXISTS pg_trgm;"); err != nil {

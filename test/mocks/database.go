@@ -5,12 +5,12 @@ import (
 )
 
 func InitRepoMocks() (
-	*repomocks.MockFileRepo, *repomocks.MockUserRepo,
+	*repomocks.MockUserRepo, *repomocks.MockFileRepo,
 	*repomocks.MockFolderRepo, *repomocks.MockTokenRepo,
 	*repomocks.MockTableRepo,
 ) {
-	return repomocks.NewMockFileRepo(),
-		repomocks.NewMockUserRepo(),
+	return repomocks.NewMockUserRepo(),
+		repomocks.NewMockFileRepo(),
 		repomocks.NewMockFolderRepo(),
 		repomocks.NewMockTokenRepo(),
 		repomocks.NewMockTableRepo()

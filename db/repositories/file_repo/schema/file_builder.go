@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/constants/dbconsts"
+	"homeserver/constants/fconsts"
 	"homeserver/web-server/pkg/utils"
 	"os"
 	"strings"
@@ -121,6 +122,88 @@ func (uf *UserFile) WithMetadata(metadata *string) *UserFile {
 	}
 	uf.Metadata = metadata
 	return uf
+}
+
+func (uf *UserFile) Get(name string) (any, error) {
+	switch name {
+	case fconsts.ID:
+		return uf.ID, nil
+	case fconsts.Filename:
+		return uf.Filename, nil
+	case fconsts.Extension:
+		return uf.Extension, nil
+	case fconsts.Path:
+		return uf.Path, nil
+	case fconsts.Directory:
+		return uf.Directory, nil
+	case fconsts.Size:
+		return uf.Size, nil
+	case fconsts.ContentType:
+		return uf.ContentType, nil
+	case fconsts.OwnerID:
+		return uf.OwnerID, nil
+	case fconsts.CreatedAt:
+		return uf.CreatedAt, nil
+	case fconsts.UpdatedAt:
+		return uf.UpdatedAt, nil
+	default:
+		return nil, fmt.Errorf("unknown field: %s", name)
+	}
+}
+
+func (uf *UserFile) Set(name string, value any) error {
+	switch name {
+	case fconsts.ID:
+		if id, ok := value.(int); ok && id > 0 {
+			uf.ID = id
+			return nil
+		}
+		return fmt.Errorf("invalid ID value: %v", value)
+	case fconsts.Filename:
+		if filename, ok := value.(string); ok && filename != "" {
+			uf.Filename = filename
+			return nil
+		}
+		return fmt.Errorf("invalid Filename value: %v", value)
+	case fconsts.Extension:
+		if ext, ok := value.(string); ok && ext != "" {
+			uf.Extension = ext
+			return nil
+		}
+		return fmt.Errorf("invalid Extension value: %v", value)
+	case fconsts.Path:
+		if path, ok := value.(string); ok && path != "" {
+			uf.Path = path
+			return nil
+		}
+		return fmt.Errorf("invalid Path value: %v", value)
+	case fconsts.Directory:
+		if dir, ok := value.(int); ok && dir > 0 {
+			uf.Directory = dir
+			return nil
+		}
+		return fmt.Errorf("invalid Directory value: %v", value)
+	case fconsts.Size:
+		if size, ok := value.(int64); ok && size > 0 {
+			uf.Size = size
+			return nil
+		}
+		return fmt.Errorf("invalid Size value: %v", value)
+	case fconsts.ContentType:
+		if contentType, ok := value.(string); ok && contentType != "" {
+			uf.ContentType = contentType
+			return nil
+		}
+		return fmt.Errorf("invalid ContentType value: %v", value)
+	case fconsts.OwnerID:
+		if ownerID, ok := value.(int); ok && ownerID > 0 {
+			uf.OwnerID = ownerID
+			return nil
+		}
+		return fmt.Errorf("invalid OwnerID value: %v", value)
+	default:
+		return fmt.Errorf("unknown field: %s", name)
+	}
 }
 
 func (uf *UserFile) AbsolutePath() string {

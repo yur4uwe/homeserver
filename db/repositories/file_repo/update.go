@@ -16,47 +16,49 @@ var (
 	FixDuplicates = PreventDuplicateFileName
 )
 
-func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschema.UserFile, fields_to_update []string, owner *uschema.User) error {
-	if slices.Contains(fields_to_update, fconsts.ID) {
+func (repo *FileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error {
+	keys := []string{}
+	fval := *file
+	projected_file := &fval
+
+	for k := range fvp {
+		if _, err := file.Get(k); err == nil {
+			keys = append(keys, k)
+			projected_file.Set(k, fvp[k])
+		}
+	}
+
+	if slices.Contains(keys, fconsts.ID) {
 		return fmt.Errorf("cannot update file ID")
 	}
-	if slices.Contains(fields_to_update, fconsts.OwnerID) {
+	if slices.Contains(keys, fconsts.OwnerID) {
 		return fmt.Errorf("cannot update owner ID")
 	}
-	if slices.Contains(fields_to_update, fconsts.CreatedAt) {
+	if slices.Contains(keys, fconsts.CreatedAt) {
 		return fmt.Errorf("cannot update created at")
 	}
-	if slices.Contains(fields_to_update, fconsts.UpdatedAt) {
+	if slices.Contains(keys, fconsts.UpdatedAt) {
 		return fmt.Errorf("cannot update updated at")
 	}
 
-	args := append(fields_to_update, fconsts.ID)
-	if err := modified_file.ShouldHaveFields(owner.Username)(args...); err != nil {
+	if err := file.ShouldHaveFields(owner.Username)(fconsts.ID); err != nil {
 		return fmt.Errorf("invalid file data: %v", err)
 	}
 
 	var err error
-	if modified_file.Filename != "" && modified_file.Extension != "" && modified_file.Path != "" {
-		modified_file, err = FixDuplicates(modified_file)
+	if slices.Contains(keys, fconsts.Filename) || slices.Contains(keys, fconsts.Extension) || slices.Contains(keys, fconsts.Path) {
+		projected_file, err = FixDuplicates(projected_file)
 		if err != nil {
 			return fmt.Errorf("error preventing duplicate file name: %v", err)
 		}
-	} else if modified_file.Filename != "" || modified_file.Extension != "" || modified_file.Path != "" {
-		return fmt.Errorf("if filename, extension, or path is provided for file update, all must be provided for the update")
-	}
 
-	fields_str := ""
-	for i, field := range fields_to_update {
-		if i > 0 {
-			fields_str += ", "
-		}
-		fields_str += fmt.Sprintf("%s = $%d", field, i+1)
+		fvp[fconsts.Filename] = projected_file.Filename
 	}
 
 	query := querybuilder.New().
 		Update(dbconsts.DBFilesTable.Name).
-		Set(fields_to_update...).
-		Where("id = $" + fmt.Sprint(len(fields_to_update)+1)).
+		Set(keys...).
+		Where("id = $" + fmt.Sprint(len(keys)+1)).
 		Returning(fschema.FieldsList()...).
 		Build()
 
@@ -67,9 +69,11 @@ func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschem
 	// 	RETURNING`+strings.Join(fschema.FieldsList(), ", "),
 	// 	fields_str, len(fields_to_update)+1)
 
-	query_args := make([]any, len(fields_to_update)+1)
-	copy(query_args, OrderFileUpdateFields(fields_to_update, modified_file))
-	query_args[len(fields_to_update)] = modified_file.ID
+	query_args := make([]any, 0, len(keys)+1)
+	for _, k := range keys {
+		query_args = append(query_args, fvp[k])
+	}
+	query_args = append(query_args, file.ID)
 
 	rows, err := repo.db.Pool.Query(ctx, query, query_args...)
 	if err != nil {
@@ -85,7 +89,7 @@ func (repo *FileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschem
 		return fmt.Errorf("expected 1 modified file, got %d", len(modified_files))
 	}
 
-	*modified_file = modified_files[0]
+	*file = modified_files[0]
 
 	return nil
 }

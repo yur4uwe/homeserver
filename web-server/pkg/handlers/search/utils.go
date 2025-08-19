@@ -2,10 +2,11 @@ package search
 
 import (
 	"fmt"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/folder_schema"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
+
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"math"
 	"net/url"
 	"sort"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	IsFileTypeAvailable = globals.IsFileTypeAvailable
+	IsFileTypeAvailable = utils.IsFileTypeAvailable
 )
 
 func ParseQuerySlice(query []string) string {
@@ -37,7 +38,7 @@ func ParseSize(size int64) string {
 	return fmt.Sprintf("%.2f %s", size_float/math.Pow(1024, float64(i)), size_units[i])
 }
 
-func FileToSearchEntry(file *file_schema.UserFile) templates.SearchEntry {
+func FileToSearchEntry(file *fschema.UserFile) templates.SearchEntry {
 	entry := templates.SearchEntry{
 		ID:        file.ID,
 		Name:      file.Filename,
@@ -65,7 +66,7 @@ func FileToSearchEntry(file *file_schema.UserFile) templates.SearchEntry {
 	return entry
 }
 
-func FolderToSearchEntry(folder *folder_schema.UserFolder) templates.SearchEntry {
+func FolderToSearchEntry(folder *folschema.UserFolder) templates.SearchEntry {
 	entry := templates.SearchEntry{
 		ID:       folder.ID,
 		Name:     folder.Name,
@@ -85,16 +86,16 @@ func FolderToSearchEntry(folder *folder_schema.UserFolder) templates.SearchEntry
 	return entry
 }
 
-func TransformEntries(file_entries []*file_schema.UserFile, folder_entries []*folder_schema.UserFolder) []templates.SearchEntry {
+func TransformEntries(file_entries []fschema.UserFile, folder_entries []folschema.UserFolder) []templates.SearchEntry {
 	var entries []templates.SearchEntry
 
 	for _, file := range file_entries {
-		entry := FileToSearchEntry(file)
+		entry := FileToSearchEntry(&file)
 		entries = append(entries, entry)
 	}
 
 	for _, folder := range folder_entries {
-		entry := FolderToSearchEntry(folder)
+		entry := FolderToSearchEntry(&folder)
 		entries = append(entries, entry)
 	}
 
@@ -112,8 +113,8 @@ func SortEntries(entries []templates.SearchEntry) {
 	})
 }
 
-func ExcludeFilesFromParents(files []*file_schema.UserFile, directory []string) []*file_schema.UserFile {
-	var filtered []*file_schema.UserFile
+func ExcludeFilesFromParents(files []fschema.UserFile, directory []string) []fschema.UserFile {
+	var filtered []fschema.UserFile
 	for _, file := range files {
 		if strings.HasPrefix(file.Path, strings.Join(directory, "/")) {
 			filtered = append(filtered, file)

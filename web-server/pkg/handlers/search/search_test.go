@@ -3,23 +3,26 @@ package search
 import (
 	"context"
 	"errors"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFileSearchHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
-	requester := &user_schema.User{ID: 1, Username: "testuser"}
+	_, mockFR, _, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
+	requester := &uschema.User{ID: 1, Username: "testuser"}
 	ctx := context.Background()
 	query := "report"
 	directory := []string{"testuser", "docs"}
 
-	file := &file_schema.UserFile{
+	file := fschema.UserFile{
 		ID:        1,
 		Filename:  "report",
 		Extension: "pdf",
@@ -27,12 +30,12 @@ func TestFileSearchHandler(t *testing.T) {
 		Size:      2048,
 	}
 
-	resetter := test.NewMocksResetter(&mockDB.Mock)
+	resetter := test.NewMocksResetter(&mockFR.Mock)
 
 	t.Run("success", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("SearchFiles", ctx, query, requester, directory).Return([]*file_schema.UserFile{file}, nil)
+		mockFR.On("FuzzySearch", ctx, query, strings.Join(directory, "/"), requester).Return([]fschema.UserFile{file}, nil)
 		data, err := FileSearchHandler(ctx, mockDB, query, directory, requester)
 		assert.NoError(t, err)
 		assert.NotNil(t, data)
@@ -44,7 +47,7 @@ func TestFileSearchHandler(t *testing.T) {
 	t.Run("error searching files", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("SearchFiles", ctx, query, requester, directory).Return(([]*file_schema.UserFile)(nil), errors.New("fail search"))
+		mockFR.On("FuzzySearch", ctx, query, strings.Join(directory, "/"), requester).Return(([]fschema.UserFile)(nil), errors.New("fail search"))
 		data, err := FileSearchHandler(ctx, mockDB, query, directory, requester)
 		assert.Error(t, err)
 		assert.Nil(t, data)

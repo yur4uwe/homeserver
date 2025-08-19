@@ -57,3 +57,23 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 
 	return &result[0], nil
 }
+
+func (r *UserRepo) QueryAll(ctx context.Context) ([]uschema.User, error) {
+	query := querybuilder.New().
+		Select(uschema.FieldsList()...).
+		From(dbconsts.DBUsersTable.Name).
+		Build()
+
+	var result []uschema.User
+	rows, err := r.db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying users: %v", err)
+	}
+	defer rows.Close()
+
+	if err = helpers.ScanRows(rows, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

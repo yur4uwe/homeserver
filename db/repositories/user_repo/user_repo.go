@@ -9,6 +9,7 @@ import (
 type InUserRepo interface {
 	Create(ctx context.Context, user *uschema.User) (*uschema.User, error)
 	Query(ctx context.Context, user *uschema.User) (*uschema.User, error)
+	QueryAll(ctx context.Context) ([]uschema.User, error)
 	Update(ctx context.Context, user *uschema.User, field_vals map[string]any) error
 	Delete(ctx context.Context, user *uschema.User) error
 }

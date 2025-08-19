@@ -21,8 +21,8 @@ func (m *MockFileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, o
 	return args.Error(0)
 }
 
-func (m *MockFileRepo) UpdateFileEntry(ctx context.Context, modified_file *fschema.UserFile, fields_to_update []string, owner *uschema.User) error {
-	args := m.Called(ctx, modified_file, fields_to_update, owner)
+func (m *MockFileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error {
+	args := m.Called(ctx, file, fvp, owner)
 	return args.Error(0)
 }
 
@@ -48,6 +48,11 @@ func (m *MockFileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) 
 
 func (m *MockFileRepo) FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]fschema.UserFile, error) {
 	args := m.Called(ctx, search_query, directory, owner)
+	return args.Get(0).([]fschema.UserFile), args.Error(1)
+}
+
+func (m *MockFileRepo) GetFilesByDirectory(ctx context.Context, directory string, owner *uschema.User) ([]fschema.UserFile, error) {
+	args := m.Called(ctx, directory, owner)
 	return args.Get(0).([]fschema.UserFile), args.Error(1)
 }
 

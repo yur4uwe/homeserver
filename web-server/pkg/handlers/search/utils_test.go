@@ -1,8 +1,8 @@
 package search
 
 import (
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/folder_schema"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/test"
 	"homeserver/web-server/pkg/templates"
 	"testing"
@@ -66,7 +66,7 @@ func TestFileToSearchEntry(t *testing.T) {
 
 	mockIsFileTypeAvailable.On("IsFileTypeAvailable", "pdf").Return(true)
 
-	file := &file_schema.UserFile{
+	file := &fschema.UserFile{
 		ID:        1,
 		Filename:  "report",
 		Extension: "pdf",
@@ -104,7 +104,7 @@ func TestFileToSearchEntry(t *testing.T) {
 }
 
 func TestFolderToSearchEntry(t *testing.T) {
-	folder := &folder_schema.UserFolder{
+	folder := &folschema.UserFolder{
 		ID:   2,
 		Name: "reports",
 		Path: "user/docs/reports",
@@ -128,10 +128,10 @@ func TestTransformEntries(t *testing.T) {
 	mockIsFileTypeAvailable.On("IsFileTypeAvailable", "txt").Return(true)
 	mockIsFileTypeAvailable.On("IsFileTypeAvailable", mock.AnythingOfType("string")).Return(false)
 
-	file := &file_schema.UserFile{ID: 1, Filename: "file", Extension: "txt", Path: "user/folder/file.txt", Size: 100}
-	folder := &folder_schema.UserFolder{ID: 2, Name: "folder", Path: "user/folder"}
-	files := []*file_schema.UserFile{file}
-	folders := []*folder_schema.UserFolder{folder}
+	file := fschema.UserFile{ID: 1, Filename: "file", Extension: "txt", Path: "user/folder/file.txt", Size: 100}
+	folder := folschema.UserFolder{ID: 2, Name: "folder", Path: "user/folder"}
+	files := []fschema.UserFile{file}
+	folders := []folschema.UserFolder{folder}
 	entries := TransformEntries(files, folders)
 	assert.Len(t, entries, 2)
 	assert.Equal(t, "file", entries[0].Name)
@@ -155,7 +155,7 @@ func TestSortEntries(t *testing.T) {
 }
 
 func TestExcludeFilesFromParents(t *testing.T) {
-	files := []*file_schema.UserFile{
+	files := []fschema.UserFile{
 		{
 			Filename: "file1.txt",
 			Path:     "root/parent",
@@ -183,7 +183,7 @@ func TestExcludeFilesFromParents(t *testing.T) {
 	filtered := ExcludeFilesFromParents(files, directory)
 
 	// Only files whose path starts with "root/parent/folder" should remain
-	expected := []*file_schema.UserFile{
+	expected := []fschema.UserFile{
 		{
 			Filename: "file2.txt",
 			Path:     "root/parent/folder",

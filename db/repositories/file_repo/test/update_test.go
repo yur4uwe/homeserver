@@ -32,7 +32,11 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fieldsToUpdate := []string{"filename", "extension", "path"}
+	fvp := map[string]any{
+		"filename":  "new_filename",
+		"extension": "jpg",
+		"path":      "new_path",
+	}
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
@@ -41,6 +45,9 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	expected := *file
 	expected.ID += 1
+	expected.Filename = fvp["filename"].(string)
+	expected.Extension = fvp["extension"].(string)
+	expected.Path = fvp["path"].(string)
 
 	mockRows := &mocks.MockRows{}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
@@ -55,9 +62,12 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
+	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.NoError(t, err)
 	assert.NotEqual(t, file.ID, 1)
+	assert.Equal(t, expected.Filename, file.Filename)
+	assert.Equal(t, expected.Extension, file.Extension)
+	assert.Equal(t, expected.Path, file.Path)
 }
 
 func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
@@ -67,7 +77,11 @@ func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fieldsToUpdate := []string{"filename", "extension", "path"}
+	fvp := map[string]any{
+		"filename":  "new_filename",
+		"extension": "jpg",
+		"path":      "new_path",
+	}
 
 	// Patch FixDuplicates to return error
 	mockFuncs := &MockFuncs{}
@@ -75,7 +89,7 @@ func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
 	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
-	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
+	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error preventing duplicate file name")
 }
@@ -90,9 +104,11 @@ func TestUpdateFileEntry_PartialNameFields(t *testing.T) {
 		Filename: "file",
 	}
 	owner := makeOwner()
-	fieldsToUpdate := []string{"filename"}
+	fvp := map[string]any{
+		"filename": "new_filename",
+	}
 
-	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
+	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "if filename, extension, or path is provided for file update, all must be provided")
 }
@@ -104,7 +120,11 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fieldsToUpdate := []string{"filename", "extension", "path"}
+	fvp := map[string]any{
+		"filename":  "new_filename",
+		"extension": "jpg",
+		"path":      "new_path",
+	}
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
@@ -119,7 +139,7 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 	mockRows.On("Scan", mock.Anything).Return(fmt.Errorf("update error"))
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFileEntry(context.Background(), file, fieldsToUpdate, owner)
+	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "update error")
 }

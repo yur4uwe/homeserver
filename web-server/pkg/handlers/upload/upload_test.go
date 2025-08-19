@@ -5,14 +5,17 @@ import (
 	"context"
 	"errors"
 	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/test/mocks/mocksos"
 	"homeserver/web-server/pkg/middleware"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -21,7 +24,7 @@ import (
 )
 
 func TestDownloadFile(t *testing.T) {
-	mockFR, _, _, _, _ := mocks.InitRepoMocks()
+	_, mockFR, _, _, _ := mocks.InitRepoMocks()
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	defer test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})()
@@ -30,6 +33,23 @@ func TestDownloadFile(t *testing.T) {
 	reqCont.Requester = uschema.NewUserBuilder().
 		WithID(1).
 		WithUsername("testuser")
+
+	mockOS := new(mocksos.MockOS)
+	defer test.MockFunction(&MkdirAll, mockOS.MkdirAll, func() {})()
+	defer test.MockFunction(&Create, mockOS.Create, func() {})()
+	defer test.MockFunction(&Getenv, mockOS.Getenv, func() {})()
+
+	mockIO := new(mocks.MockIO)
+	defer test.MockFunction(&Copy, mockIO.Copy, func() {})()
+
+	mockInsertedFile := fschema.NewUserFileBuilder().
+		WithID(1).
+		WithFullName("myfile.txt").
+		WithPath("testuser/docs").
+		WithExtension("txt").
+		WithSize(int64(len("filecontent"))).
+		WithContentType("text/plain").
+		WithOwnerID(reqCont.Requester.ID)
 
 	resetter := test.NewMocksResetter(&mockFR.Mock)
 
@@ -48,7 +68,11 @@ func TestDownloadFile(t *testing.T) {
 	t.Run("success upload", func(t *testing.T) {
 		resetter()
 		body, contentType := createMultipart("myfile.txt", "docs/myfile.txt")
-		mockFR.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(1, "myfile.txt", nil)
+		mockFR.On("CreateFile", mock.Anything, mock.Anything, reqCont.Requester).Return(mockInsertedFile, nil)
+		mockIO.On("Copy", mock.Anything, mock.Anything).Return(int64(len("filecontent")), nil)
+		mockOS.On("MkdirAll", mock.Anything, os.ModePerm).Return(nil)
+		mockOS.On("Create", mock.Anything).Return(new(os.File), nil)
+		mockOS.On("Getenv", "STORAGE_PATH").Return("/storage/path/")
 
 		req := httptest.NewRequest(http.MethodPost, "/upload", body)
 		req.Header.Set("Content-Type", contentType)
@@ -84,7 +108,7 @@ func TestDownloadFile(t *testing.T) {
 	t.Run("error saving file", func(t *testing.T) {
 		resetter()
 		body, contentType := createMultipart("myfile.txt", "")
-		mockFR.On("SaveFile", mock.Anything, mock.AnythingOfType("*file_schema.UserFile"), mock.Anything, reqCont.Requester).Return(0, "", errors.New("save error"))
+		mockFR.On("CreateFile", mock.Anything, mock.Anything, reqCont.Requester).Return(mockInsertedFile, errors.New("error saving file"))
 
 		mockErrResp.On("ErrorResponse", mock.Anything, "Error saving file", http.StatusInternalServerError).Return()
 

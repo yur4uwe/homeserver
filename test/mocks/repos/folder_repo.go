@@ -17,24 +17,19 @@ func NewMockFolderRepo() *MockFolderRepo {
 	return &MockFolderRepo{}
 }
 
-func (m *MockFolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.UserFolder, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(*folschema.UserFolder), args.Error(1)
-}
-
-func (m *MockFolderRepo) GetFolderByPath(ctx context.Context, folder *folschema.UserFolder) (*folschema.UserFolder, error) {
+func (m *MockFolderRepo) GetFolder(ctx context.Context, folder *folschema.UserFolder) (*folschema.UserFolder, error) {
 	args := m.Called(ctx, folder)
 	return args.Get(0).(*folschema.UserFolder), args.Error(1)
 }
 
-func (m *MockFolderRepo) GetFolderByOwner(ctx context.Context, ownerID int) (*folschema.UserFolder, error) {
+func (m *MockFolderRepo) GetFoldersByOwner(ctx context.Context, ownerID int) ([]folschema.UserFolder, error) {
 	args := m.Called(ctx, ownerID)
-	return args.Get(0).(*folschema.UserFolder), args.Error(1)
+	return args.Get(0).([]folschema.UserFolder), args.Error(1)
 }
 
-func (m *MockFolderRepo) GetChildren(ctx context.Context, parentID int) ([]*folschema.UserFolder, error) {
-	args := m.Called(ctx, parentID)
-	return args.Get(0).([]*folschema.UserFolder), args.Error(1)
+func (m *MockFolderRepo) GetChildren(ctx context.Context, path, name string, owner *uschema.User) ([]folschema.UserFolder, error) {
+	args := m.Called(ctx, path, name, owner)
+	return args.Get(0).([]folschema.UserFolder), args.Error(1)
 }
 
 func (m *MockFolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error) {

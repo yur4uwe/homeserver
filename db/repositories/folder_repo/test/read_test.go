@@ -3,11 +3,13 @@ package foltests
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"homeserver/db"
 	folderrepo "homeserver/db/repositories/folder_repo"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test/mocks"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -24,7 +26,7 @@ var fieldDescs = []pgconn.FieldDescription{
 	{Name: "created_at"},
 }
 
-func TestGetFolderByID_Success(t *testing.T) {
+func TestGetFolder_Success(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
 	mockDB := &db.Database{Pool: mockPool}
 	repo := folderrepo.NewFolderRepo(mockDB)
@@ -44,7 +46,7 @@ func TestGetFolderByID_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolderByID(context.Background(), expected.ID)
+	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithID(expected.ID))
 	assert.NoError(t, err)
 	assert.Equal(t, expected.ID, folder.ID)
 	assert.Equal(t, expected.Name, folder.Name)
@@ -67,7 +69,7 @@ func TestGetFolderByID_DBError(t *testing.T) {
 	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolderByID(context.Background(), 1)
+	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithID(1))
 	assert.Error(t, err)
 	assert.Nil(t, folder)
 }
@@ -92,7 +94,7 @@ func TestGetFolderByPath_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolderByPath(context.Background(), expected)
+	folder, err := repo.GetFolder(context.Background(), expected)
 	assert.NoError(t, err)
 	assert.Equal(t, expected.ID, folder.ID)
 	assert.Equal(t, expected.Name, folder.Name)
@@ -116,7 +118,7 @@ func TestGetFolderByPath_DBError(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolderByPath(context.Background(), &folschema.UserFolder{Path: "p", Name: "n"})
+	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithPath("p").WithName("n"))
 	assert.Error(t, err)
 	assert.Nil(t, folder)
 }
@@ -188,7 +190,13 @@ func TestGetChildren_Success(t *testing.T) {
 	})
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	children, err := repo.GetChildren(context.Background(), *expected.Parent)
+	mockRequester := &uschema.User{ID: expected.OwnerID, Username: "john_doe"}
+
+	pathSlice := strings.Split(expected.Path, "/")
+	name := pathSlice[len(pathSlice)-1]
+	path := strings.Join(pathSlice[:len(pathSlice)-1], "/")
+
+	children, err := repo.GetChildren(context.Background(), path, name, mockRequester)
 	assert.NoError(t, err)
 	assert.Len(t, children, 1)
 	assert.Equal(t, expected.ID, children[0].ID)
@@ -205,7 +213,13 @@ func TestGetChildren_DBError(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(&mocks.MockRows{}, errors.New("db error"))
 
-	children, err := repo.GetChildren(context.Background(), 1)
+	pathSlice := strings.Split("john_doe/folder", "/")
+	name := pathSlice[len(pathSlice)-1]
+	path := strings.Join(pathSlice[:len(pathSlice)-1], "/")
+
+	mockRequester := &uschema.User{ID: 1, Username: "john_doe"}
+
+	children, err := repo.GetChildren(context.Background(), path, name, mockRequester)
 	assert.Error(t, err)
 	assert.Nil(t, children)
 }

@@ -1,11 +1,21 @@
 package upload
 
 import (
+	"homeserver/constants"
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/web-server/pkg/middleware"
+	"io"
 	"net/http"
+	"os"
 	"strings"
+)
+
+var (
+	Copy     = io.Copy
+	MkdirAll = os.MkdirAll
+	Create   = os.Create
+	Getenv   = os.Getenv
 )
 
 func DownloadFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
@@ -70,6 +80,53 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 				// Handle other errors
 				reqCont.LogHistory.ErrLog("Error saving file: "+err.Error(), "DownloadFile:71")
 				ErrorResponse(w, "Error saving file", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if err := MkdirAll(Getenv(constants.StoragePath)+inserted_file.Path, os.ModePerm); err != nil {
+			select {
+			case <-done:
+				// Handle cancellation
+				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile:66")
+				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+				return
+			default:
+				// Handle other errors
+				reqCont.LogHistory.ErrLog("Error creating directories: "+err.Error(), "DownloadFile:71")
+				ErrorResponse(w, "Error creating directories", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		f, err := Create(inserted_file.AbsolutePath())
+		if err != nil {
+			select {
+			case <-done:
+				// Handle cancellation
+				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile:66")
+				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+				return
+			default:
+				// Handle other errors
+				reqCont.LogHistory.ErrLog("Error creating file: "+err.Error(), "DownloadFile:71")
+				ErrorResponse(w, "Error creating file", http.StatusInternalServerError)
+				return
+			}
+		}
+		defer f.Close()
+
+		if _, err := Copy(f, multipart); err != nil {
+			select {
+			case <-done:
+				// Handle cancellation
+				reqCont.LogHistory.ErrLog("Request canceled during file saving", "DownloadFile:66")
+				ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+				return
+			default:
+				// Handle other errors
+				reqCont.LogHistory.ErrLog("Error copying file content: "+err.Error(), "DownloadFile:71")
+				ErrorResponse(w, "Error copying file content", http.StatusInternalServerError)
 				return
 			}
 		}

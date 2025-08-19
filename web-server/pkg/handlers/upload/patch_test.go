@@ -3,12 +3,17 @@ package upload
 import (
 	"errors"
 	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+	"strings"
+
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +21,7 @@ import (
 )
 
 func TestPatchFile(t *testing.T) {
-	mockFR, _, _, _, _ := mocks.InitRepoMocks()
+	_, mockFR, _, _, _ := mocks.InitRepoMocks()
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrRes := new(mocks.ErrorResponseMock)
 
@@ -56,15 +61,19 @@ func TestPatchFile(t *testing.T) {
 				err = errors.New("file not found")
 			}
 
-			mockFR.On("RenameFile",
+			mockFR.On("UpdateFileEntry",
 				mock.Anything, mock.Anything,
-				mock.AnythingOfType("string"), mockReqContext.Requester,
-			).Return("new file.txt", err)
+				mock.AnythingOfType("map[string]interface {}"), mockReqContext.Requester,
+			).Return(err).Run(func(args mock.Arguments) {
+				name := strings.Split(utils.Must(url.QueryUnescape(tt.newContent)).(string), ".")
+				args.Get(1).(*fschema.UserFile).Filename = name[0]
+				args.Get(1).(*fschema.UserFile).Extension = name[1]
+			})
 			mockErrRes.On("ErrorResponse", mock.Anything, mock.Anything, tt.statusCode).Return()
 
 			req := httptest.NewRequest(
 				http.MethodPatch,
-				"/patch?new_name="+tt.filename+"&old_name="+tt.newContent,
+				"/patch?new_name="+tt.newContent+"&old_name="+tt.filename,
 				nil,
 			)
 

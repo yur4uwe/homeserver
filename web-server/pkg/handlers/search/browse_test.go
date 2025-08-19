@@ -3,9 +3,10 @@ package search
 import (
 	"context"
 	"errors"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/folder_schema"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"testing"
@@ -14,21 +15,22 @@ import (
 )
 
 func TestBrowseHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
-	requester := &user_schema.User{ID: 1, Username: "testuser"}
+	_, mockFR, mockFolR, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, mockFolR, nil, nil)
+	requester := &uschema.User{ID: 1, Username: "testuser"}
 	ctx := context.Background()
 	directory := []string{"testuser", "docs"}
 
-	resetter := test.NewMocksResetter(&mockDB.Mock)
+	resetter := test.NewMocksResetter(&mockFR.Mock, &mockFolR.Mock)
 
-	file := file_schema.NewUserFileBuilder().
+	file := fschema.NewUserFileBuilder().
 		WithID(1).
 		WithFilename("file1").
 		WithExtension("txt").
 		WithPath("testuser/docs/file1.txt").
 		WithSize(100)
 
-	folder := folder_schema.NewUserFolderBuilder().
+	folder := folschema.NewUserFolderBuilder().
 		WithID(2).
 		WithName("folder1").
 		WithPath("testuser/docs/folder1")
@@ -36,8 +38,8 @@ func TestBrowseHandler(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("ExtractFilesFromDirectory", ctx, "testuser/docs", requester).Return([]*file_schema.UserFile{file}, nil)
-		mockDB.On("ExtractFoldersFromDirectory", ctx, directory, requester).Return([]*folder_schema.UserFolder{folder}, nil)
+		mockFR.On("GetFilesByDirectory", ctx, "testuser/docs", requester).Return([]fschema.UserFile{*file}, nil)
+		mockFolR.On("GetChildren", ctx, "testuser", "docs", requester).Return([]folschema.UserFolder{*folder}, nil)
 
 		data, err := BrowseHandler(ctx, mockDB, directory, requester)
 		assert.NoError(t, err)
@@ -56,8 +58,8 @@ func TestBrowseHandler(t *testing.T) {
 	t.Run("error extracting files", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("ExtractFilesFromDirectory", ctx, "testuser/docs", requester).Return(([]*file_schema.UserFile)(nil), errors.New("fail files"))
-		mockDB.On("ExtractFoldersFromDirectory", ctx, directory, requester).Return(([]*folder_schema.UserFolder)(nil), nil)
+		mockFR.On("GetFilesByDirectory", ctx, "testuser/docs", requester).Return(([]fschema.UserFile)(nil), errors.New("fail files"))
+		mockFolR.On("GetChildren", ctx, "testuser", "docs", requester).Return(([]folschema.UserFolder)(nil), nil)
 
 		data, err := BrowseHandler(ctx, mockDB, directory, requester)
 
@@ -69,8 +71,8 @@ func TestBrowseHandler(t *testing.T) {
 	t.Run("error extracting folders", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("ExtractFilesFromDirectory", ctx, "testuser/docs", requester).Return([]*file_schema.UserFile{}, nil)
-		mockDB.On("ExtractFoldersFromDirectory", ctx, directory, requester).Return(([]*folder_schema.UserFolder)(nil), errors.New("fail folders"))
+		mockFR.On("GetFilesByDirectory", ctx, "testuser/docs", requester).Return(([]fschema.UserFile)(nil), nil)
+		mockFolR.On("GetChildren", ctx, "testuser", "docs", requester).Return(([]folschema.UserFolder)(nil), errors.New("fail folders"))
 
 		data, err := BrowseHandler(ctx, mockDB, directory, requester)
 		assert.Error(t, err)

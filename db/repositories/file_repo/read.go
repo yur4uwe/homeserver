@@ -133,7 +133,7 @@ func (repo *FileRepo) FuzzySearch(ctx context.Context, search_query string, dire
 	return files, nil
 }
 
-func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string, owner *uschema.User) ([]*fschema.UserFile, error) {
+func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string, owner *uschema.User) ([]fschema.UserFile, error) {
 	if err := owner.ShouldHaveFields(uconsts.ID); err != nil {
 		return nil, fmt.Errorf("owner must have a valid user ID")
 	}
@@ -156,7 +156,7 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 	}
 	defer rows.Close()
 
-	var files []*fschema.UserFile
+	var files []fschema.UserFile
 	for rows.Next() {
 		var file fschema.UserFile
 		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt, &file.UpdatedAt, &file.Metadata); err != nil {
@@ -164,7 +164,7 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 		}
 
 		if strings.HasPrefix(file.Path, directory) {
-			files = append(files, &file)
+			files = append(files, file)
 		}
 	}
 

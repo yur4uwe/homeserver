@@ -1,15 +1,16 @@
 package main
 
 import (
-	"homeserver/pkg/db"
-	"homeserver/pkg/setup"
+	"homeserver/db"
+	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/setup"
 	"log"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load("../.env", "../.env.test"); err != nil {
+	if err := godotenv.Load("../../.env", "../../.env.test"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
@@ -29,13 +30,15 @@ func main() {
 		log.Fatalf("Test storage path setup error: %v", err)
 	}
 
-	connection, err := db.NewDatabase()
+	connection, err := db.NewConnection()
 	if err != nil {
 		log.Fatalf("Database connection error: %v", err)
 	}
 	defer connection.Close()
 
-	if err := setup.CheckDatabaseTables(connection); err != nil {
+	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
+
+	if err := setup.CheckDatabaseTables(repos); err != nil {
 		log.Fatalf("Database table setup error: %v", err)
 	}
 
@@ -43,7 +46,7 @@ func main() {
 		log.Fatalf("Database extension setup error: %v", err)
 	}
 
-	if err := setup.CheckUserFolders(connection); err != nil {
+	if err := setup.CheckUserFolders(repos); err != nil {
 		log.Fatalf("User folder setup error: %v", err)
 	}
 }

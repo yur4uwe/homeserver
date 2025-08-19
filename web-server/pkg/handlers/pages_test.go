@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/test/mocks/mocksos"
 	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
@@ -121,7 +122,7 @@ func TestStaticPageHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
-	mockOS := new(mocks.MockOS)
+	mockOS := new(mocksos.MockOS)
 	cleanupReadFile := test.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
 
 	isPageMock := new(IsPageMock)
