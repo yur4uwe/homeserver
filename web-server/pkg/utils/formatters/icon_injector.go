@@ -1,4 +1,4 @@
-package utils
+package formatters
 
 import (
 	"homeserver/web-server/pkg/parser"

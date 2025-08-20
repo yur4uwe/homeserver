@@ -9,7 +9,8 @@ type UserFolder struct {
 	// With no leading or trailing slashes
 	Path string `db:"path" json:"path"`
 	// If Parent is nil, this is a root user folder
-	Parent    *int      `db:"parent" json:"parent,omitempty"`
-	OwnerID   int       `db:"owner_id" json:"owner_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	Parent        *int      `db:"parent" json:"parent,omitempty"`
+	OwnerID       int       `db:"owner_id" json:"owner_id"`
+	TrustedSource []byte    `db:"trusted_source" json:"trusted_source"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at"`
 }

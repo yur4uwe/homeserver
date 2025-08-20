@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func (repo *FileRepo) GetFileByID(ctx context.Context, id string) (*fschema.UserFile, error) {
+func (repo *FileRepo) GetFileByID(ctx context.Context, id int) (*fschema.UserFile, error) {
 	query := querybuilder.New().Select(fschema.FieldsList()...).From(dbconsts.DBFilesTable.Name).Where("id = $1").Build()
 
 	var file []fschema.UserFile

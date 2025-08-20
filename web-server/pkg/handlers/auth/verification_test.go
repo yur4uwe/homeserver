@@ -10,7 +10,7 @@ import (
 	"homeserver/test/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -138,7 +138,7 @@ func TestVerificationHandler(t *testing.T) {
 		mockParser.On(
 			"NewAlert",
 			"Verification success", "check",
-			"Your email has been verified successfully!", utils.AlertSuccess,
+			"Your email has been verified successfully!", constants.Success,
 		).Return("ALERT: Verification success check Your email has been verified successfully! 1")
 
 		mockTemplate.On(
@@ -212,7 +212,7 @@ func TestSendVerificationEmail(t *testing.T) {
 		os.Unsetenv(constants.EmailPassword)
 	}()
 
-	form := utils.RegisterForm{
+	form := formatters.RegisterForm{
 		Username: "testuser",
 		Email:    "test@example.com",
 	}

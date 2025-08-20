@@ -11,29 +11,42 @@ import (
 	"time"
 
 	"homeserver/constants"
+	"homeserver/db"
+	"homeserver/db/repositories"
 	"homeserver/file-server/pkg/handlers"
+	"homeserver/file-server/pkg/middleware"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	info, err := os.Stat("../../.env")
+	info, err := os.Stat(constants.Rootd + ".env")
 	if err != nil {
 		log.Fatalf("Error stating .env file: %v", err)
 	}
 
 	log.Printf("Using .env file at: %s", info.Name())
 
-	if err := godotenv.Load("../../.env"); err != nil {
+	if err := godotenv.Load(constants.Rootd + ".env"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+	connection, err := db.NewConnection()
+	if err != nil {
+		log.Fatalf("Error establishing database connection: %v", err)
+	}
+
+	conn := repositories.NewRepositories(repositories.InitRepositories(connection))
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers.PageHandler)
+	mux.HandleFunc("/files/", handlers.FileHandler)
+	mux.HandleFunc("/folders/", handlers.FolderHandler)
+
+	handler := middleware.Wrapper(mux, conn)
 
 	server := &http.Server{
 		Addr:    ":" + os.Getenv(constants.FileSrvPort),
-		Handler: mux,
+		Handler: handler,
 	}
 
 	go func() {

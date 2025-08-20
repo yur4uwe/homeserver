@@ -1,4 +1,4 @@
-package utils
+package generics
 
 func Must(value interface{}, err error) interface{} {
 	if err != nil {

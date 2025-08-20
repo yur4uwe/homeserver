@@ -3,7 +3,7 @@ package uschema
 import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/generics"
 	"slices"
 	"strings"
 	"time"
@@ -127,5 +127,5 @@ func IsUserField(field string) bool {
 }
 
 func FieldsList(without ...string) []string {
-	return utils.Without(dbconsts.DBUsersTable.Fields, without...)
+	return generics.Without(dbconsts.DBUsersTable.Fields, without...)
 }

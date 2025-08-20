@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/formatters"
 	"strings"
 	"testing"
 
@@ -11,28 +11,28 @@ import (
 func TestLoginValidation(t *testing.T) {
 	tests := []struct {
 		name         string
-		form         utils.LoginForm
+		form         formatters.LoginForm
 		wantValid    bool
 		wantField    string
 		wantContains string
 	}{
 		{
 			name:         "empty identificator",
-			form:         utils.LoginForm{Identificator: "", Password: "pass"},
+			form:         formatters.LoginForm{Identificator: "", Password: "pass"},
 			wantValid:    false,
 			wantField:    IdentificatorField,
 			wantContains: IdentificatorError,
 		},
 		{
 			name:         "empty password",
-			form:         utils.LoginForm{Identificator: "user", Password: ""},
+			form:         formatters.LoginForm{Identificator: "user", Password: ""},
 			wantValid:    false,
 			wantField:    PasswordField,
 			wantContains: PasswordError,
 		},
 		{
 			name:         "valid login",
-			form:         utils.LoginForm{Identificator: "user", Password: "pass"},
+			form:         formatters.LoginForm{Identificator: "user", Password: "pass"},
 			wantValid:    true,
 			wantField:    "",
 			wantContains: "",
@@ -56,49 +56,49 @@ func TestLoginValidation(t *testing.T) {
 func TestRegisterValidation(t *testing.T) {
 	tests := []struct {
 		name         string
-		form         utils.RegisterForm
+		form         formatters.RegisterForm
 		wantValid    bool
 		wantField    string
 		wantContains string
 	}{
 		{
 			name:         "empty username",
-			form:         utils.RegisterForm{Username: "", Email: "e", Password: "p", Confirm: "p"},
+			form:         formatters.RegisterForm{Username: "", Email: "e", Password: "p", Confirm: "p"},
 			wantValid:    false,
 			wantField:    UsernameField,
 			wantContains: UsernameError,
 		},
 		{
 			name:         "empty email",
-			form:         utils.RegisterForm{Username: "u", Email: "", Password: "p", Confirm: "p"},
+			form:         formatters.RegisterForm{Username: "u", Email: "", Password: "p", Confirm: "p"},
 			wantValid:    false,
 			wantField:    EmailField,
 			wantContains: EmailError,
 		},
 		{
 			name:         "empty password",
-			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "", Confirm: "p"},
+			form:         formatters.RegisterForm{Username: "u", Email: "e", Password: "", Confirm: "p"},
 			wantValid:    false,
 			wantField:    PasswordField,
 			wantContains: PasswordError,
 		},
 		{
 			name:         "empty confirm",
-			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: ""},
+			form:         formatters.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: ""},
 			wantValid:    false,
 			wantField:    ConfirmPasswordField,
 			wantContains: ConfirmPasswordError,
 		},
 		{
 			name:         "password mismatch",
-			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "q"},
+			form:         formatters.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "q"},
 			wantValid:    false,
 			wantField:    ConfirmPasswordField,
 			wantContains: PasswordMismatchError,
 		},
 		{
 			name:         "valid register",
-			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "p"},
+			form:         formatters.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "p"},
 			wantValid:    true,
 			wantField:    "",
 			wantContains: "",

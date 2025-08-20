@@ -8,7 +8,7 @@ import (
 	"homeserver/web-server/pkg/auth"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/formatters"
 	"net/http"
 	"os"
 )
@@ -29,7 +29,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Register endpoint accessed")
 
-		form := utils.RegisterFormFromRequest(r)
+		form := formatters.RegisterFormFromRequest(r)
 
 		valid, target, fieldsetHTML := RegisterValidation(form)
 		if !valid {
@@ -67,7 +67,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		go verSuccess(form, verification_token)
 
-		w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
+		w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

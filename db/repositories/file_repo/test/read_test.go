@@ -56,7 +56,7 @@ func TestGetFileByID_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	file, err := repo.GetFileByID(context.Background(), "1")
+	file, err := repo.GetFileByID(context.Background(), 1)
 	assert.NoError(t, err)
 	assert.Equal(t, expected.Filename, file.Filename)
 	assert.Equal(t, expected.Path, file.Path)
@@ -76,7 +76,7 @@ func TestGetFileByID_DBError(t *testing.T) {
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
 
-	file, err := repo.GetFileByID(context.Background(), "1")
+	file, err := repo.GetFileByID(context.Background(), 1)
 	assert.Error(t, err)
 	assert.Nil(t, file)
 }

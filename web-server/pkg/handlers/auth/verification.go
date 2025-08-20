@@ -7,7 +7,8 @@ import (
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	ErrorResponse = utils.ErrorResponse
+	ErrorResponse = err.ErrorResponse
 	NewAlert      = parser.NewAlert
 	LoadIcon      = parser.LoadIcon
 	verFailed     = sendVerificationFailurePage
@@ -34,7 +35,7 @@ func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.
 	tmpl.Execute(w, verification)
 }
 
-func sendVerificationEmail(form utils.RegisterForm, verification_token string) {
+func sendVerificationEmail(form formatters.RegisterForm, verification_token string) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", "tsg9515@gmail.com")
 	m.SetHeader("To", form.Email)
@@ -100,7 +101,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 		verification.Success = true
 		verification.Icon = template.HTML(LoadIcon("check"))
 
-		alert := NewAlert("Verification success", "check", "Your email has been verified successfully!", utils.AlertSuccess)
+		alert := NewAlert("Verification success", "check", "Your email has been verified successfully!", constants.Success)
 
 		reqCont.PageContent.ModalContent = template.HTML(alert)
 		reqCont.RerenderBody = true

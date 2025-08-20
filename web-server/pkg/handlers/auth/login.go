@@ -7,7 +7,7 @@ import (
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"net/http"
 	"os"
@@ -26,7 +26,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Login endpoint accessed")
 
-		form := utils.LoginFormFromRequest(r)
+		form := formatters.LoginFormFromRequest(r)
 
 		valid, target, fieldsetHTML := LoginValidation(form)
 		if !valid {

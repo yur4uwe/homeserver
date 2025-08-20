@@ -1,4 +1,4 @@
-package utils
+package formatters
 
 import (
 	"net/http/httptest"

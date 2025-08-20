@@ -31,7 +31,7 @@ func (m *MockFileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, o
 	return args.Get(0).(*fschema.UserFile), args.Error(1)
 }
 
-func (m *MockFileRepo) GetFileByID(ctx context.Context, id string) (*fschema.UserFile, error) {
+func (m *MockFileRepo) GetFileByID(ctx context.Context, id int) (*fschema.UserFile, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*fschema.UserFile), args.Error(1)
 }
@@ -56,7 +56,7 @@ func (m *MockFileRepo) GetFilesByDirectory(ctx context.Context, directory string
 	return args.Get(0).([]fschema.UserFile), args.Error(1)
 }
 
-func (m *MockFileRepo) DeleteFileByID(ctx context.Context, fileID string, owner *uschema.User) error {
+func (m *MockFileRepo) DeleteFileByID(ctx context.Context, fileID int, owner *uschema.User) error {
 	args := m.Called(ctx, fileID, owner)
 	return args.Error(0)
 }

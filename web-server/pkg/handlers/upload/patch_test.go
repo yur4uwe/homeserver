@@ -10,7 +10,7 @@ import (
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/generics"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -65,7 +65,7 @@ func TestPatchFile(t *testing.T) {
 				mock.Anything, mock.Anything,
 				mock.AnythingOfType("map[string]interface {}"), mockReqContext.Requester,
 			).Return(err).Run(func(args mock.Arguments) {
-				name := strings.Split(utils.Must(url.QueryUnescape(tt.newContent)).(string), ".")
+				name := strings.Split(generics.Must(url.QueryUnescape(tt.newContent)).(string), ".")
 				args.Get(1).(*fschema.UserFile).Filename = name[0]
 				args.Get(1).(*fschema.UserFile).Extension = name[1]
 			})

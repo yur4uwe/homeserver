@@ -1,6 +1,8 @@
 package auth
 
-import "homeserver/web-server/pkg/utils"
+import (
+	"homeserver/web-server/pkg/utils/formatters"
+)
 
 func fieldset(fieldId, message, value, inputType, placeholder string, isError bool) string {
 	class := ""
@@ -23,7 +25,7 @@ func fieldset(fieldId, message, value, inputType, placeholder string, isError bo
 	</div>`
 }
 
-func LoginValidation(form utils.LoginForm) (bool, string, string) {
+func LoginValidation(form formatters.LoginForm) (bool, string, string) {
 	if form.Identificator == "" {
 		return false, IdentificatorField, fieldset(IdentificatorField, IdentificatorError, form.Identificator, "text", IdentificatorPlaceholder, true)
 	}
@@ -33,7 +35,7 @@ func LoginValidation(form utils.LoginForm) (bool, string, string) {
 	return true, "", ""
 }
 
-func RegisterValidation(form utils.RegisterForm) (bool, string, string) {
+func RegisterValidation(form formatters.RegisterForm) (bool, string, string) {
 	if form.Username == "" {
 		return false, UsernameField, fieldset(UsernameField, UsernameError, form.Username, "text", UsernamePlaceholder, true)
 	}

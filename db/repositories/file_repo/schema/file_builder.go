@@ -5,7 +5,7 @@ import (
 	"homeserver/constants"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/generics"
 	"os"
 	"strings"
 	"time"
@@ -220,5 +220,5 @@ func (uf *UserFile) AbsolutePath() string {
 }
 
 func FieldsList(without ...string) []string {
-	return utils.Without(dbconsts.DBFilesTable.Fields, without...)
+	return generics.Without(dbconsts.DBFilesTable.Fields, without...)
 }

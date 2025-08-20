@@ -12,7 +12,7 @@ import (
 
 func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User, error) {
 	validFields := user.GetValidFields()
-	if len(validFields) == 1 && validFields[0] == uconsts.EmailVerified {
+	if len(validFields) == 0 {
 		return nil, fmt.Errorf("no valid fields to query")
 	}
 

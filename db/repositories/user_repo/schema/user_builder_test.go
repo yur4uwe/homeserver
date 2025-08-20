@@ -95,7 +95,6 @@ func TestUserBuilderSuite(t *testing.T) {
 		assert.Contains(t, fields, "email")
 		assert.Contains(t, fields, "auth_token")
 		assert.Contains(t, fields, "created_at")
-		assert.Contains(t, fields, "email_verified")
 	})
 
 	t.Run("TestGet", func(t *testing.T) {

@@ -9,8 +9,9 @@ import (
 	"homeserver/web-server/pkg/handlers/search"
 	"homeserver/web-server/pkg/handlers/upload"
 	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/err"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	ErrorResponse      = utils.ErrorResponse
-	ParsePathWithUName = utils.ParsePathWithUName
+	ErrorResponse      = err.ErrorResponse
+	ParsePathWithUName = parser.ParsePathWithUName
 
 	DownloadFile = upload.DownloadFile
 	DeleteFile   = upload.DeleteFile

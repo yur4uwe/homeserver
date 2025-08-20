@@ -9,7 +9,7 @@ import (
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
-func (repo *FileRepo) DeleteFileByID(ctx context.Context, fileID string, owner *uschema.User) error {
+func (repo *FileRepo) DeleteFileByID(ctx context.Context, fileID int, owner *uschema.User) error {
 	if err := owner.ShouldHaveFields(uconsts.ID); err != nil {
 		return err
 	}

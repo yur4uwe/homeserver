@@ -8,7 +8,7 @@ import (
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +25,7 @@ type MockVerificationEmail struct {
 	mock.Mock
 }
 
-func (m *MockVerificationEmail) SendVerificationEmail(form utils.RegisterForm, token string) {
+func (m *MockVerificationEmail) SendVerificationEmail(form formatters.RegisterForm, token string) {
 	m.Called(form, token)
 }
 
@@ -109,7 +109,7 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := utils.RegisterForm{
+				form := formatters.RegisterForm{
 					Username: "username",
 					Email:    "e@example.com",
 					Password: "p",
@@ -130,7 +130,7 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := utils.RegisterForm{
+				form := formatters.RegisterForm{
 					Username: "u",
 					Email:    "e@example.com",
 					Password: "p",
@@ -152,7 +152,7 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := utils.RegisterForm{
+				form := formatters.RegisterForm{
 					Username: "u",
 					Email:    "e@example.com",
 					Password: "p",
@@ -178,7 +178,7 @@ func TestRegisterHandler(t *testing.T) {
 				template, err := template.New("welcome").Parse("<div>welcome</div>")
 				assert.NoError(t, err)
 
-				form := utils.RegisterForm{Username: "u", Email: "e@example.com", Password: "p", Confirm: "p"}
+				form := formatters.RegisterForm{Username: "u", Email: "e@example.com", Password: "p", Confirm: "p"}
 				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e@example.com"}, nil)

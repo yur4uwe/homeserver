@@ -44,12 +44,13 @@ var (
 			fconsts.Extension,
 			fconsts.Path,
 			fconsts.Directory,
+			fconsts.OwnerID,
 			fconsts.Size,
 			fconsts.ContentType,
-			fconsts.OwnerID,
+			fconsts.TrustedSource,
+			fconsts.Metadata,
 			fconsts.CreatedAt,
 			fconsts.UpdatedAt,
-			fconsts.Metadata,
 		},
 		SQLCreation: `
 			CREATE TABLE IF NOT EXISTS user_files (
@@ -62,6 +63,7 @@ var (
 				size BIGINT NOT NULL DEFAULT 0,
 				content_type TEXT NOT NULL DEFAULT '',
 				metadata JSONB,
+				trusted_source BYTEA UNIQUE,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 			);
@@ -79,6 +81,7 @@ var (
 			folconsts.Path,
 			folconsts.Parent,
 			folconsts.OwnerID,
+			folconsts.TrustedSource,
 			folconsts.CreatedAt,
 		},
 		SQLCreation: `
@@ -88,6 +91,7 @@ var (
 				path TEXT NOT NULL,
 				parent INTEGER REFERENCES user_folders(id),
 				owner_id INTEGER NOT NULL,
+				trusted_source BYTEA UNIQUE,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				CONSTRAINT user_folders_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id)
 			);

@@ -6,6 +6,8 @@ import (
 	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
 	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"log"
 	"net/http"
@@ -17,9 +19,9 @@ import (
 var (
 	ParseFiles            = template.ParseFiles
 	Must                  = template.Must
-	IconsInjector         = utils.IconsInjector
+	IconsInjector         = formatters.IconsInjector
 	ParseTemplateToString = parser.ParseTemplateToString
-	ErrorResponse         = utils.ErrorResponse
+	ErrorResponse         = err.ErrorResponse
 	Now                   = time.Now
 	Since                 = time.Since
 	IsProtectedPath       = utils.IsProtectedPath

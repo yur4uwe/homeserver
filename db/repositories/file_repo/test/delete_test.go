@@ -30,7 +30,7 @@ func TestDeleteFileByID_Success(t *testing.T) {
 		mock.Anything,
 	).Return(tag, nil)
 
-	err := repo.DeleteFileByID(context.Background(), "123", owner)
+	err := repo.DeleteFileByID(context.Background(), 123, owner)
 	assert.NoError(t, err)
 }
 
@@ -48,7 +48,7 @@ func TestDeleteFileByID_NotFound(t *testing.T) {
 		mock.Anything,
 	).Return(tag, nil)
 
-	err := repo.DeleteFileByID(context.Background(), "123", owner)
+	err := repo.DeleteFileByID(context.Background(), 123, owner)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "failed to delete file")
 }
@@ -67,7 +67,7 @@ func TestDeleteFileByID_DBError(t *testing.T) {
 		mock.Anything,
 	).Return(tag, errors.New("db error"))
 
-	err := repo.DeleteFileByID(context.Background(), "123", owner)
+	err := repo.DeleteFileByID(context.Background(), 123, owner)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "db error")
 }

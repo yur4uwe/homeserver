@@ -4,11 +4,11 @@ import (
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/err"
 	"net/http"
 )
 
-var ErrorResponse = utils.ErrorResponse
+var ErrorResponse = err.ErrorResponse
 
 func DeleteFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

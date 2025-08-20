@@ -8,14 +8,15 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
-	"homeserver/web-server/pkg/utils"
+	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/formatters"
 	"net/http"
 	"strings"
 )
 
 var (
 	NewAlert      = parser.NewAlert
-	ErrorResponse = utils.ErrorResponse
+	ErrorResponse = err.ErrorResponse
 )
 
 func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {
@@ -39,6 +40,6 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositori
 		return
 	}
 
-	w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "File successfully renamed", constants.Success))
+	w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "File successfully renamed", constants.Success))
 	w.Write([]byte(oldFile.Filename + "." + oldFile.Extension))
 }

@@ -2,11 +2,11 @@ package actions
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -36,7 +36,7 @@ func DeleteFileHandler(
 			"Folder Deleted",
 			"check",
 			fmt.Sprintf("Folder '%s' has been deleted successfully.", folder.Name),
-			utils.AlertSuccess,
+			constants.Success,
 		)
 
 		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", id))
@@ -57,7 +57,7 @@ func DeleteFileHandler(
 			"File Deleted",
 			"check",
 			fmt.Sprintf("File '%s.%s' has been deleted successfully.", entryNameSlice[0], entryNameSlice[1]),
-			utils.AlertSuccess,
+			constants.Success,
 		)
 
 		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-file-%d", id))
