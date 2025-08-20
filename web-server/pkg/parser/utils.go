@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"os"
@@ -14,7 +15,7 @@ var (
 )
 
 func LoadIcon(icon_name string) string {
-	icon_path := fmt.Sprintf("../../static/assets/%s.svg", icon_name)
+	icon_path := fmt.Sprintf(constants.Rootd+"static/assets/%s.svg", icon_name)
 
 	icon_data, err := osReadFile(icon_path)
 	if err != nil {
@@ -33,7 +34,7 @@ func NewAlert(title, iconName, message, status string) string {
 		Message: message,
 	}
 
-	str, err := ParseTemplateToString("../../static/templates/modal.html", alert)
+	str, err := ParseTemplateToString(constants.Rootd+"static/templates/modal.html", alert)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse alert template: %v\n", err))
 	}

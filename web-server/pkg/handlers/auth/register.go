@@ -71,7 +71,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-		tmpl := Must(ParseFiles("../../static/templates/welcome.html"))
+		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/welcome.html"))
 		if err := tmpl.Execute(w, &templates.WelcomePageData{IsLoggedIn: false}); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "AuthenticationHandler:196")
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

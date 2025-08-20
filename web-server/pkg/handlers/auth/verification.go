@@ -26,7 +26,7 @@ var (
 )
 
 func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
-	tmpl := Must(ParseFiles("../../static/templates/verification.html"))
+	tmpl := Must(ParseFiles(constants.Rootd + "static/templates/verification.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(errCode)
@@ -108,7 +108,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 
-		tmpl := Must(ParseFiles("../../static/templates/verification.html"))
+		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/verification.html"))
 		tmpl.Execute(w, verification)
 	}
 }

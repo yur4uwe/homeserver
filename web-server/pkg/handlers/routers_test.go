@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"homeserver/constants"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
@@ -403,7 +404,7 @@ func TestSearchRouter(t *testing.T) {
 
 		mockTemplate.On(
 			"ParseFiles",
-			[]string{"../../static/templates/search_base.html", "../../static/templates/search_results.html"},
+			[]string{constants.Rootd + "static/templates/search_base.html", constants.Rootd + "static/templates/search_results.html"},
 		).Return(mockedTemplate, nil)
 
 		defer mockSearch.AssertExpectations(t)

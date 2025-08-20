@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/web-server/pkg/middleware"
@@ -100,7 +101,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			IsLoggedIn: true,
 		}
 
-		header, err := ParseTemplateToString("../../static/templates/header.html", welcomeData)
+		header, err := ParseTemplateToString(constants.Rootd+"static/templates/header.html", welcomeData)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LoginHandler:66")
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -109,7 +110,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.PageContent.Header = template.HTML(header)
 
-		tmpl := Must(ParseFiles("../../static/templates/welcome.html"))
+		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/welcome.html"))
 		if err := tmpl.Execute(w, welcomeData); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LoginHandler:66")
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

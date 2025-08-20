@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"html/template"
 	"net/http"
 	"os"
@@ -35,7 +36,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 		if reqCont.ToRestorePage {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
-			tmpl := Must(ParseFiles("../../static/index.html", "../../static/layout.html")) // Use the global variable for mocking
+			tmpl := Must(ParseFiles(constants.Rootd+"static/index.html", constants.Rootd+"static/layout.html")) // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
@@ -55,7 +56,7 @@ func Interceptor(next http.Handler) http.Handler {
 			w.Header().Set("HX-Retarget", "body")
 			w.Header().Set("HX-Reswap", "innerHTML")
 
-			tmpl := Must(ParseFiles("../../static/layout.html")) // Use the global variable for mocking
+			tmpl := Must(ParseFiles(constants.Rootd + "static/layout.html")) // Use the global variable for mocking
 
 			if interceptor.statusCode < 400 {
 				reqCont.PageContent.Content = template.HTML(interceptor.body.String())

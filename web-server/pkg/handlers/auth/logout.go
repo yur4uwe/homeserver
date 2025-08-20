@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"homeserver/constants"
 	"homeserver/db/repositories"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
@@ -44,7 +45,7 @@ func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
 			IsLoggedIn: false,
 		}
 
-		header, err := ParseTemplateToString("../../static/templates/header.html", data)
+		header, err := ParseTemplateToString(constants.Rootd+"static/templates/header.html", data)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "LogoutHandler:66")
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -53,7 +54,7 @@ func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.PageContent.Header = template.HTML(header)
 
-		tmpl := Must(ParseFiles("../../static/templates/welcome.html"))
+		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/welcome.html"))
 		if err := tmpl.Execute(w, data); err != nil {
 			reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "LogoutHandler:66")
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

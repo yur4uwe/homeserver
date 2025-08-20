@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"homeserver/db/repositories"
 	"homeserver/web-server/pkg/templates"
 	"html/template"
@@ -41,7 +42,7 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				return
 			}
 
-			if header, err := ParseTemplateToString("../../static/templates/header.html", templates.WelcomePageData{IsLoggedIn: reqCont.AuthToken != ""}); err != nil {
+			if header, err := ParseTemplateToString(constants.Rootd+"static/templates/header.html", templates.WelcomePageData{IsLoggedIn: reqCont.AuthToken != ""}); err != nil {
 				fmt.Println("Failed to parse header template:", err)
 				reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "AuthMiddleware")
 				ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

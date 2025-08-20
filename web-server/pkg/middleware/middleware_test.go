@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"homeserver/constants"
 	"homeserver/test"
 	"homeserver/test/mocks"
 	"net/http"
@@ -20,7 +21,7 @@ func TestMiddlewareSuite(t *testing.T) {
 	defer mustCleanup()
 
 	mockParse := new(MockParseAsString)
-	mockParse.On("ParseTemplateToString", "../../static/fragments/footer.html", nil).Return("Mocked Footer", nil)
+	mockParse.On("ParseTemplateToString", constants.Rootd+"static/fragments/footer.html", nil).Return("Mocked Footer", nil)
 
 	parseCleanup := test.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
 	defer parseCleanup()

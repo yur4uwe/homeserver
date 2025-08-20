@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -17,12 +18,17 @@ import (
 	"homeserver/web-server/pkg/handlers/auth"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/setup"
+	"homeserver/web-server/pkg/utils"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load("../../.env"); err != nil {
+	constants.Rootd = utils.GetProjectRoot()
+
+	fmt.Println("Project root directory:", constants.Rootd)
+
+	if err := godotenv.Load(constants.Rootd + ".env"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
@@ -38,7 +44,7 @@ func main() {
 		log.Fatalf("Database extension check error: %v", err)
 	}
 
-	fs := http.FileServer(http.Dir("../../static"))
+	fs := http.FileServer(http.Dir("G:\\projects\\Myprojects\\homeserver\\static"))
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
