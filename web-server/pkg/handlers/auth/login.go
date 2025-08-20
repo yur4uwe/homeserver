@@ -3,12 +3,14 @@ package auth
 import (
 	"fmt"
 	"homeserver/db/repositories"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
+	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -23,7 +25,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Login endpoint accessed")
 
-		form := globals.LoginFormFromRequest(r)
+		form := utils.LoginFormFromRequest(r)
 
 		valid, target, fieldsetHTML := LoginValidation(form)
 		if !valid {
@@ -33,7 +35,16 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user, email_verified, err := connection.QueryUserOnLogin(r.Context(), form)
+		q_user := uschema.NewUserBuilder().
+			WithPassword(form.Password)
+
+		if strings.Contains(form.Identificator, "@") {
+			q_user.WithEmail(form.Identificator)
+		} else {
+			q_user.WithUsername(form.Identificator)
+		}
+
+		user, err := repos.UserRepo.Query(r.Context(), q_user)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
@@ -49,7 +60,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		if !email_verified {
+		if !user.EmailVerified {
 			fmt.Fprintf(os.Stderr, "User %d has not verified their email\n", user.ID)
 			w.Header().Set("HX-Retarget", "#error-resp")
 			w.Header().Set("HX-Reswap", "innerHTML")
@@ -65,7 +76,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		if err = connection.CreateToken(r.Context(), user.ID, newToken); err != nil {
+		if err = repos.TokenRepo.CreateToken(r.Context(), user.ID, newToken); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return

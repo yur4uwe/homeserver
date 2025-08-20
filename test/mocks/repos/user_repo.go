@@ -25,6 +25,11 @@ func (m *MockUserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.
 	return args.Get(0).(*uschema.User), args.Error(1)
 }
 
+func (m *MockUserRepo) QueryAll(ctx context.Context) ([]uschema.User, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]uschema.User), args.Error(1)
+}
+
 func (m *MockUserRepo) Update(ctx context.Context, user *uschema.User, field_vals map[string]any) error {
 	args := m.Called(ctx, user, field_vals)
 	return args.Error(0)

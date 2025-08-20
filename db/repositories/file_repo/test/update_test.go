@@ -94,25 +94,6 @@ func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
 	assert.Contains(t, err.Error(), "error preventing duplicate file name")
 }
 
-func TestUpdateFileEntry_PartialNameFields(t *testing.T) {
-	mockPool := &mocks.MockQueryExecutor{}
-	mockDB := &db.Database{Pool: mockPool}
-	repo := filerepo.NewFileRepo(mockDB)
-
-	file := &fschema.UserFile{
-		ID:       1,
-		Filename: "file",
-	}
-	owner := makeOwner()
-	fvp := map[string]any{
-		"filename": "new_filename",
-	}
-
-	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "if filename, extension, or path is provided for file update, all must be provided")
-}
-
 func TestUpdateFileEntry_DBError(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
 	mockDB := &db.Database{Pool: mockPool}

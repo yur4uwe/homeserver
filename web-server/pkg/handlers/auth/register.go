@@ -2,11 +2,13 @@ package auth
 
 import (
 	"fmt"
+	"homeserver/constants"
 	"homeserver/db/repositories"
-	"homeserver/pkg/auth"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
+	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/web-server/pkg/auth"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
 	"os"
 )
@@ -27,7 +29,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Register endpoint accessed")
 
-		form := globals.RegisterFormFromRequest(r)
+		form := utils.RegisterFormFromRequest(r)
 
 		valid, target, fieldsetHTML := RegisterValidation(form)
 		if !valid {
@@ -37,12 +39,12 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user := user_schema.NewUserBuilder().
+		user := uschema.NewUserBuilder().
 			WithUsername(form.Username).
 			WithEmail(form.Email).
 			WithPassword(form.Password)
 
-		inserted_user, err := connection.CreateUserEntry(r.Context(), user)
+		inserted_user, err := repos.UserRepo.Create(r.Context(), user)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -56,7 +58,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		err = connection.CreateToken(r.Context(), inserted_user.ID, verification_token)
+		err = repos.TokenRepo.CreateToken(r.Context(), inserted_user.ID, verification_token)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -65,7 +67,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		go verSuccess(form, verification_token)
 
-		w.Header().Set("HX-Trigger", `{"raise-alert": {"title": "Success!", "value": "Registration successful! Please check your email for verification.", "status": "success", "icon": "check"}}`)
+		w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

@@ -5,6 +5,13 @@ import (
 	"os"
 )
 
+const (
+	Success = "success"
+	Warning = "warning"
+	Error   = "error"
+	Info    = "info"
+)
+
 var AvailableFileTypes = []string{}
 
 func ReadAvailableFileTypes() {

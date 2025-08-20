@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
+	"homeserver/db/repositories"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/utils"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	uschema "homeserver/db/repositories/user_repo/schema"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,12 +25,13 @@ type MockVerificationEmail struct {
 	mock.Mock
 }
 
-func (m *MockVerificationEmail) SendVerificationEmail(form globals.RegisterForm, token string) {
+func (m *MockVerificationEmail) SendVerificationEmail(form utils.RegisterForm, token string) {
 	m.Called(form, token)
 }
 
 func TestRegisterHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	mockUR, _, _, mockTokR, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(mockUR, nil, nil, mockTokR, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	mockLog := new(mocks.MockLogHistory)
 	mockTemplate := new(mocks.MockTemplate)
@@ -51,7 +55,8 @@ func TestRegisterHandler(t *testing.T) {
 	reqCont := middleware.DefaultContext
 
 	resetter := test.NewMocksResetter(
-		&mockDB.Mock,
+		&mockUR.Mock,
+		&mockTokR.Mock,
 		&mockErrResp.Mock,
 		&mockLog.Mock,
 		&mockTemplate.Mock,
@@ -104,15 +109,15 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := globals.RegisterForm{
+				form := utils.RegisterForm{
 					Username: "username",
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := user_schema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
-				mockDB.On("CreateUserEntry", mock.Anything, user).Return((*user_schema.User)(nil), errors.New("db error"))
+				mockUR.On("Create", mock.Anything, user).Return((*uschema.User)(nil), errors.New("db error"))
 			},
 			requestBody:    "username=username&email=e@example.com&password=p&confirm=p",
 			contentType:    "application/x-www-form-urlencoded",
@@ -125,15 +130,15 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := globals.RegisterForm{
+				form := utils.RegisterForm{
 					Username: "u",
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := user_schema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
-				mockDB.On("CreateUserEntry", mock.Anything, user).Return(&user_schema.User{ID: 1, Username: "u", Email: "e"}, nil)
+				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
 				mockTokens.On("NewToken").Return("", errors.New("token error"))
 			},
 			requestBody:    "username=u&email=e@example.com&password=p&confirm=p",
@@ -147,17 +152,17 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 
-				form := globals.RegisterForm{
+				form := utils.RegisterForm{
 					Username: "u",
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := user_schema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
-				mockDB.On("CreateUserEntry", mock.Anything, user).Return(&user_schema.User{ID: 1, Username: "u", Email: "e"}, nil)
+				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
 				mockTokens.On("NewToken").Return("token123", nil)
-				mockDB.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
+				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
 			},
 			requestBody:    "username=u&email=e@example.com&password=p&confirm=p",
 			contentType:    "application/x-www-form-urlencoded",
@@ -173,11 +178,11 @@ func TestRegisterHandler(t *testing.T) {
 				template, err := template.New("welcome").Parse("<div>welcome</div>")
 				assert.NoError(t, err)
 
-				form := globals.RegisterForm{Username: "u", Email: "e@example.com", Password: "p", Confirm: "p"}
-				user := user_schema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				form := utils.RegisterForm{Username: "u", Email: "e@example.com", Password: "p", Confirm: "p"}
+				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
-				mockDB.On("CreateUserEntry", mock.Anything, user).Return(&user_schema.User{ID: 1, Username: "u", Email: "e@example.com"}, nil)
-				mockDB.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
+				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e@example.com"}, nil)
+				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
 				mockTokens.On("NewToken").Return("token123", nil)
 				mockVerificationEmail.On("SendVerificationEmail", form, "token123").Return()
 				mockTemplate.On("Must", mock.Anything, mock.Anything).Return(template)

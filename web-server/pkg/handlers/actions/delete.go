@@ -3,10 +3,10 @@ package actions
 import (
 	"fmt"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/folder_schema"
-	"homeserver/pkg/utils"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -21,12 +21,12 @@ func DeleteFileHandler(
 
 	var alert string
 	if len(entryNameSlice) < 2 {
-		folder := folder_schema.NewUserFolderBuilder().
+		folder := folschema.NewUserFolderBuilder().
 			WithName(entryNameSlice[0]).
 			WithPath(strings.Join(relativePath, "/")).
 			WithOwnerID(reqCont.Requester.ID)
 
-		id, err := connection.DeleteFolder(r.Context(), folder, reqCont.Requester.Username)
+		id, err := repos.FolderRepo.DeleteFolder(r.Context(), folder, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting folder: %v", err), http.StatusInternalServerError)
 			return
@@ -41,13 +41,13 @@ func DeleteFileHandler(
 
 		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", id))
 	} else {
-		file := file_schema.NewUserFileBuilder().
+		file := fschema.NewUserFileBuilder().
 			WithFilename(entryNameSlice[0]).
 			WithExtension(entryNameSlice[1]).
 			WithPath(strings.Join(relativePath, "/")).
 			WithOwnerID(reqCont.Requester.ID)
 
-		id, err := connection.DeleteFile(r.Context(), file, reqCont.Requester.Username)
+		id, err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
 			return

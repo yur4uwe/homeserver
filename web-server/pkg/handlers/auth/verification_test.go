@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/utils"
+	"homeserver/constants"
+	"homeserver/db/repositories"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
+	"homeserver/web-server/pkg/utils"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +38,8 @@ func (m *VerFailureMock) verFailed(w http.ResponseWriter, verification *template
 }
 
 func TestVerificationHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	_, _, _, mockTokR, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, nil, nil, mockTokR, nil)
 	mockParser := new(mocks.MockParser)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	mockVerFail := new(VerFailureMock)
@@ -60,7 +62,7 @@ func TestVerificationHandler(t *testing.T) {
 		cleanupParseFiles()
 	}()
 
-	resetter := test.NewMocksResetter(&mockDB.Mock, &mockParser.Mock)
+	resetter := test.NewMocksResetter(&mockTokR.Mock, &mockParser.Mock)
 
 	handler := VerificationHandler(mockDB)
 
@@ -106,7 +108,7 @@ func TestVerificationHandler(t *testing.T) {
 	t.Run("invalid token", func(t *testing.T) {
 		resetter()
 
-		mockDB.On(
+		mockTokR.On(
 			"VerifyToken",
 			mock.Anything, "badtoken",
 		).Return(errors.New("invalid token"))
@@ -131,7 +133,7 @@ func TestVerificationHandler(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		resetter()
 
-		mockDB.On("VerifyToken", mock.Anything, "goodtoken").Return(nil)
+		mockTokR.On("VerifyToken", mock.Anything, "goodtoken").Return(nil)
 		mockParser.On("LoadIcon", mock.Anything).Return("icon")
 		mockParser.On(
 			"NewAlert",
@@ -199,18 +201,18 @@ func TestSendVerificationFailurePage(t *testing.T) {
 
 func TestSendVerificationEmail(t *testing.T) {
 	// Set environment variables for email config
-	os.Setenv(globals.EnvEmailPort, "2525")
-	os.Setenv(globals.EnvEmailHost, "smtp.example.com")
-	os.Setenv(globals.EnvEmailUser, "user")
-	os.Setenv(globals.EnvEmailPassword, "pass")
+	os.Setenv(constants.EmailPort, "2525")
+	os.Setenv(constants.EmailHost, "smtp.example.com")
+	os.Setenv(constants.EmailUser, "user")
+	os.Setenv(constants.EmailPassword, "pass")
 	defer func() {
-		os.Unsetenv(globals.EnvEmailPort)
-		os.Unsetenv(globals.EnvEmailHost)
-		os.Unsetenv(globals.EnvEmailUser)
-		os.Unsetenv(globals.EnvEmailPassword)
+		os.Unsetenv(constants.EmailPort)
+		os.Unsetenv(constants.EmailHost)
+		os.Unsetenv(constants.EmailUser)
+		os.Unsetenv(constants.EmailPassword)
 	}()
 
-	form := globals.RegisterForm{
+	form := utils.RegisterForm{
 		Username: "testuser",
 		Email:    "test@example.com",
 	}

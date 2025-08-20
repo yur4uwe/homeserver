@@ -16,9 +16,9 @@ func NewMockFileRepo() *MockFileRepo {
 	return &MockFileRepo{}
 }
 
-func (m *MockFileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error {
+func (m *MockFileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (int, error) {
 	args := m.Called(ctx, file, owner)
-	return args.Error(0)
+	return args.Int(0), args.Error(1)
 }
 
 func (m *MockFileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error {

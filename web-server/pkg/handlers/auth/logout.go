@@ -2,8 +2,8 @@ package auth
 
 import (
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/parser"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
@@ -29,7 +29,7 @@ func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		if err := connection.DeleteToken(r.Context(), authToken); err != nil {
+		if err := repos.TokenRepo.DeleteToken(r.Context(), authToken); err != nil {
 			ErrorResponse(w, "Failed to delete token: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

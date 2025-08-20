@@ -16,7 +16,7 @@ type InFileRepo interface {
 	FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]fschema.UserFile, error)
 	GetFilesByDirectory(ctx context.Context, directory string, owner *uschema.User) ([]fschema.UserFile, error)
 
-	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error
+	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (int, error)
 	DeleteFileByID(ctx context.Context, fileID string, owner *uschema.User) error
 
 	UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error

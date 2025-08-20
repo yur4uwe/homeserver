@@ -125,7 +125,6 @@ func TestFileActionsRouter(t *testing.T) {
 	mockActions := new(ActionsMock)
 	cleanupDelete := test.MockFunction(&DeleteFileHandler, mockActions.DeleteFileHandler, func() {})
 	cleanupRename := test.MockFunction(&RenameFileHandler, mockActions.RenameFileHandler, func() {})
-	cleanupOpen := test.MockFunction(&OpenFileHandler, mockActions.OpenFileHandler, func() {})
 
 	resetter := test.NewMocksResetter(
 		&mockErrResp.Mock,
@@ -138,7 +137,6 @@ func TestFileActionsRouter(t *testing.T) {
 		cleanupErrorResponse()
 		cleanupDelete()
 		cleanupRename()
-		cleanupOpen()
 	}()
 
 	t.Run("Hands over handling to DeleteFileHandler on DELETE", func(t *testing.T) {
@@ -187,34 +185,6 @@ func TestFileActionsRouter(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
 		mockActions.AssertCalled(t, "RenameFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt", "newfile.txt", false)
-	})
-
-	t.Run("Hands over handling to OpenFileHandler on GET", func(t *testing.T) {
-		resetter()
-
-		mockActions.On(
-			"OpenFileHandler",
-			mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything,
-		)
-		mockParsePath.On(
-			"ParsePathWithUName",
-			mock.Anything, mock.Anything,
-		).Return([]string{"user", "file.txt"}, nil)
-
-		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
-
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/file-actions/user/file.txt", nil)
-		rec := httptest.NewRecorder()
-
-		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
-
-		handler := FileActionsRouter(nil)
-		handler(rec, req)
-
-		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockActions.AssertCalled(t, "OpenFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt")
 	})
 
 	t.Run("Returns Method Not Allowed for unsupported methods", func(t *testing.T) {

@@ -26,23 +26,28 @@ func (repo *FileRepo) DeleteFileByID(ctx context.Context, fileID string, owner *
 	return nil
 }
 
-func (repo *FileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) error {
+func (repo *FileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (int, error) {
 	if err := owner.ShouldHaveFields(uconsts.Username, uconsts.ID); err != nil {
-		return err
+		return 0, err
 	}
 
 	if err := file.ShouldHaveFields(owner.Username)(fconsts.Filename, fconsts.Path); err != nil {
-		return err
+		return 0, err
 	}
 
-	tag, err := repo.db.Pool.Exec(ctx, "DELETE FROM files WHERE filename = $1 AND path = $2 AND owner_id = $3", file.Filename, file.Path, owner.ID)
+	var id int
+	err := repo.db.Pool.QueryRow(
+		ctx,
+		"DELETE FROM files WHERE filename = $1 AND path = $2 AND owner_id = $3 RETURNING id",
+		file.Filename, file.Path, owner.ID,
+	).Scan(&id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("failed to delete file")
+	if id == 0 {
+		return 0, fmt.Errorf("failed to delete file")
 	}
 
-	return nil
+	return id, nil
 }

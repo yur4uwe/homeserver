@@ -78,7 +78,7 @@ func TestDeleteFile_ValidationError(t *testing.T) {
 	owner := &uschema.User{ID: 0} // Invalid ID
 
 	file := &fschema.UserFile{Filename: "file", Path: "path"}
-	err := repo.DeleteFile(context.Background(), file, owner)
+	_, err := repo.DeleteFile(context.Background(), file, owner)
 	assert.Error(t, err)
 }
 
@@ -89,36 +89,21 @@ func TestDeleteFile_Success(t *testing.T) {
 	owner := &uschema.User{ID: 42, Username: "john_doe"}
 	file := &fschema.UserFile{Filename: "file", Path: "john_doe/docs"}
 
-	tag := pgconn.NewCommandTag("DELETE 1")
+	mockRow := &mocks.MockRow{}
+	mockRow.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		dest := args.Get(0).([]any)
+		*dest[0].(*int) = 1
+	})
 
-	mockPool.On("Exec",
+	mockPool.On("QueryRow",
 		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.Anything,
-	).Return(tag, nil)
+	).Return(mockRow)
 
-	err := repo.DeleteFile(context.Background(), file, owner)
+	id, err := repo.DeleteFile(context.Background(), file, owner)
 	assert.NoError(t, err)
-}
-
-func TestDeleteFile_NotFound(t *testing.T) {
-	mockPool := &mocks.MockQueryExecutor{}
-	mockDB := &db.Database{Pool: mockPool}
-	repo := filerepo.NewFileRepo(mockDB)
-	owner := &uschema.User{ID: 42, Username: "john_doe"}
-	file := &fschema.UserFile{Filename: "file", Path: "john_doe/docs"}
-
-	tag := pgconn.NewCommandTag("DELETE 0")
-
-	mockPool.On("Exec",
-		mock.Anything,
-		mock.AnythingOfType("string"),
-		mock.Anything,
-	).Return(tag, nil)
-
-	err := repo.DeleteFile(context.Background(), file, owner)
-	assert.Error(t, err)
-	assert.EqualError(t, err, "failed to delete file")
+	assert.Equal(t, 1, id)
 }
 
 func TestDeleteFile_DBError(t *testing.T) {
@@ -128,15 +113,17 @@ func TestDeleteFile_DBError(t *testing.T) {
 	owner := &uschema.User{ID: 42, Username: "john_doe"}
 	file := &fschema.UserFile{Filename: "file", Path: "john_doe/docs"}
 
-	tag := pgconn.NewCommandTag("DELETE 0")
+	mockRow := &mocks.MockRow{}
+	mockRow.On("Scan", mock.Anything).Return(errors.New("db error"))
 
-	mockPool.On("Exec",
+	mockPool.On("QueryRow",
 		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.Anything,
-	).Return(tag, errors.New("db error"))
+	).Return(mockRow)
 
-	err := repo.DeleteFile(context.Background(), file, owner)
+	id, err := repo.DeleteFile(context.Background(), file, owner)
 	assert.Error(t, err)
+	assert.Equal(t, 0, id)
 	assert.EqualError(t, err, "db error")
 }

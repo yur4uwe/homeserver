@@ -2,11 +2,13 @@ package actions
 
 import (
 	"fmt"
+	"homeserver/constants"
+	"homeserver/constants/fconsts"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/parser"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/utils"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/web-server/pkg/middleware"
+	"homeserver/web-server/pkg/parser"
+	"homeserver/web-server/pkg/utils"
 	"net/http"
 	"strings"
 )
@@ -22,17 +24,21 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositori
 		return
 	}
 
-	oldFile := file_schema.NewUserFileBuilder().
+	oldFile := fschema.NewUserFileBuilder().
 		WithFullName(fileName).
 		WithPath(strings.Join(relativePath, "/")).
 		WithOwnerID(reqCont.Requester.ID)
 
-	newName, err := connection.RenameFile(r.Context(), oldFile, desiredName, reqCont.Requester)
+	fvp := map[string]any{
+		fconsts.Filename: desiredName,
+	}
+
+	err := repos.FileRepo.UpdateFileEntry(r.Context(), oldFile, fvp, reqCont.Requester)
 	if err != nil {
 		ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("HX-Trigger", `{"raise-alert": {"title": "Success!", "value": "File successfully renamed", "status": "success", "icon": "check"}}`)
-	w.Write([]byte(newName))
+	w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "File successfully renamed", constants.Success))
+	w.Write([]byte(oldFile.Filename + "." + oldFile.Extension))
 }

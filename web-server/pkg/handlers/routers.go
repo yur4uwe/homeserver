@@ -26,7 +26,6 @@ var (
 
 	DeleteFileHandler = actions.DeleteFileHandler
 	RenameFileHandler = actions.RenameFileHandler
-	OpenFileHandler   = actions.OpenFileHandler
 
 	FileSearchHandler = search.FileSearchHandler
 	BrowseHandler     = search.BrowseHandler
@@ -96,8 +95,6 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 			DeleteFileHandler(w, r, repos, reqCont, relativePath, fileName)
 		case http.MethodPatch:
 			RenameFileHandler(w, r, repos, reqCont, relativePath, fileName, desiredName, isFolder)
-		case http.MethodGet:
-			OpenFileHandler(w, r, repos, reqCont, relativePath, fileName)
 		default:
 			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}

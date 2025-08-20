@@ -2,9 +2,9 @@ package account
 
 import (
 	"fmt"
+	"homeserver/constants/uconsts"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
 )
 
@@ -21,7 +21,11 @@ func HandlePasswordChange(r *http.Request, repos *repositories.Repositories) err
 		return fmt.Errorf("password cannot be empty")
 	}
 
-	err := connection.ModifyUserField(r.Context(), reqCont.Requester, schemas.Password, new_password)
+	fvp := map[string]any{
+		uconsts.Password: new_password,
+	}
+
+	err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
 	if err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}

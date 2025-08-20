@@ -26,7 +26,7 @@ func DeleteFile(repos *repositories.Repositories, reqCont *middleware.Additional
 			WithOwnerID(reqCont.Requester.ID).
 			WithFullName(filePath)
 
-		if err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester); err != nil {
+		if _, err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
 			ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return

@@ -61,7 +61,7 @@ func TestDeleteFile(t *testing.T) {
 				mock.Anything,
 				mock.AnythingOfType("*fschema.UserFile"),
 				mockReqContext.Requester,
-			).Return(err)
+			).Return(0, err)
 			mockErrRes.On("ErrorResponse", mock.Anything, mock.Anything, tt.statusCode).Return()
 
 			req := httptest.NewRequest(http.MethodDelete, "/delete?filename="+tt.filename, nil)

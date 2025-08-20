@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"homeserver/pkg/globals"
+	"homeserver/web-server/pkg/utils"
 	"strings"
 	"testing"
 
@@ -11,28 +11,28 @@ import (
 func TestLoginValidation(t *testing.T) {
 	tests := []struct {
 		name         string
-		form         globals.LoginForm
+		form         utils.LoginForm
 		wantValid    bool
 		wantField    string
 		wantContains string
 	}{
 		{
 			name:         "empty identificator",
-			form:         globals.LoginForm{Identificator: "", Password: "pass"},
+			form:         utils.LoginForm{Identificator: "", Password: "pass"},
 			wantValid:    false,
 			wantField:    IdentificatorField,
 			wantContains: IdentificatorError,
 		},
 		{
 			name:         "empty password",
-			form:         globals.LoginForm{Identificator: "user", Password: ""},
+			form:         utils.LoginForm{Identificator: "user", Password: ""},
 			wantValid:    false,
 			wantField:    PasswordField,
 			wantContains: PasswordError,
 		},
 		{
 			name:         "valid login",
-			form:         globals.LoginForm{Identificator: "user", Password: "pass"},
+			form:         utils.LoginForm{Identificator: "user", Password: "pass"},
 			wantValid:    true,
 			wantField:    "",
 			wantContains: "",
@@ -56,49 +56,49 @@ func TestLoginValidation(t *testing.T) {
 func TestRegisterValidation(t *testing.T) {
 	tests := []struct {
 		name         string
-		form         globals.RegisterForm
+		form         utils.RegisterForm
 		wantValid    bool
 		wantField    string
 		wantContains string
 	}{
 		{
 			name:         "empty username",
-			form:         globals.RegisterForm{Username: "", Email: "e", Password: "p", Confirm: "p"},
+			form:         utils.RegisterForm{Username: "", Email: "e", Password: "p", Confirm: "p"},
 			wantValid:    false,
 			wantField:    UsernameField,
 			wantContains: UsernameError,
 		},
 		{
 			name:         "empty email",
-			form:         globals.RegisterForm{Username: "u", Email: "", Password: "p", Confirm: "p"},
+			form:         utils.RegisterForm{Username: "u", Email: "", Password: "p", Confirm: "p"},
 			wantValid:    false,
 			wantField:    EmailField,
 			wantContains: EmailError,
 		},
 		{
 			name:         "empty password",
-			form:         globals.RegisterForm{Username: "u", Email: "e", Password: "", Confirm: "p"},
+			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "", Confirm: "p"},
 			wantValid:    false,
 			wantField:    PasswordField,
 			wantContains: PasswordError,
 		},
 		{
 			name:         "empty confirm",
-			form:         globals.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: ""},
+			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: ""},
 			wantValid:    false,
 			wantField:    ConfirmPasswordField,
 			wantContains: ConfirmPasswordError,
 		},
 		{
 			name:         "password mismatch",
-			form:         globals.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "q"},
+			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "q"},
 			wantValid:    false,
 			wantField:    ConfirmPasswordField,
 			wantContains: PasswordMismatchError,
 		},
 		{
 			name:         "valid register",
-			form:         globals.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "p"},
+			form:         utils.RegisterForm{Username: "u", Email: "e", Password: "p", Confirm: "p"},
 			wantValid:    true,
 			wantField:    "",
 			wantContains: "",

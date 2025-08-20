@@ -2,9 +2,9 @@ package account
 
 import (
 	"fmt"
+	"homeserver/constants/uconsts"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
 )
 
@@ -21,7 +21,11 @@ func HandleEmailChange(r *http.Request, repos *repositories.Repositories) error 
 		return fmt.Errorf("email cannot be empty")
 	}
 
-	err := connection.ModifyUserField(r.Context(), reqCont.Requester, schemas.Email, new_email)
+	fvp := map[string]any{
+		uconsts.Email: new_email,
+	}
+
+	err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
 	if err != nil {
 		return fmt.Errorf("failed to update email: %w", err)
 	}

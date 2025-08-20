@@ -3,9 +3,10 @@ package auth
 import (
 	"context"
 	"errors"
-	"homeserver/pkg/middleware"
+	"homeserver/db/repositories"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +17,8 @@ import (
 )
 
 func TestLogoutHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	_, _, _, mockTokR, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, nil, nil, mockTokR, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	mockParser := new(mocks.MockParser)
 	mockTemplate := new(mocks.MockTemplate)
@@ -34,7 +36,7 @@ func TestLogoutHandler(t *testing.T) {
 	reqCont.AuthToken = "token123"
 
 	resetter := test.NewMocksResetter(
-		&mockDB.Mock,
+		&mockTokR.Mock,
 		&mockErrResp.Mock,
 		&mockParser.Mock,
 		&mockTemplate.Mock,
@@ -78,7 +80,7 @@ func TestLogoutHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 				mockErrResp.On("ErrorResponse", mock.Anything, "Failed to delete token: db error", http.StatusInternalServerError).Return()
-				mockDB.On("DeleteToken", mock.Anything, "token123").Return(errors.New("db error"))
+				mockTokR.On("DeleteToken", mock.Anything, "token123").Return(errors.New("db error"))
 			},
 			authToken:      "token123",
 			wantCode:       http.StatusInternalServerError,
@@ -88,7 +90,7 @@ func TestLogoutHandler(t *testing.T) {
 			name: "header template error",
 			setupMocks: func() {
 				resetter()
-				mockDB.On("DeleteToken", mock.Anything, "token123").Return(nil)
+				mockTokR.On("DeleteToken", mock.Anything, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("", errors.New("header error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError)
 			},
@@ -100,7 +102,7 @@ func TestLogoutHandler(t *testing.T) {
 			name: "success logout",
 			setupMocks: func() {
 				resetter()
-				mockDB.On("DeleteToken", mock.Anything, "token123").Return(nil)
+				mockTokR.On("DeleteToken", mock.Anything, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("<header>", nil)
 				mockTemplate.On("Must", mock.Anything, mock.Anything).Return(mockedTemplate)
 				mockTemplate.On("ParseFiles", mock.Anything).Return(mockedTemplate, nil)

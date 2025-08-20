@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"homeserver/pkg/globals"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +20,8 @@ import (
 )
 
 func TestLoginHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	mockUR, _, _, mockTokR, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(mockUR, nil, nil, mockTokR, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	mockLog := new(mocks.MockLogHistory)
 	mockParser := new(mocks.MockParser)
@@ -40,7 +41,15 @@ func TestLoginHandler(t *testing.T) {
 
 	reqCont := middleware.DefaultContext
 
-	resetter := test.NewMocksResetter(&mockDB.Mock, &mockErrResp.Mock, &mockLog.Mock, &mockParser.Mock, &mockTemplate.Mock, &mockTokens.Mock)
+	resetter := test.NewMocksResetter(
+		&mockUR.Mock,
+		&mockTokR.Mock,
+		&mockErrResp.Mock,
+		&mockLog.Mock,
+		&mockParser.Mock,
+		&mockTemplate.Mock,
+		&mockTokens.Mock,
+	)
 
 	handler := LoginHandler(mockDB)
 
@@ -88,8 +97,8 @@ func TestLoginHandler(t *testing.T) {
 			name: "user not found",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return((*user_schema.User)(nil), false, errors.New("no rows in result set"))
+				u := (*uschema.User)(nil)
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(u, errors.New("no rows in result set"))
 			},
 			requestBody:    "identificator=u&password=p",
 			contentType:    "application/x-www-form-urlencoded",
@@ -101,8 +110,8 @@ func TestLoginHandler(t *testing.T) {
 			name: "db error",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return((*user_schema.User)(nil), false, errors.New("db error"))
+
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return((*uschema.User)(nil), errors.New("db error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
 			requestBody:    "identificator=u&password=p",
@@ -115,9 +124,9 @@ func TestLoginHandler(t *testing.T) {
 			name: "email not verified",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				user := &user_schema.User{ID: 1, Username: "u", Email: "e"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return(user, false, nil)
+
+				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: false}
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
 			},
 			requestBody:    "identificator=u&password=p",
 			contentType:    "application/x-www-form-urlencoded",
@@ -129,9 +138,9 @@ func TestLoginHandler(t *testing.T) {
 			name: "token generation error",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				user := &user_schema.User{ID: 1, Username: "u", Email: "e"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return(user, true, nil)
+
+				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
 				mockTokens.On("NewToken").Return("", errors.New("token error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
@@ -145,11 +154,11 @@ func TestLoginHandler(t *testing.T) {
 			name: "db create token error",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				user := &user_schema.User{ID: 1, Username: "u", Email: "e"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return(user, true, nil)
+
+				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
 				mockTokens.On("NewToken").Return("token123", nil)
-				mockDB.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
+				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
 			requestBody:    "identificator=u&password=p",
@@ -162,11 +171,11 @@ func TestLoginHandler(t *testing.T) {
 			name: "header template error",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				user := &user_schema.User{ID: 1, Username: "u", Email: "e"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return(user, true, nil)
+
+				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
 				mockTokens.On("NewToken").Return("token123", nil)
-				mockDB.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
+				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("", errors.New("header error"))
 				mockLog.On("ErrLog", mock.Anything, mock.Anything).Return()
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
@@ -181,11 +190,11 @@ func TestLoginHandler(t *testing.T) {
 			name: "success login",
 			setupMocks: func() {
 				resetter()
-				form := globals.LoginForm{Identificator: "u", Password: "p"}
-				user := &user_schema.User{ID: 1, Username: "u", Email: "e"}
-				mockDB.On("QueryUserOnLogin", mock.Anything, form).Return(user, true, nil)
+
+				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
+				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
 				mockTokens.On("NewToken").Return("token123", nil)
-				mockDB.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
+				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("<header>", nil)
 				mockTemplate.On("Must", mock.Anything, mock.Anything).Return(mockedTemplate)
 				mockTemplate.On("ParseFiles", mock.Anything).Return(mockedTemplate, nil)

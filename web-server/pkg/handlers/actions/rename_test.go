@@ -3,10 +3,12 @@ package actions
 import (
 	"context"
 	"fmt"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +18,8 @@ import (
 )
 
 func TestRenameFileHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	_, mockFR, _, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
@@ -25,7 +28,7 @@ func TestRenameFileHandler(t *testing.T) {
 	cleanupNewAlert := test.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
 
 	resetter := test.NewMocksResetter(
-		&mockDB.Mock,
+		&mockFR.Mock,
 		&mockErrResp.Mock,
 		&mockNewAlert.Mock,
 	)
@@ -35,7 +38,7 @@ func TestRenameFileHandler(t *testing.T) {
 		cleanupNewAlert()
 	}()
 
-	mockRequester := user_schema.NewUserBuilder().
+	mockRequester := uschema.NewUserBuilder().
 		WithUsername("testuser").
 		WithID(1)
 
@@ -62,7 +65,7 @@ func TestRenameFileHandler(t *testing.T) {
 		{
 			name:         "rename error",
 			fileName:     "file.txt",
-			desiredName:  "new.txt",
+			desiredName:  "new",
 			renameErr:    fmt.Errorf("fail"),
 			renameResult: "",
 			wantCode:     http.StatusInternalServerError,
@@ -73,9 +76,9 @@ func TestRenameFileHandler(t *testing.T) {
 		{
 			name:         "success",
 			fileName:     "old.txt",
-			desiredName:  "new.txt",
+			desiredName:  "new",
 			renameErr:    nil,
-			renameResult: "new.txt",
+			renameResult: "new",
 			wantCode:     http.StatusOK,
 			wantBody:     "new.txt",
 			relativePath: []string{"path/to/file"},
@@ -87,14 +90,18 @@ func TestRenameFileHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resetter()
 
-			mockDB.On(
-				"RenameFile",
+			mockFR.On(
+				"UpdateFileEntry",
 				context.Background(),
-				mock.AnythingOfType("*file_schema.UserFile"),
-				tt.desiredName,
+				mock.AnythingOfType("*fschema.UserFile"),
+				mock.AnythingOfType("map[string]interface {}"),
 				mockRequester,
-			).Return(tt.renameResult, tt.renameErr)
-			mockNewAlert.On("NewAlert", "File Renamed", "check", fmt.Sprintf("File '%s' has been renamed to '%s'.", tt.fileName, tt.renameResult), mock.Anything).Return("ALERT: File Renamed check File 'old.txt' has been renamed to 'new.txt'. 1")
+			).Return(tt.renameErr).Run(func(args mock.Arguments) {
+				dest := args.Get(1).(*fschema.UserFile)
+				if tt.renameResult != "" {
+					dest.Filename = tt.renameResult
+				}
+			})
 			mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return(tt.wantBody)
 
 			req := httptest.NewRequest(http.MethodPatch, "/rename", nil)

@@ -2,15 +2,10 @@ package account
 
 import (
 	"fmt"
+	"homeserver/constants/uconsts"
 	"homeserver/db/repositories"
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas"
-	"homeserver/pkg/utils"
+	"homeserver/web-server/pkg/middleware"
 	"net/http"
-)
-
-var (
-	ErrorResponse = utils.ErrorResponse
 )
 
 func HandleUsernameChange(r *http.Request, repos *repositories.Repositories) error {
@@ -26,7 +21,11 @@ func HandleUsernameChange(r *http.Request, repos *repositories.Repositories) err
 		return fmt.Errorf("username cannot be empty")
 	}
 
-	err := connection.ModifyUserField(r.Context(), reqCont.Requester, schemas.Username, new_username)
+	fvp := map[string]any{
+		uconsts.Username: new_username,
+	}
+
+	err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
 	if err != nil {
 		return fmt.Errorf("failed to update username: %w", err)
 	}

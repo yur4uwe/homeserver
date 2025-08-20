@@ -6,19 +6,21 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"homeserver/pkg/middleware"
-	"homeserver/pkg/schemas/file_schema"
-	"homeserver/pkg/schemas/folder_schema"
-	"homeserver/pkg/schemas/user_schema"
+	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test"
 	"homeserver/test/mocks"
+	"homeserver/web-server/pkg/middleware"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDeleteFileHandler(t *testing.T) {
-	mockDB := new(mocks.MockDB)
+	_, mockFR, mockFolR, _, _ := mocks.InitRepoMocks()
+	mockDB := repositories.NewRepositories(nil, mockFR, mockFolR, nil, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
 	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 	defer cleanupErrResp()
@@ -28,12 +30,13 @@ func TestDeleteFileHandler(t *testing.T) {
 	defer cleanupNewAlert()
 
 	resetter := test.NewMocksResetter(
-		&mockDB.Mock,
+		&mockFR.Mock,
+		&mockFolR.Mock,
 		&mockErrResp.Mock,
 		&mockNewAlert.Mock,
 	)
 
-	mockRequester := user_schema.NewUserBuilder().
+	mockRequester := uschema.NewUserBuilder().
 		WithID(1).
 		WithUsername("testuser")
 
@@ -44,7 +47,7 @@ func TestDeleteFileHandler(t *testing.T) {
 	fileName := "test"
 	fileExtension := "txt"
 	filePath := "folder"
-	fileObj := file_schema.NewUserFileBuilder().
+	fileObj := fschema.NewUserFileBuilder().
 		WithFilename(fileName).
 		WithExtension(fileExtension).
 		WithPath(filePath).
@@ -52,7 +55,7 @@ func TestDeleteFileHandler(t *testing.T) {
 
 	folderName := "myfolder"
 	folderPath := "folder"
-	folderObj := folder_schema.NewUserFolderBuilder().
+	folderObj := folschema.NewUserFolderBuilder().
 		WithName(folderName).
 		WithPath(folderPath).
 		WithOwnerID(mockRequester.ID)
@@ -109,7 +112,7 @@ func TestDeleteFileHandler(t *testing.T) {
 			resetter()
 
 			if tt.isFolder {
-				mockDB.On("DeleteFolder", mock.Anything, folderObj, mockRequester.Username).Return(tt.returnID, tt.returnErr)
+				mockFolR.On("DeleteFolder", mock.Anything, folderObj, mockRequester).Return(tt.returnID, tt.returnErr)
 				if tt.returnErr != nil {
 					mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return(tt.wantBody)
 				} else {
@@ -124,7 +127,7 @@ func TestDeleteFileHandler(t *testing.T) {
 					assert.Equal(t, tt.wantTrigger, rec.Header().Get("HX-Trigger"))
 				}
 			} else {
-				mockDB.On("DeleteFile", mock.Anything, fileObj, mockRequester.Username).Return(tt.returnID, tt.returnErr)
+				mockFR.On("DeleteFile", mock.Anything, fileObj, mockRequester).Return(tt.returnID, tt.returnErr)
 				if tt.returnErr != nil {
 					mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return(tt.wantBody)
 				} else {
