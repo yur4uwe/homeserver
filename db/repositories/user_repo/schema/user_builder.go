@@ -16,7 +16,7 @@ var (
 		Password:      "",
 		Email:         "",
 		AuthToken:     nil,
-		CreatedAt:     time.Now(),
+		CreatedAt:     time.Time{},
 		EmailVerified: false,
 	}
 )
@@ -96,8 +96,6 @@ func (u *User) GetValidFields() []string {
 			if !u.CreatedAt.IsZero() {
 				validFields = append(validFields, field)
 			}
-		case uconsts.EmailVerified:
-			validFields = append(validFields, field)
 		}
 	}
 	return validFields

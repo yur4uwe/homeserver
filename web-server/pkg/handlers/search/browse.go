@@ -20,7 +20,6 @@ func BrowseHandler(ctx context.Context, repos *repositories.Repositories, direct
 	}
 
 	file_entries, err := repos.FileRepo.GetFilesByDirectory(ctx, strings.Join(directory, "/"), requester)
-	// file_entries, err := connection.ExtractFilesFromDirectory(ctx, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user files: %v", err)
 	}

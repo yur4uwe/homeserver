@@ -144,11 +144,12 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 		args[i] = f
 	}
 
-	query := fmt.Sprintf(`
-		SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-		FROM user_files
-		WHERE path = $1 AND owner_id = $2
-	`, args...)
+	query := querybuilder.New().Select(fields...).From(dbconsts.DBFilesTable.Name).Where("path = $1 AND owner_id = $2").Build()
+	// query := fmt.Sprintf(`
+	// 	SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+	// 	FROM user_files
+	// 	WHERE path = $1 AND owner_id = $2
+	// `, args...)
 
 	rows, err := repo.db.Pool.Query(ctx, query, directory, owner.ID)
 	if err != nil {
@@ -157,15 +158,8 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 	defer rows.Close()
 
 	var files []fschema.UserFile
-	for rows.Next() {
-		var file fschema.UserFile
-		if err := rows.Scan(&file.ID, &file.Filename, &file.Extension, &file.Path, &file.Size, &file.ContentType, &file.OwnerID, &file.CreatedAt, &file.UpdatedAt, &file.Metadata); err != nil {
-			return nil, fmt.Errorf("error scanning file entry: %v", err)
-		}
-
-		if strings.HasPrefix(file.Path, directory) {
-			files = append(files, file)
-		}
+	if err := helpers.ScanRows(rows, &files); err != nil {
+		return nil, fmt.Errorf("error scanning files: %v", err)
 	}
 
 	return files, nil

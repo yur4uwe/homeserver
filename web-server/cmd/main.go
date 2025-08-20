@@ -26,6 +26,10 @@ import (
 func main() {
 	constants.Rootd = utils.GetProjectRoot()
 
+	if err := utils.LoadAvailableIconTypes(); err != nil {
+		log.Fatalf("Error loading available icon types: %v", err)
+	}
+
 	fmt.Println("Project root directory:", constants.Rootd)
 
 	if err := godotenv.Load(constants.Rootd + ".env"); err != nil {
@@ -44,7 +48,7 @@ func main() {
 		log.Fatalf("Database extension check error: %v", err)
 	}
 
-	fs := http.FileServer(http.Dir("G:\\projects\\Myprojects\\homeserver\\static"))
+	fs := http.FileServer(http.Dir(constants.Rootd + "static"))
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
