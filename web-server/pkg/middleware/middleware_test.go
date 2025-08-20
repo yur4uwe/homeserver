@@ -20,7 +20,7 @@ func TestMiddlewareSuite(t *testing.T) {
 	defer mustCleanup()
 
 	mockParse := new(MockParseAsString)
-	mockParse.On("ParseTemplateToString", "../static/fragments/footer.html", nil).Return("Mocked Footer", nil)
+	mockParse.On("ParseTemplateToString", "../../static/fragments/footer.html", nil).Return("Mocked Footer", nil)
 
 	parseCleanup := test.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
 	defer parseCleanup()

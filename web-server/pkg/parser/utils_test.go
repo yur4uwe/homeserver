@@ -30,7 +30,7 @@ func (m *MockTemplateParseFiles) ParseFiles(filenames ...string) (*template.Temp
 
 func TestLoadIcon(t *testing.T) {
 	mockOS := new(MockOSReadFile)
-	mockOS.On("ReadFile", "../static/assets/test-icon.svg").Return([]byte("<svg>Mock Icon</svg>"), nil)
+	mockOS.On("ReadFile", "../../static/assets/test-icon.svg").Return([]byte("<svg>Mock Icon</svg>"), nil)
 
 	// Replace osReadFile with the mock
 	cleanup := test.MockFunction(&osReadFile, mockOS.ReadFile, func() {})
@@ -42,7 +42,7 @@ func TestLoadIcon(t *testing.T) {
 	})
 
 	t.Run("TestLoadIconFailure", func(t *testing.T) {
-		mockOS.On("ReadFile", "../static/assets/missing-icon.svg").Return(nil, errors.New("file not found"))
+		mockOS.On("ReadFile", "../../static/assets/missing-icon.svg").Return(nil, errors.New("file not found"))
 
 		assert.Panics(t, func() {
 			LoadIcon("missing-icon")
@@ -52,7 +52,7 @@ func TestLoadIcon(t *testing.T) {
 
 func TestNewAlert(t *testing.T) {
 	mockTemplate := new(MockTemplateParseFiles)
-	mockTemplate.On("ParseFiles", []string{"../static/templates/modal.html"}).Return(template.Must(template.New("mock").Parse("Mock Template: {{.Title}} - {{.Message}}")), nil)
+	mockTemplate.On("ParseFiles", []string{"../../static/templates/modal.html"}).Return(template.Must(template.New("mock").Parse("Mock Template: {{.Title}} - {{.Message}}")), nil)
 
 	// Replace templateParseFiles with the mock
 	cleanup := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
@@ -64,10 +64,10 @@ func TestNewAlert(t *testing.T) {
 	})
 
 	t.Run("TestNewAlertTemplateFailure", func(t *testing.T) {
-		mockTemplate.On("ParseFiles", []string{"../static/templates/missing-template.html"}).Return(nil, errors.New("template not found"))
+		mockTemplate.On("ParseFiles", []string{"../../static/templates/missing-template.html"}).Return(nil, errors.New("template not found"))
 
 		assert.Panics(t, func() {
-			ParseFiles("../static/templates/missing-template.html")
+			ParseFiles("../../static/templates/missing-template.html")
 		}, "NewAlert should panic when the template file is not found")
 	})
 }

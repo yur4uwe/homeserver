@@ -27,7 +27,7 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqCont.LogHistory.Log("[Handler] Welcome page accessed")
 
-	tmpl := Must(ParseFiles("../static/templates/welcome.html"))
+	tmpl := Must(ParseFiles("../../static/templates/welcome.html"))
 
 	data := templates.WelcomePageData{
 		IsLoggedIn: reqCont.AuthToken != "",
@@ -47,7 +47,7 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqCont.LogHistory.Log("[Handler] Upload page accessed")
 
-	tmpl := Must(ParseFiles("../static/fragments/upload.html"))
+	tmpl := Must(ParseFiles("../../static/fragments/upload.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -63,7 +63,7 @@ func SettingsPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqCont.LogHistory.Log("[Handler] Settings page accessed")
 
-	tmpl := Must(ParseFiles("../static/templates/settings.html"))
+	tmpl := Must(ParseFiles("../../static/templates/settings.html"))
 
 	data := templates.SettingsPageData{
 		Username: reqCont.Requester.Username,
@@ -98,7 +98,7 @@ func StaticPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file_to_serve := "../static/fragments/" + r.URL.Path[1:] + ".html"
+	file_to_serve := "../../static/fragments/" + r.URL.Path[1:] + ".html"
 
 	content, err := ReadFile(file_to_serve)
 	if err != nil {

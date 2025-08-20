@@ -53,7 +53,7 @@ func TestUploadRouter(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
 		mockErrResp.AssertNotCalled(t, "ErrorResponse", mock.Anything, mock.Anything, mock.Anything)
-		mockUpload.AssertCalled(t, "DownloadFile", nil, mock.Anything)
+		mockUpload.AssertCalled(t, "DownloadFile", mock.Anything, mock.Anything)
 	})
 
 	t.Run("Hands over handling to DeleteFile on DELETE", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestUploadRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockUpload.AssertCalled(t, "DeleteFile", nil, mock.Anything)
+		mockUpload.AssertCalled(t, "DeleteFile", mock.Anything, mock.Anything)
 	})
 
 	t.Run("Hands over handling to PatchFile on PATCH", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestUploadRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockUpload.AssertCalled(t, "PatchFile", nil, mock.Anything)
+		mockUpload.AssertCalled(t, "PatchFile", mock.Anything, mock.Anything)
 	})
 
 	t.Run("Returns Method Not Allowed for unsupported methods", func(t *testing.T) {
@@ -160,7 +160,7 @@ func TestFileActionsRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockActions.AssertCalled(t, "DeleteFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt")
+		mockActions.AssertCalled(t, "DeleteFileHandler", rec, req, mock.Anything, mock.Anything, []string{"user"}, "file.txt")
 	})
 
 	t.Run("Hands over handling to RenameFileHandler on PATCH", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestFileActionsRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockActions.AssertCalled(t, "RenameFileHandler", rec, req, nil, mock.Anything, []string{"user"}, "file.txt", "newfile.txt", false)
+		mockActions.AssertCalled(t, "RenameFileHandler", rec, req, mock.Anything, mock.Anything, []string{"user"}, "file.txt", "newfile.txt", false)
 	})
 
 	t.Run("Returns Method Not Allowed for unsupported methods", func(t *testing.T) {
@@ -403,7 +403,7 @@ func TestSearchRouter(t *testing.T) {
 
 		mockTemplate.On(
 			"ParseFiles",
-			[]string{"../static/templates/search_base.html", "../static/templates/search_results.html"},
+			[]string{"../../static/templates/search_base.html", "../../static/templates/search_results.html"},
 		).Return(mockedTemplate, nil)
 
 		defer mockSearch.AssertExpectations(t)

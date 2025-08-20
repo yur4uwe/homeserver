@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"homeserver/constants"
 	"homeserver/db"
 	"homeserver/db/repositories"
 	"homeserver/web-server/pkg/handlers"
@@ -37,7 +38,7 @@ func main() {
 		log.Fatalf("Database extension check error: %v", err)
 	}
 
-	fs := http.FileServer(http.Dir("../static"))
+	fs := http.FileServer(http.Dir("../../static"))
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -57,11 +58,11 @@ func main() {
 
 	server := &http.Server{
 		Handler: handler,
-		Addr:    ":" + os.Getenv("PORT"),
+		Addr:    ":" + os.Getenv(constants.WebSrvPort),
 	}
 
 	go func() {
-		log.Printf("Starting HTTP server on port %s", os.Getenv("MAIN_PORT"))
+		log.Printf("Starting HTTP server on port %s", os.Getenv(constants.WebSrvPort))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}

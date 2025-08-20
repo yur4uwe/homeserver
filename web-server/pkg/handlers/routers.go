@@ -152,12 +152,12 @@ func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 		var tmpl *template.Template
 		if reqCont.ToRestorePage || reqCont.RerenderBody || r.URL.Query().Get("redirect") != "" {
-			tmpl = Must(ParseFiles("../static/templates/search_base.html", "../static/templates/search_results.html"))
+			tmpl = Must(ParseFiles("../../static/templates/search_base.html", "../../static/templates/search_results.html"))
 
 			w.Header().Set("HX-Push-Url", "/search/"+url.QueryEscape(strings.Join(directory[1:], "/")))
 			tmpl.ExecuteTemplate(w, "search_base.html", &data)
 		} else {
-			tmpl = Must(ParseFiles("../static/templates/search_results.html"))
+			tmpl = Must(ParseFiles("../../static/templates/search_results.html"))
 
 			tmpl.Execute(w, data)
 		}

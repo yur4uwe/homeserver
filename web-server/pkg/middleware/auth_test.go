@@ -27,7 +27,7 @@ func TestAuthMiddleware(t *testing.T) {
 	mockLogHistory.On("ErrLog", mock.Anything, mock.Anything).Return()
 
 	mockParseAsString := new(MockParseAsString)
-	mockParseAsString.On("ParseTemplateToString", "../static/templates/header.html", mock.Anything).Return("<header>Welcome</header>", nil)
+	mockParseAsString.On("ParseTemplateToString", "../../static/templates/header.html", mock.Anything).Return("<header>Welcome</header>", nil)
 
 	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return()
@@ -119,7 +119,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	t.Run("Handles template parsing error", func(t *testing.T) {
 		mockErrorParseAsString := new(MockParseAsString)
-		mockErrorParseAsString.On("ParseTemplateToString", "../static/templates/header.html", mock.Anything).Return("", fmt.Errorf("template error"))
+		mockErrorParseAsString.On("ParseTemplateToString", "../../static/templates/header.html", mock.Anything).Return("", fmt.Errorf("template error"))
 		cleanupParseAsString := test.MockFunction(&ParseTemplateToString, mockErrorParseAsString.ParseTemplateToString, func() {
 			test.MockFunction(&ParseTemplateToString, mockParseAsString.ParseTemplateToString, func() {})
 		})
