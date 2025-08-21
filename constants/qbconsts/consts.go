@@ -23,3 +23,21 @@ const (
 	OR  QueryConnector = "OR"
 	NOT QueryConnector = "NOT"
 )
+
+const (
+	InnerJoin = "INNER"
+	LeftJoin  = "LEFT"
+	RightJoin = "RIGHT"
+)
+
+type Join struct {
+	Type  string
+	Table string
+	On    string
+}
+
+type Column struct {
+	Name  string
+	Table string
+	Alias string
+}
