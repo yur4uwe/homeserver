@@ -12,7 +12,7 @@ var (
 	IsPage = utils.IsPage
 )
 
-func contextConstructor() *AdditionalRequestContext {
+func ContextConstructor() *AdditionalRequestContext {
 	return &AdditionalRequestContext{
 		LogHistory:    &LogHistory{Entries: []string{}},
 		ToRestorePage: false,
@@ -44,7 +44,7 @@ func ToRestorePage(next http.Handler) http.Handler {
 
 func WithAdditionalRequestContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reqCont := contextConstructor()
+		reqCont := ContextConstructor()
 		ctx := context.WithValue(r.Context(), ReqContKey, reqCont)
 		r = r.WithContext(ctx)
 

@@ -21,12 +21,12 @@ var (
 	ErrorResponse = err.ErrorResponse
 	NewAlert      = parser.NewAlert
 	LoadIcon      = parser.LoadIcon
-	verFailed     = sendVerificationFailurePage
+	VerFailed     = SendVerificationFailurePage
 	Must          = template.Must
 	ParseFiles    = template.ParseFiles
 )
 
-func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
+func SendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
 	tmpl := Must(ParseFiles(constants.Rootd + "static/templates/verification.html"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -35,7 +35,7 @@ func sendVerificationFailurePage(w http.ResponseWriter, verification *templates.
 	tmpl.Execute(w, verification)
 }
 
-func sendVerificationEmail(form formatters.RegisterForm, verification_token string) {
+func SendVerificationEmail(form formatters.RegisterForm, verification_token string) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", "tsg9515@gmail.com")
 	m.SetHeader("To", form.Email)
@@ -82,7 +82,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 			reqCont.LogHistory.ErrLog("Missing verification token in request\n", "VerificationHandler:58")
 			verification.Error = "Missing verification token"
 			verification.Causes = append(verification.Causes, template.HTML("You shouldn't be here"))
-			verFailed(w, verification, http.StatusBadRequest)
+			VerFailed(w, verification, http.StatusBadRequest)
 			return
 		}
 
@@ -94,7 +94,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 			verification.Error = "Failed to check verification token"
 			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
 			verification.Causes = append(verification.Causes, template.HTML("You refreshed the page with already verified token"))
-			verFailed(w, verification, http.StatusInternalServerError)
+			VerFailed(w, verification, http.StatusInternalServerError)
 			return
 		}
 

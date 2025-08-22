@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	verSuccess = sendVerificationEmail
+	VerSuccess = SendVerificationEmail
 	NewToken   = auth.NewToken
 )
 
@@ -65,7 +65,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		go verSuccess(form, verification_token)
+		go VerSuccess(form, verification_token)
 
 		w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")

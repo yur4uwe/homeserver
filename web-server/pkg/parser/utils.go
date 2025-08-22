@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	osReadFile = os.ReadFile         // For testing purposes
+	OsReadFile = os.ReadFile         // For testing purposes
 	Must       = template.Must       // For testing purposes
 	ParseFiles = template.ParseFiles // For testing purposes
 )
@@ -17,7 +17,7 @@ var (
 func LoadIcon(icon_name string) string {
 	icon_path := fmt.Sprintf(constants.Rootd+"static/assets/%s.svg", icon_name)
 
-	icon_data, err := osReadFile(icon_path)
+	icon_data, err := OsReadFile(icon_path)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load icon %s: %v\n", icon_name, err))
 	}

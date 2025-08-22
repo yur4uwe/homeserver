@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"homeserver/constants/authconsts"
 	"homeserver/web-server/pkg/utils/formatters"
 )
 
@@ -27,29 +28,29 @@ func fieldset(fieldId, message, value, inputType, placeholder string, isError bo
 
 func LoginValidation(form formatters.LoginForm) (bool, string, string) {
 	if form.Identificator == "" {
-		return false, IdentificatorField, fieldset(IdentificatorField, IdentificatorError, form.Identificator, "text", IdentificatorPlaceholder, true)
+		return false, authconsts.IdentificatorField, fieldset(authconsts.IdentificatorField, authconsts.IdentificatorError, form.Identificator, "text", authconsts.IdentificatorPlaceholder, true)
 	}
 	if form.Password == "" {
-		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "password", PasswordPlaceholder, true)
+		return false, authconsts.PasswordField, fieldset(authconsts.PasswordField, authconsts.PasswordError, form.Password, "password", authconsts.PasswordPlaceholder, true)
 	}
 	return true, "", ""
 }
 
 func RegisterValidation(form formatters.RegisterForm) (bool, string, string) {
 	if form.Username == "" {
-		return false, UsernameField, fieldset(UsernameField, UsernameError, form.Username, "text", UsernamePlaceholder, true)
+		return false, authconsts.UsernameField, fieldset(authconsts.UsernameField, authconsts.UsernameError, form.Username, "text", authconsts.UsernamePlaceholder, true)
 	}
 	if form.Email == "" {
-		return false, EmailField, fieldset(EmailField, EmailError, form.Email, "email", EmailPlaceholder, true)
+		return false, authconsts.EmailField, fieldset(authconsts.EmailField, authconsts.EmailError, form.Email, "email", authconsts.EmailPlaceholder, true)
 	}
 	if form.Password == "" {
-		return false, PasswordField, fieldset(PasswordField, PasswordError, form.Password, "password", PasswordPlaceholder, true)
+		return false, authconsts.PasswordField, fieldset(authconsts.PasswordField, authconsts.PasswordError, form.Password, "password", authconsts.PasswordPlaceholder, true)
 	}
 	if form.Confirm == "" {
-		return false, ConfirmPasswordField, fieldset(ConfirmPasswordField, ConfirmPasswordError, form.Confirm, "password", ConfirmPasswordPlaceholder, true)
+		return false, authconsts.ConfirmPasswordField, fieldset(authconsts.ConfirmPasswordField, authconsts.ConfirmPasswordError, form.Confirm, "password", authconsts.ConfirmPasswordPlaceholder, true)
 	}
 	if form.Password != form.Confirm {
-		return false, ConfirmPasswordField, fieldset(ConfirmPasswordField, PasswordMismatchError, form.Confirm, "password", ConfirmPasswordPlaceholder, true)
+		return false, authconsts.ConfirmPasswordField, fieldset(authconsts.ConfirmPasswordField, authconsts.PasswordMismatchError, form.Confirm, "password", authconsts.ConfirmPasswordPlaceholder, true)
 	}
 	return true, "", ""
 }
