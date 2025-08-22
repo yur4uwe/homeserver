@@ -3,9 +3,10 @@ package tokenrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/tconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbselect"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"os"
@@ -21,11 +22,17 @@ func (r *TokenRepo) CheckToken(ctx context.Context, token string) (int, error) {
 		return 0, fmt.Errorf(tconsts.ErrEmptyToken)
 	}
 
-	query := querybuilder.New().
-		Select("id").
-		From("users").
+	query := qbselect.New().
+		Columns(uconsts.ID).
+		From(dbconsts.DBUsersTable.Name).
 		Where("auth_token = $1 AND email_verified = true").
 		Build()
+
+	// query := querybuilder.New().
+	// 	Select("id").
+	// 	From("users").
+	// 	Where("auth_token = $1 AND email_verified = true").
+	// 	Build()
 
 	var userID int
 	err := r.db.Pool.QueryRow(ctx, query, token).Scan(&userID)
@@ -40,11 +47,17 @@ func (r *TokenRepo) QueryToken(ctx context.Context, token string) (*uschema.User
 		return nil, fmt.Errorf(tconsts.ErrEmptyToken)
 	}
 
-	query := querybuilder.New().
-		Select(uschema.FieldsList(uconsts.Password)...).
-		From("users").
+	query := qbselect.New().
+		Columns(uschema.FieldsList(uconsts.Password)...).
+		From(dbconsts.DBUsersTable.Name).
 		Where("auth_token = $1").
 		Build()
+
+	// query := querybuilder.New().
+	// 	Select(uschema.FieldsList(uconsts.Password)...).
+	// 	From("users").
+	// 	Where("auth_token = $1").
+	// 	Build()
 
 	var user []uschema.User
 	rows, err := r.db.Pool.Query(ctx, query, token)

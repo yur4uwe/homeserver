@@ -7,8 +7,11 @@ import (
 )
 
 // Set adds a SET clause (e.g., Set("name = $1"))
-func (qb *UpdateQueryBuilder) Set(setClause string) *UpdateQueryBuilder {
-	qb.setClauses = append(qb.setClauses, setClause)
+func (qb *UpdateQueryBuilder) Set(setCols ...string) *UpdateQueryBuilder {
+	init_len := len(qb.setColumns)
+	for i, col := range setCols {
+		qb.setColumns = append(qb.setColumns, fmt.Sprintf("%s = $%d", col, i+1+init_len))
+	}
 	return qb
 }
 
@@ -37,10 +40,11 @@ func (qb *UpdateQueryBuilder) Build() string {
 	if qb.bb.GetFrom() == "" {
 		panic("No table specified for UPDATE")
 	}
-	if len(qb.setClauses) == 0 {
-		panic("No SET clauses specified for UPDATE")
+	if len(qb.setColumns) == 0 {
+		panic("No SET columns specified for UPDATE")
 	}
-	query := fmt.Sprintf("UPDATE %s SET %s", qb.bb.GetFrom(), strings.Join(qb.setClauses, ", "))
+
+	query := fmt.Sprintf("UPDATE %s SET %s", qb.bb.GetFrom(), strings.Join(qb.setColumns, ", "))
 
 	if where := qb.bb.GetWhere(); where != "" {
 		query += " WHERE " + where
@@ -58,6 +62,6 @@ func (qb *UpdateQueryBuilder) Build() string {
 func New() *UpdateQueryBuilder {
 	return &UpdateQueryBuilder{
 		bb:         *basebuilder.New(),
-		setClauses: []string{},
+		setColumns: []string{},
 	}
 }

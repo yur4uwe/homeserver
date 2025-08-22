@@ -12,16 +12,9 @@ func (b *BaseBuilder) Where(where string) *BaseBuilder {
 	return b
 }
 
-func (b *BaseBuilder) Returning(col ...string) *BaseBuilder {
-	switch len(col) {
-	case 1:
-		b.returning = append(b.returning, qbconsts.Column{Name: col[0]})
-	case 2:
-		b.returning = append(b.returning, qbconsts.Column{Name: col[1], Table: col[0]})
-	case 3:
-		b.returning = append(b.returning, qbconsts.Column{Name: col[1], Table: col[0], Alias: col[2]})
-	default:
-		panic("Returning method requires 1 to 3 arguments")
+func (b *BaseBuilder) Returning(cols ...string) *BaseBuilder {
+	for _, col := range cols {
+		b.returning = append(b.returning, qbconsts.Column{Name: col})
 	}
 	return b
 }

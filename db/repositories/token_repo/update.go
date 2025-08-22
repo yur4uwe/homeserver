@@ -7,7 +7,7 @@ import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/tconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbselect"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
@@ -17,11 +17,17 @@ func (r *TokenRepo) VerifyToken(ctx context.Context, token string) error {
 		return fmt.Errorf(tconsts.ErrEmptyToken)
 	}
 
-	query := querybuilder.New().
-		Select(uconsts.ID, uconsts.Username).
-		From("users").
+	query := qbselect.New().
+		Columns(uconsts.ID, uconsts.Username).
+		From(dbconsts.DBUsersTable.Name).
 		Where("auth_token = $1 AND email_verified = false").
 		Build()
+
+	// query := querybuilder.New().
+	// 	Select(uconsts.ID, uconsts.Username).
+	// 	From("users").
+	// 	Where("auth_token = $1 AND email_verified = false").
+	// 	Build()
 
 	var user []uschema.User
 	// Can fail if the token does not exist == user does not exist
@@ -45,11 +51,11 @@ func (r *TokenRepo) VerifyToken(ctx context.Context, token string) error {
 		return fmt.Errorf("invalid user ID for token verification")
 	}
 
-	query = querybuilder.New().
-		Update(dbconsts.DBUsersTable.Name).
-		Set(uconsts.EmailVerified).
-		Where("id = $2").
-		Build()
+	// query = querybuilder.New().
+	// 	Update(dbconsts.DBUsersTable.Name).
+	// 	Set(uconsts.EmailVerified).
+	// 	Where("id = $2").
+	// 	Build()
 
 	tag, err := r.db.Pool.Exec(ctx, query, true, user[0].ID)
 	if err != nil {

@@ -11,22 +11,23 @@ import (
 )
 
 var (
-	getStoragePath = os.Getenv
+	GetStoragePath = os.Getenv
 )
 
 var (
-	defaultFolder = UserFolder{
-		ID:        0,
-		Name:      "",
-		Path:      "",
-		Parent:    nil,
-		OwnerID:   0,
-		CreatedAt: time.Now(),
+	DefaultFolder = UserFolder{
+		ID:            0,
+		Name:          "",
+		Path:          "",
+		Parent:        nil,
+		OwnerID:       0,
+		TrustedSource: []byte{},
+		CreatedAt:     time.Time{},
 	}
 )
 
 func NewUserFolderBuilder() *UserFolder {
-	clone := defaultFolder
+	clone := DefaultFolder
 	return &clone
 }
 
@@ -80,7 +81,7 @@ func (uf *UserFolder) WithOwnerID(ownerID int) *UserFolder {
 }
 
 func (uf *UserFolder) AbsolutePath() string {
-	storagePath := getStoragePath(constants.StoragePath)
+	storagePath := GetStoragePath(constants.StoragePath)
 
 	return fmt.Sprintf("%s%s/%s", storagePath, uf.Path, uf.Name)
 }

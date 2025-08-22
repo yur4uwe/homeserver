@@ -1,7 +1,8 @@
-package qbselect
+package querybuilders_test
 
 import (
 	"homeserver/constants/qbconsts"
+	"homeserver/db/query_builder/qbselect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 
 func TestSelectQueryBuilder(t *testing.T) {
 	t.Run("Simple Select", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("id").
 			Col("name").
 			From("users").
@@ -21,7 +22,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Joined Select", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("users", "id").
 			Col("users", "name").
 			From("users").
@@ -35,7 +36,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Many Joins", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("users", "id").
 			Col("users", "name").
 			From("users").
@@ -50,7 +51,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 	t.Run("OrderBy and Limit", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("id").
 			Col("name").
 			From("users").
@@ -63,7 +64,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Offset and GroupBy", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("department").
 			Col("", "COUNT(*)", "cnt").
 			From("employees").
@@ -76,7 +77,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Having Clause", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("department").
 			Col("", "COUNT(*)", "cnt").
 			From("employees").
@@ -89,7 +90,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Distinct Select", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Distinct().
 			Col("email").
 			From("users")
@@ -99,7 +100,7 @@ func TestSelectQueryBuilder(t *testing.T) {
 	})
 
 	t.Run("Raw SQL Clause (appended)", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("id").
 			From("users").
 			Raw("FOR UPDATE")
@@ -108,30 +109,30 @@ func TestSelectQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, qb.Build())
 	})
 
-	t.Run("AliasedColumns", func(t *testing.T) {
-		qb := NewSelect().
-			AliasedColumns([3]string{"users", "id", "user_id"}, [3]string{"users", "name", "username"}).
+	t.Run("Columns", func(t *testing.T) {
+		qb := qbselect.New().
+			Columns("id", "name").
 			From("users")
 
 		query := qb.Build()
-		expected := "SELECT users.id AS user_id, users.name AS username FROM users"
+		expected := "SELECT id, name FROM users"
 		assert.Equal(t, expected, query)
 	})
 
 	t.Run("Panic on Col with 0 args", func(t *testing.T) {
-		qb := NewSelect().From("users")
+		qb := qbselect.New().From("users")
 		assert.Panics(t, func() { qb.Col() })
 	})
 
 	t.Run("No Columns Specified", func(t *testing.T) {
-		qb := NewSelect().From("users")
+		qb := qbselect.New().From("users")
 		query := qb.Build()
 		expected := "SELECT * FROM users"
 		assert.Equal(t, expected, query)
 	})
 
 	t.Run("Returning", func(t *testing.T) {
-		qb := NewSelect().
+		qb := qbselect.New().
 			Col("id").
 			Col("name").
 			From("users").

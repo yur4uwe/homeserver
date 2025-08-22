@@ -17,7 +17,7 @@ type SelectQueryBuilder struct {
 	distinct bool
 }
 
-func NewSelect() *SelectQueryBuilder {
+func New() *SelectQueryBuilder {
 	return &SelectQueryBuilder{
 		bb:       *basebuilder.New(),
 		columns:  []qbconsts.Column{},

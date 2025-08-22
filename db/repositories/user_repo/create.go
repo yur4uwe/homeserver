@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbinsert"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
@@ -15,18 +15,12 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 		return nil, fmt.Errorf("invalid user data: %v", err)
 	}
 
-	query := querybuilder.New().
-		Insert(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt)...).
+	query := qbinsert.New().
+		Columns(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt)...).
 		Into(dbconsts.DBUsersTable.Name).
-		Values(len(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt))).
 		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
 
-	// query := fmt.Sprintf(
-	// 	`INSERT INTO users (%s, created_at) VALUES (%s, now()) RETURNING %s`,
-	// 	strings.Join(uschema.FieldsList(uconsts.ID, uconsts.UpdatedAt, uconsts.CreatedAt), ", "),
-	// 	placeholders,
-	// 	strings.Join(uschema.FieldsList(uconsts.Password), ", "))
 	rows, err := r.db.Pool.Query(ctx, query, user.Username, user.Password, user.Email, nil, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %v", err)

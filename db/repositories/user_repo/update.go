@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbupdate"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"slices"
@@ -34,12 +34,18 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 		return fmt.Errorf("invalid user data: %v", err)
 	}
 
-	query := querybuilder.New().
-		Update(dbconsts.DBUsersTable.Name).
+	query := qbupdate.New().
+		From(dbconsts.DBUsersTable.Name).
 		Set(fields...).
 		Where(fmt.Sprintf("id = $%d", len(fields)+1)).
-		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
+
+	// query := querybuilder.New().
+	// 	Update(dbconsts.DBUsersTable.Name).
+	// 	Set(fields...).
+	// 	Where(fmt.Sprintf("id = $%d", len(fields)+1)).
+	// 	Returning(uschema.FieldsList(uconsts.Password)...).
+	// 	Build()
 
 	vals = append(vals, user.ID)
 

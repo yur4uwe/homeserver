@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	defaultUser = User{
+	DefaultUser = User{
 		ID:            0,
 		Username:      "",
 		Password:      "",
@@ -22,7 +22,7 @@ var (
 )
 
 func NewUserBuilder() *User {
-	clone := defaultUser
+	clone := DefaultUser
 	return &clone
 }
 

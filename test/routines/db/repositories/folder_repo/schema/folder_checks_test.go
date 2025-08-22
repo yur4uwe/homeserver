@@ -1,7 +1,8 @@
-package folschema
+package folschema_test
 
 import (
 	"homeserver/constants/folconsts"
+	folschema "homeserver/db/repositories/folder_repo/schema"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,50 +10,50 @@ import (
 
 func TestFolderChecksSuite(t *testing.T) {
 	t.Run("TestCheckFolderID", func(t *testing.T) {
-		folder := &UserFolder{ID: 1}
-		err := CheckFolderID(folder)
+		folder := &folschema.UserFolder{ID: 1}
+		err := folschema.CheckFolderID(folder)
 		assert.NoError(t, err, "CheckFolderID should not return an error for valid ID")
 
-		folder = &UserFolder{ID: 0}
-		err = CheckFolderID(folder)
+		folder = &folschema.UserFolder{ID: 0}
+		err = folschema.CheckFolderID(folder)
 		assert.Error(t, err, "CheckFolderID should return an error for invalid ID")
 		assert.EqualError(t, err, "ID must be greater than 0", "Error message should match")
 	})
 
 	t.Run("TestCheckFolderName", func(t *testing.T) {
-		folder := &UserFolder{Name: "documents"}
-		err := CheckFolderName(folder)
+		folder := &folschema.UserFolder{Name: "documents"}
+		err := folschema.CheckFolderName(folder)
 		assert.NoError(t, err, "CheckFolderName should not return an error for valid name")
 
-		folder = &UserFolder{Name: ""}
-		err = CheckFolderName(folder)
+		folder = &folschema.UserFolder{Name: ""}
+		err = folschema.CheckFolderName(folder)
 		assert.Error(t, err, "CheckFolderName should return an error for empty name")
 		assert.EqualError(t, err, "name cannot be empty", "Error message should match")
 	})
 
 	t.Run("TestCheckFolderPath", func(t *testing.T) {
-		checkPath := CheckFolderPath("john_doe")
+		checkPath := folschema.CheckFolderPath("john_doe")
 
-		folder := &UserFolder{Path: "john_doe/documents"}
+		folder := &folschema.UserFolder{Path: "john_doe/documents"}
 		err := checkPath(folder)
 		assert.NoError(t, err, "CheckFolderPath should not return an error for valid path")
 
-		folder = &UserFolder{Path: ""}
+		folder = &folschema.UserFolder{Path: ""}
 		err = checkPath(folder)
 		assert.Error(t, err, "CheckFolderPath should return an error for empty path")
 		assert.EqualError(t, err, "path cannot be empty", "Error message should match")
 
-		folder = &UserFolder{Path: "/invalid_path"}
+		folder = &folschema.UserFolder{Path: "/invalid_path"}
 		err = checkPath(folder)
 		assert.Error(t, err, "CheckFolderPath should return an error for path starting with a slash")
 		assert.EqualError(t, err, "path cannot start with a slash", "Error message should match")
 
-		folder = &UserFolder{Path: "invalid_path/"}
+		folder = &folschema.UserFolder{Path: "invalid_path/"}
 		err = checkPath(folder)
 		assert.Error(t, err, "CheckFolderPath should return an error for path ending with a slash")
 		assert.EqualError(t, err, "path cannot end with a slash", "Error message should match")
 
-		folder = &UserFolder{Path: "other_user/documents"}
+		folder = &folschema.UserFolder{Path: "other_user/documents"}
 		err = checkPath(folder)
 		assert.Error(t, err, "CheckFolderPath should return an error for path not starting with owner's name")
 		assert.EqualError(t, err, "path must start with the owner's name", "Error message should match")
@@ -60,24 +61,24 @@ func TestFolderChecksSuite(t *testing.T) {
 
 	t.Run("TestCheckParent", func(t *testing.T) {
 		parentID := 42
-		folder := &UserFolder{Parent: &parentID}
-		err := CheckParent(folder)
+		folder := &folschema.UserFolder{Parent: &parentID}
+		err := folschema.CheckParent(folder)
 		assert.NoError(t, err, "CheckParent should not return an error for valid parent ID")
 
 		parentID = 0
-		folder = &UserFolder{Parent: &parentID}
-		err = CheckParent(folder)
+		folder = &folschema.UserFolder{Parent: &parentID}
+		err = folschema.CheckParent(folder)
 		assert.Error(t, err, "CheckParent should return an error for invalid parent ID")
 		assert.EqualError(t, err, "parent ID must be greater than 0", "Error message should match")
 	})
 
 	t.Run("TestCheckFolderOwnerID", func(t *testing.T) {
-		folder := &UserFolder{OwnerID: 100}
-		err := CheckFolderOwnerID(folder)
+		folder := &folschema.UserFolder{OwnerID: 100}
+		err := folschema.CheckFolderOwnerID(folder)
 		assert.NoError(t, err, "CheckFolderOwnerID should not return an error for valid owner ID")
 
-		folder = &UserFolder{OwnerID: 0}
-		err = CheckFolderOwnerID(folder)
+		folder = &folschema.UserFolder{OwnerID: 0}
+		err = folschema.CheckFolderOwnerID(folder)
 		assert.Error(t, err, "CheckFolderOwnerID should return an error for invalid owner ID")
 		assert.EqualError(t, err, "owner ID must be greater than 0", "Error message should match")
 	})
@@ -85,7 +86,7 @@ func TestFolderChecksSuite(t *testing.T) {
 	t.Run("TestShouldHaveFields", func(t *testing.T) {
 		mockInvalidParentID := -1
 
-		folder := &UserFolder{
+		folder := &folschema.UserFolder{
 			ID:      0,
 			Name:    "",
 			Path:    "/invalid_path/",
@@ -104,7 +105,7 @@ func TestFolderChecksSuite(t *testing.T) {
 
 		mockParentID := 1
 
-		folder = &UserFolder{
+		folder = &folschema.UserFolder{
 			ID:      1,
 			Name:    "documents",
 			Path:    "john_doe/documents",

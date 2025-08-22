@@ -6,13 +6,10 @@ import (
 	"strconv"
 )
 
-func (qb *SelectQueryBuilder) AliasedColumns(args ...[3]string) *SelectQueryBuilder {
+func (qb *SelectQueryBuilder) Columns(args ...string) *SelectQueryBuilder {
 
 	for _, arg := range args {
-		if len(arg) != 3 {
-			continue
-		}
-		qb.columns = append(qb.columns, qbconsts.Column{Name: arg[1], Table: arg[0], Alias: arg[2]})
+		qb.columns = append(qb.columns, qbconsts.Column{Name: arg})
 	}
 
 	return qb

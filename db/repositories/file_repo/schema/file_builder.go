@@ -12,18 +12,19 @@ import (
 )
 
 var (
-	defaultFile = UserFile{
-		ID:          0,
-		Filename:    "",
-		Extension:   "",
-		Path:        "",
-		Directory:   0,
-		Size:        0,
-		ContentType: "",
-		OwnerID:     0,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    nil,
+	DefaultFile = UserFile{
+		ID:            0,
+		Filename:      "",
+		Extension:     "",
+		Path:          "",
+		Directory:     0,
+		Size:          0,
+		ContentType:   "",
+		OwnerID:       0,
+		TrustedSource: []byte{},
+		CreatedAt:     time.Time{},
+		UpdatedAt:     time.Time{},
+		Metadata:      nil,
 	}
 )
 
@@ -32,7 +33,7 @@ var (
 )
 
 func NewUserFileBuilder() *UserFile {
-	clone := defaultFile
+	clone := DefaultFile
 	return &clone
 }
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbupdate"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -40,8 +40,15 @@ func (r *FolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFol
 	copy(args, OrderUpdateFields(fields_to_update, folder))
 	args[len(fields_to_update)] = folder.ID
 
-	query := querybuilder.New().
-		Update(dbconsts.DBFoldersTable.Name).
+	// query := querybuilder.New().
+	// 	Update(dbconsts.DBFoldersTable.Name).
+	// 	Set(fields_to_update...).
+	// 	Where("id = $" + strconv.Itoa(len(fields_to_update)+1)).
+	// 	Returning(folschema.FieldsList()...).
+	// 	Build()
+
+	query := qbupdate.New().
+		From(dbconsts.DBFoldersTable.Name).
 		Set(fields_to_update...).
 		Where("id = $" + strconv.Itoa(len(fields_to_update)+1)).
 		Returning(folschema.FieldsList()...).

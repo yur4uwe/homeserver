@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbupdate"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -55,19 +55,12 @@ func (repo *FileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFil
 		fvp[fconsts.Filename] = projected_file.Filename
 	}
 
-	query := querybuilder.New().
-		Update(dbconsts.DBFilesTable.Name).
+	query := qbupdate.New().
 		Set(keys...).
+		From(dbconsts.DBFilesTable.Name).
 		Where("id = $" + fmt.Sprint(len(keys)+1)).
 		Returning(fschema.FieldsList()...).
 		Build()
-
-	// query := fmt.Sprintf(`
-	// 	UPDATE user_files
-	// 	SET %s
-	// 	WHERE id = $%d
-	// 	RETURNING`+strings.Join(fschema.FieldsList(), ", "),
-	// 	fields_str, len(fields_to_update)+1)
 
 	query_args := make([]any, 0, len(keys)+1)
 	for _, k := range keys {

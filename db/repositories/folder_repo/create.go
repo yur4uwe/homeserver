@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbinsert"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -28,12 +28,17 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 		return nil, fmt.Errorf("root folder must have the same name as the owner")
 	}
 
-	query := querybuilder.New().
-		Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
+	query := qbinsert.New().
+		Columns(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
 		Into(dbconsts.DBFoldersTable.Name).
-		Values(len(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt))).
 		Returning(folschema.FieldsList()...).
 		Build()
+	// query := querybuilder.New().
+	// 	Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
+	// 	Into(dbconsts.DBFoldersTable.Name).
+	// 	Values(len(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt))).
+	// 	Returning(folschema.FieldsList()...).
+	// 	Build()
 
 	inserted_folder := []folschema.UserFolder{}
 	rows, err := r.db.Pool.Query(

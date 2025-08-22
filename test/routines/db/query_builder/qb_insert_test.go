@@ -1,6 +1,7 @@
-package qbinsert
+package querybuilders_test
 
 import (
+	"homeserver/db/query_builder/qbinsert"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,7 +9,7 @@ import (
 
 func TestInsertQueryBuilder_Build(t *testing.T) {
 	t.Run("Simple Insert", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Into("users").
 			Columns("name", "email").
 			ValuesNum(1)
@@ -17,7 +18,7 @@ func TestInsertQueryBuilder_Build(t *testing.T) {
 	})
 
 	t.Run("Multiple Rows Insert", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Into("users").
 			Columns("name", "email").
 			ValuesNum(2)
@@ -26,7 +27,7 @@ func TestInsertQueryBuilder_Build(t *testing.T) {
 	})
 
 	t.Run("With Returning", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Into("users").
 			Columns("name", "email").
 			ValuesNum(1).
@@ -38,7 +39,7 @@ func TestInsertQueryBuilder_Build(t *testing.T) {
 	})
 
 	t.Run("With Raw Clause", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Into("users").
 			Columns("name").
 			ValuesNum(1).
@@ -48,23 +49,16 @@ func TestInsertQueryBuilder_Build(t *testing.T) {
 	})
 
 	t.Run("Panic on No Table", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Columns("name").
 			ValuesNum(1)
 		assert.PanicsWithValue(t, "No table specified for INSERT", func() { qb.Build() })
 	})
 
 	t.Run("Panic on No Columns", func(t *testing.T) {
-		qb := New().
+		qb := qbinsert.New().
 			Into("users").
 			ValuesNum(1)
 		assert.PanicsWithValue(t, "No columns specified for INSERT", func() { qb.Build() })
-	})
-
-	t.Run("Panic on No Values", func(t *testing.T) {
-		qb := New().
-			Into("users").
-			Columns("name")
-		assert.PanicsWithValue(t, "No values specified for INSERT", func() { qb.Build() })
 	})
 }

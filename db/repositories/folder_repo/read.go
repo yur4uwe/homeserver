@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbselect"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -16,8 +16,8 @@ func (r *FolderRepo) GetFolder(ctx context.Context, folder *folschema.UserFolder
 		return r.GetFolderByID(ctx, folder.ID)
 	}
 
-	query := querybuilder.New().
-		Select(folschema.FieldsList()...).
+	query := qbselect.New().
+		Columns(folschema.FieldsList()...).
 		From(dbconsts.DBFoldersTable.Name).
 		Where("path = $1 AND name = $2").
 		Build()
@@ -41,8 +41,8 @@ func (r *FolderRepo) GetFolder(ctx context.Context, folder *folschema.UserFolder
 }
 
 func (r *FolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.UserFolder, error) {
-	query := querybuilder.New().
-		Select(folschema.FieldsList()...).
+	query := qbselect.New().
+		Columns(folschema.FieldsList()...).
 		From(dbconsts.DBFoldersTable.Name).
 		Where("id = $1").
 		Build()
@@ -66,8 +66,8 @@ func (r *FolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.User
 }
 
 func (r *FolderRepo) GetFoldersByOwner(ctx context.Context, ownerID int) ([]folschema.UserFolder, error) {
-	query := querybuilder.New().
-		Select(folschema.FieldsList()...).
+	query := qbselect.New().
+		Columns(folschema.FieldsList()...).
 		From(dbconsts.DBFoldersTable.Name).
 		Where("owner_id = $1").
 		Build()
@@ -87,14 +87,14 @@ func (r *FolderRepo) GetFoldersByOwner(ctx context.Context, ownerID int) ([]fols
 }
 
 func (r *FolderRepo) GetChildren(ctx context.Context, path, name string, owner *uschema.User) ([]folschema.UserFolder, error) {
-	parent_query := querybuilder.New().
-		Select(folconsts.ID).
+	parent_query := qbselect.New().
+		Columns(folconsts.ID).
 		From(dbconsts.DBFoldersTable.Name).
 		Where("path = $2 AND name = $3").
 		Build()
 
-	query := querybuilder.New().
-		Select(folschema.FieldsList()...).
+	query := qbselect.New().
+		Columns(folschema.FieldsList()...).
 		From(dbconsts.DBFoldersTable.Name).
 		Where("owner_id = $1 AND parent = (" + parent_query + ")").
 		Build()

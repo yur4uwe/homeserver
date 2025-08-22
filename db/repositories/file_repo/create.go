@@ -6,7 +6,7 @@ import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbinsert"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -28,10 +28,9 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
-	query := querybuilder.New().
-		Insert(fields...).
+	query := qbinsert.New().
+		Columns(fields...).
 		Into(dbconsts.DBFilesTable.Name).
-		Values(len(fields)).
 		Returning(fschema.FieldsList()...).
 		Build()
 

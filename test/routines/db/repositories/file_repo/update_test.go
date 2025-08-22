@@ -9,6 +9,7 @@ import (
 	"homeserver/db"
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
 
 	"github.com/stretchr/testify/assert"

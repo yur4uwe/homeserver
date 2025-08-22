@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbselect"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
@@ -28,11 +28,17 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 		}
 	}
 
-	query := querybuilder.New().
-		Select(uschema.FieldsList(uconsts.Password)...).
+	query := qbselect.New().
+		Columns(uschema.FieldsList(uconsts.Password)...).
 		From(dbconsts.DBUsersTable.Name).
 		Where(whereClause).
 		Build()
+
+	// query := querybuilder.New().
+	// 	Select(uschema.FieldsList(uconsts.Password)...).
+	// 	From(dbconsts.DBUsersTable.Name).
+	// 	Where(whereClause).
+	// 	Build()
 
 	// query := fmt.Sprintf(
 	// 	`SELECT %s FROM users WHERE %s`,
@@ -59,8 +65,13 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 }
 
 func (r *UserRepo) QueryAll(ctx context.Context) ([]uschema.User, error) {
-	query := querybuilder.New().
-		Select(uschema.FieldsList()...).
+	// query := querybuilder.New().
+	// 	Select(uschema.FieldsList()...).
+	// 	From(dbconsts.DBUsersTable.Name).
+	// 	Build()
+
+	query := qbselect.New().
+		Columns(uschema.FieldsList()...).
 		From(dbconsts.DBUsersTable.Name).
 		Build()
 

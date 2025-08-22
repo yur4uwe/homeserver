@@ -6,5 +6,5 @@ import (
 
 type UpdateQueryBuilder struct {
 	bb         basebuilder.BaseBuilder
-	setClauses []string
+	setColumns []string
 }

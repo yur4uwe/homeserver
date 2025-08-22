@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	querybuilder "homeserver/db/query_builder"
+	"homeserver/db/query_builder/qbselect"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
@@ -13,7 +13,8 @@ import (
 )
 
 func (repo *FileRepo) GetFileByID(ctx context.Context, id int) (*fschema.UserFile, error) {
-	query := querybuilder.New().Select(fschema.FieldsList()...).From(dbconsts.DBFilesTable.Name).Where("id = $1").Build()
+	query := qbselect.New().Build()
+	// query := qbselect.New().Select(fschema.FieldsList()...).From(dbconsts.DBFilesTable.Name).Where("id = $1").Build()
 
 	var file []fschema.UserFile
 	rows, err := repo.db.Pool.Query(
@@ -45,11 +46,13 @@ func (repo *FileRepo) GetFullFileInfo(ctx context.Context, file *fschema.UserFil
 		return nil, err
 	}
 
-	query := querybuilder.New().
-		Select(fschema.FieldsList()...).
-		From(dbconsts.DBFilesTable.Name).
-		Where("filename = $1 AND path = $2 AND owner_id = $3").
-		Build()
+	query := qbselect.New().Build()
+
+	// query := querybuilder.New().
+	// 	Select(fschema.FieldsList()...).
+	// 	From(dbconsts.DBFilesTable.Name).
+	// 	Where("filename = $1 AND path = $2 AND owner_id = $3").
+	// 	Build()
 
 	var fullFileInfo []fschema.UserFile
 	rows, err := repo.db.Pool.Query(
@@ -77,11 +80,12 @@ func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) (
 		return nil, err
 	}
 
-	query := querybuilder.New().
-		Select(fschema.FieldsList()...).
-		From(dbconsts.DBFilesTable.Name).
-		Where("owner_id = $1").
-		Build()
+	query := qbselect.New().Build()
+	// query := querybuilder.New().
+	// 	Select(fschema.FieldsList()...).
+	// 	From(dbconsts.DBFilesTable.Name).
+	// 	Where("owner_id = $1").
+	// 	Build()
 
 	var files []fschema.UserFile
 	rows, err := repo.db.Pool.Query(
@@ -144,12 +148,15 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 		args[i] = f
 	}
 
-	query := querybuilder.New().Select(fields...).From(dbconsts.DBFilesTable.Name).Where("path = $1 AND owner_id = $2").Build()
-	// query := fmt.Sprintf(`
-	// 	SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-	// 	FROM user_files
-	// 	WHERE path = $1 AND owner_id = $2
-	// `, args...)
+	builder := qbselect.New().
+		From(dbconsts.DBFilesTable.Name).
+		Where("path = $1 AND owner_id = $2")
+
+	for _, field := range fields {
+		builder.Col(field)
+	}
+
+	query := builder.Build()
 
 	rows, err := repo.db.Pool.Query(ctx, query, directory, owner.ID)
 	if err != nil {

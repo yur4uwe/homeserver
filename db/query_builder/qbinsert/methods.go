@@ -19,7 +19,7 @@ func (qb *InsertQueryBuilder) Raw(sql string) *InsertQueryBuilder {
 
 // Columns sets the columns for the insert.
 func (qb *InsertQueryBuilder) Columns(cols ...string) *InsertQueryBuilder {
-	qb.columns = append([]string{}, cols...)
+	qb.columns = append(qb.columns, cols...)
 	return qb
 }
 
@@ -44,7 +44,7 @@ func (qb *InsertQueryBuilder) Build() string {
 		panic("No columns specified for INSERT")
 	}
 	if qb.valuesNum == 0 {
-		panic("No values specified for INSERT")
+		qb.valuesNum = 1
 	}
 
 	columns := "(" + strings.Join(qb.columns, ", ") + ")"
