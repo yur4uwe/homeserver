@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/templates"
 	"net/http"
 	"net/http/httptest"
@@ -31,13 +31,13 @@ func TestInterceptor(t *testing.T) {
 	mockTemplate.On("ParseFiles", mock.Anything).
 		Return(mockedTemplate, nil)
 
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 	defer cleanupParseFiles()
 
 	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, "Internal Server Error", http.StatusInternalServerError).Return()
 
-	errorResponseCleanup := test.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
+	errorResponseCleanup := helpers.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
 	defer errorResponseCleanup()
 
 	mockContext := &AdditionalRequestContext{

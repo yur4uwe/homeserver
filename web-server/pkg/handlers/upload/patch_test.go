@@ -7,8 +7,8 @@ import (
 	uschema "homeserver/db/repositories/user_repo/schema"
 	"strings"
 
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/utils/generics"
 	"net/http"
@@ -25,7 +25,7 @@ func TestPatchFile(t *testing.T) {
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrRes := new(mocks.ErrorResponseMock)
 
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrRes.ErrorResponse, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrRes.ErrorResponse, func() {})
 	defer cleanupErrResp()
 
 	mockReqContext := middleware.DefaultContext
@@ -36,7 +36,7 @@ func TestPatchFile(t *testing.T) {
 
 	handler := PatchFile(mockDB, mockReqContext)
 
-	resetter := test.NewMocksResetter(&mockFR.Mock)
+	resetter := helpers.NewMocksResetter(&mockFR.Mock)
 
 	table := []struct {
 		name         string

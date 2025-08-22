@@ -9,7 +9,7 @@ import (
 	"homeserver/db"
 	userrepo "homeserver/db/repositories/user_repo"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

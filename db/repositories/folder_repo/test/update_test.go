@@ -11,7 +11,7 @@ import (
 	folderrepo "homeserver/db/repositories/folder_repo"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -10,7 +10,7 @@ import (
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

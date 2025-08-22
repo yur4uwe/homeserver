@@ -5,8 +5,8 @@ import (
 	"homeserver/constants/fconsts"
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks/mocksos"
 	"os"
 	"testing"
 
@@ -16,12 +16,12 @@ import (
 func TestPreventDuplicateFileNames(t *testing.T) {
 	mockOS := new(mocksos.MockOS)
 
-	restore := test.MockFunction(&filerepo.Stat, mockOS.Stat, func() {})
+	restore := helpers.MockFunction(&filerepo.Stat, mockOS.Stat, func() {})
 	defer restore()
-	restoreGetenv := test.MockFunction(&fschema.Getenv, mockOS.Getenv, func() {})
+	restoreGetenv := helpers.MockFunction(&fschema.Getenv, mockOS.Getenv, func() {})
 	defer restoreGetenv()
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockOS.Mock,
 	)
 

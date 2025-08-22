@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"homeserver/test"
-	"homeserver/test/mocks"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
+	"homeserver/test/helpers/mocks/mocksos"
 	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
@@ -20,9 +20,9 @@ func TestWelcomePageHandler(t *testing.T) {
 	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
 
-	cleanupMust := test.MockFunction(&Must, mockTemplates.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	defer func() {
 		cleanupMust()
@@ -67,11 +67,11 @@ func TestUploadPageHandler(t *testing.T) {
 	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
 
-	cleanupMust := test.MockFunction(&Must, mockTemplates.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplates.ParseFiles, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockTemplates.Mock,
 		&mockErrResp.Mock,
 	)
@@ -120,18 +120,18 @@ func TestUploadPageHandler(t *testing.T) {
 
 func TestStaticPageHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	mockOS := new(mocksos.MockOS)
-	cleanupReadFile := test.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
+	cleanupReadFile := helpers.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
 
 	isPageMock := new(IsPageMock)
-	cleanupIsPage := test.MockFunction(&IsPage, isPageMock.IsPage, func() {})
+	cleanupIsPage := helpers.MockFunction(&IsPage, isPageMock.IsPage, func() {})
 
 	mockWelcomePage := new(WelcomeMock)
-	cleanupWelcome := test.MockFunction(&WelcomePage, mockWelcomePage.WelcomePageHandler, func() {})
+	cleanupWelcome := helpers.MockFunction(&WelcomePage, mockWelcomePage.WelcomePageHandler, func() {})
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockErrResp.Mock,
 		&mockOS.Mock,
 		&isPageMock.Mock,

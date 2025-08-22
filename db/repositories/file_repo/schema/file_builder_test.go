@@ -1,8 +1,7 @@
 package fschema
 
 import (
-	"homeserver/test"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers/mocks/mocksos"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -146,7 +145,7 @@ func TestFileBuilderSuite(t *testing.T) {
 	t.Run("TestAbsolutePath", func(t *testing.T) {
 		mockOS := &mocksos.MockOS{}
 		mockOS.On("Getenv", "STORAGE_PATH").Return("/storage/")
-		test.MockFunction(&Getenv, mockOS.Getenv, func() {})
+		helpers.MockFunction(&Getenv, mockOS.Getenv, func() {})
 
 		newFile := NewUserFileBuilder().
 			WithFilename("report").

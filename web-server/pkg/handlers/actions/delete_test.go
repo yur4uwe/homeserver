@@ -10,8 +10,8 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 
 	"github.com/stretchr/testify/assert"
@@ -22,14 +22,14 @@ func TestDeleteFileHandler(t *testing.T) {
 	_, mockFR, mockFolR, _, _ := mocks.InitRepoMocks()
 	mockDB := repositories.NewRepositories(nil, mockFR, mockFolR, nil, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 	defer cleanupErrResp()
 
 	mockNewAlert := new(mocks.MockParser)
-	cleanupNewAlert := test.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
+	cleanupNewAlert := helpers.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
 	defer cleanupNewAlert()
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockFR.Mock,
 		&mockFolR.Mock,
 		&mockErrResp.Mock,

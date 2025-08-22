@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"homeserver/db/repositories"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
@@ -23,10 +23,10 @@ func TestLogoutHandler(t *testing.T) {
 	mockParser := new(mocks.MockParser)
 	mockTemplate := new(mocks.MockTemplate)
 
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
-	cleanupMust := test.MockFunction(&Must, mockTemplate.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
-	cleanupParseTemplate := test.MockFunction(&ParseTemplateToString, mockParser.ParseTemplateToString, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplate.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupParseTemplate := helpers.MockFunction(&ParseTemplateToString, mockParser.ParseTemplateToString, func() {})
 	defer cleanupErrResp()
 	defer cleanupMust()
 	defer cleanupParseFiles()
@@ -35,7 +35,7 @@ func TestLogoutHandler(t *testing.T) {
 	reqCont := middleware.DefaultContext
 	reqCont.AuthToken = "token123"
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockTokR.Mock,
 		&mockErrResp.Mock,
 		&mockParser.Mock,

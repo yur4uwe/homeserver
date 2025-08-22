@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"homeserver/constants"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,19 +17,19 @@ func TestMiddlewareSuite(t *testing.T) {
 	mockTemplate := new(mocks.MockTemplate)
 	mockTemplate.On("Must", mock.Anything, mock.Anything).Return("Mocked String", nil)
 
-	mustCleanup := test.MockFunction(&Must, mockTemplate.Must, func() {})
+	mustCleanup := helpers.MockFunction(&Must, mockTemplate.Must, func() {})
 	defer mustCleanup()
 
 	mockParse := new(MockParseAsString)
 	mockParse.On("ParseTemplateToString", constants.Rootd+"static/fragments/footer.html", nil).Return("Mocked Footer", nil)
 
-	parseCleanup := test.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
+	parseCleanup := helpers.MockFunction(&ParseTemplateToString, mockParse.ParseTemplateToString, func() {})
 	defer parseCleanup()
 
 	mockErrorResponse := new(mocks.ErrorResponseMock)
 	mockErrorResponse.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return()
 
-	errorResponseCleanup := test.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
+	errorResponseCleanup := helpers.MockFunction(&ErrorResponse, mockErrorResponse.ErrorResponse, func() {})
 	defer errorResponseCleanup()
 
 	t.Run("TestContextConstructor", func(t *testing.T) {

@@ -8,9 +8,8 @@ import (
 	"homeserver/constants/tconsts"
 	"homeserver/db"
 	tokenrepo "homeserver/db/repositories/token_repo"
-	"homeserver/test"
-	"homeserver/test/mocks"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers/mocks"
+	"homeserver/test/helpers/mocks/mocksos"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +22,8 @@ func TestVerifyToken_Success(t *testing.T) {
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
 	mockOS := &mocksos.MockOS{}
-	defer test.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
-	defer test.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
+	defer helpers.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
+	defer helpers.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
 
 	mockOS.On("Mkdir", mock.Anything, mock.Anything).Return(nil)
 	mockOS.On("Getenv", mock.Anything).Return("/storage/")
@@ -162,8 +161,8 @@ func TestVerifyToken_MkdirError(t *testing.T) {
 	repo := tokenrepo.NewTokenRepo(mockDB)
 
 	mockOS := &mocksos.MockOS{}
-	defer test.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
-	defer test.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
+	defer helpers.MockFunction(&tokenrepo.Getenv, mockOS.Getenv, func() {})()
+	defer helpers.MockFunction(&tokenrepo.Mkdir, mockOS.Mkdir, func() {})()
 
 	mockOS.On("Mkdir", mock.Anything, mock.Anything).Return(errors.New("error creating directory"))
 	mockOS.On("Getenv", mock.Anything).Return("/storage/")

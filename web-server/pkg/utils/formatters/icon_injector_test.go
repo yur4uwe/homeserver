@@ -1,7 +1,7 @@
 package formatters
 
 import (
-	"homeserver/test"
+	"homeserver/test/helpers"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func (m *MockIconLoader) LoadIcon(name string) string {
 
 func TestIconsInjector(t *testing.T) {
 	mockIconLoader := new(MockIconLoader)
-	cleanup := test.MockFunction(&LoadIcon, mockIconLoader.LoadIcon, func() {})
+	cleanup := helpers.MockFunction(&LoadIcon, mockIconLoader.LoadIcon, func() {})
 	defer cleanup()
 
 	mockIconLoader.On("LoadIcon", "test-icon").Return("<svg>...</svg>")

@@ -7,9 +7,9 @@ import (
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
+	"homeserver/test/helpers/mocks/mocksos"
 	"homeserver/web-server/pkg/middleware"
 	"io"
 	"mime/multipart"
@@ -27,7 +27,7 @@ func TestDownloadFile(t *testing.T) {
 	_, mockFR, _, _, _ := mocks.InitRepoMocks()
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrResp := new(mocks.ErrorResponseMock)
-	defer test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})()
+	defer helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})()
 
 	reqCont := middleware.DefaultContext
 	reqCont.Requester = uschema.NewUserBuilder().
@@ -35,12 +35,12 @@ func TestDownloadFile(t *testing.T) {
 		WithUsername("testuser")
 
 	mockOS := new(mocksos.MockOS)
-	defer test.MockFunction(&MkdirAll, mockOS.MkdirAll, func() {})()
-	defer test.MockFunction(&Create, mockOS.Create, func() {})()
-	defer test.MockFunction(&Getenv, mockOS.Getenv, func() {})()
+	defer helpers.MockFunction(&MkdirAll, mockOS.MkdirAll, func() {})()
+	defer helpers.MockFunction(&Create, mockOS.Create, func() {})()
+	defer helpers.MockFunction(&Getenv, mockOS.Getenv, func() {})()
 
 	mockIO := new(mocks.MockIO)
-	defer test.MockFunction(&Copy, mockIO.Copy, func() {})()
+	defer helpers.MockFunction(&Copy, mockIO.Copy, func() {})()
 
 	mockInsertedFile := fschema.NewUserFileBuilder().
 		WithID(1).
@@ -51,7 +51,7 @@ func TestDownloadFile(t *testing.T) {
 		WithContentType("text/plain").
 		WithOwnerID(reqCont.Requester.ID)
 
-	resetter := test.NewMocksResetter(&mockFR.Mock)
+	resetter := helpers.NewMocksResetter(&mockFR.Mock)
 
 	createMultipart := func(filename, folder string) (*bytes.Buffer, string) {
 		body := &bytes.Buffer{}

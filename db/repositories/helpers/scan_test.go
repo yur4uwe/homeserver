@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 	"testing"
 	"time"
 

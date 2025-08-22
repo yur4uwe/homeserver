@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	repomocks "homeserver/test/mocks/repos"
+	repomocks "homeserver/test/helpers/mocks/repos"
 )
 
 func InitRepoMocks() (

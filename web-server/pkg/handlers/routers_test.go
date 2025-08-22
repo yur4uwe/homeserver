@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"homeserver/constants"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
 	"html/template"
@@ -20,12 +20,12 @@ import (
 
 func TestUploadRouter(t *testing.T) {
 	mockUpload := new(UploadMock)
-	cleanupDelete := test.MockFunction(&DeleteFile, mockUpload.DeleteFile, func() {})
-	cleanupDownload := test.MockFunction(&DownloadFile, mockUpload.DownloadFile, func() {})
-	cleanupPatch := test.MockFunction(&PatchFile, mockUpload.PatchFile, func() {})
+	cleanupDelete := helpers.MockFunction(&DeleteFile, mockUpload.DeleteFile, func() {})
+	cleanupDownload := helpers.MockFunction(&DownloadFile, mockUpload.DownloadFile, func() {})
+	cleanupPatch := helpers.MockFunction(&PatchFile, mockUpload.PatchFile, func() {})
 
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	defer func() {
 		cleanupDelete()
@@ -118,16 +118,16 @@ func TestUploadRouter(t *testing.T) {
 
 func TestFileActionsRouter(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	mockParsePath := new(mocks.ParsePathMock)
-	cleanupParsePath := test.MockFunction(&ParsePathWithUName, mockParsePath.ParsePathWithUName, func() {})
+	cleanupParsePath := helpers.MockFunction(&ParsePathWithUName, mockParsePath.ParsePathWithUName, func() {})
 
 	mockActions := new(ActionsMock)
-	cleanupDelete := test.MockFunction(&DeleteFileHandler, mockActions.DeleteFileHandler, func() {})
-	cleanupRename := test.MockFunction(&RenameFileHandler, mockActions.RenameFileHandler, func() {})
+	cleanupDelete := helpers.MockFunction(&DeleteFileHandler, mockActions.DeleteFileHandler, func() {})
+	cleanupRename := helpers.MockFunction(&RenameFileHandler, mockActions.RenameFileHandler, func() {})
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockErrResp.Mock,
 		&mockParsePath.Mock,
 		&mockActions.Mock,
@@ -274,23 +274,23 @@ func TestFileActionsRouter(t *testing.T) {
 
 func TestSearchRouter(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrorResponse := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	mockParsePath := new(mocks.ParsePathMock)
-	cleanupParsePath := test.MockFunction(&ParsePathWithUName, mockParsePath.ParsePathWithUName, func() {})
+	cleanupParsePath := helpers.MockFunction(&ParsePathWithUName, mockParsePath.ParsePathWithUName, func() {})
 
 	mockSearch := new(SearchMock)
-	cleanupSearch := test.MockFunction(&FileSearchHandler, mockSearch.FileSearchHandler, func() {})
-	cleanupBrowse := test.MockFunction(&BrowseHandler, mockSearch.BrowseHandler, func() {})
+	cleanupSearch := helpers.MockFunction(&FileSearchHandler, mockSearch.FileSearchHandler, func() {})
+	cleanupBrowse := helpers.MockFunction(&BrowseHandler, mockSearch.BrowseHandler, func() {})
 
 	mockTemplate := new(mocks.MockTemplate)
-	cleanupMust := test.MockFunction(&Must, mockTemplate.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplate.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 
 	mockedTemplate, err := template.New("test").Parse("<html><body>Test</body></html>")
 	assert.NoError(t, err, "Failed to create mock template")
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockErrResp.Mock,
 		&mockParsePath.Mock,
 		&mockSearch.Mock,

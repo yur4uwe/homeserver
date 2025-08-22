@@ -7,8 +7,8 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ func TestBrowseHandler(t *testing.T) {
 	ctx := context.Background()
 	directory := []string{"testuser", "docs"}
 
-	resetter := test.NewMocksResetter(&mockFR.Mock, &mockFolR.Mock)
+	resetter := helpers.NewMocksResetter(&mockFR.Mock, &mockFolR.Mock)
 
 	file := fschema.NewUserFileBuilder().
 		WithID(1).

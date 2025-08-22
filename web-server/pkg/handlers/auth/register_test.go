@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"homeserver/db/repositories"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
@@ -39,12 +39,12 @@ func TestRegisterHandler(t *testing.T) {
 	mockTokens := new(mocks.MockTokens)
 	mockParser := new(mocks.MockParser)
 
-	cleanupNewToken := test.MockFunction(&NewToken, mockTokens.NewToken, func() {})
-	cleanupSendEmail := test.MockFunction(&verSuccess, mockVerificationEmail.SendVerificationEmail, func() {})
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
-	cleanupMust := test.MockFunction(&Must, mockTemplate.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
-	cleanupNewAlert := test.MockFunction(&NewAlert, mockParser.NewAlert, func() {})
+	cleanupNewToken := helpers.MockFunction(&NewToken, mockTokens.NewToken, func() {})
+	cleanupSendEmail := helpers.MockFunction(&verSuccess, mockVerificationEmail.SendVerificationEmail, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplate.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupNewAlert := helpers.MockFunction(&NewAlert, mockParser.NewAlert, func() {})
 	defer cleanupErrResp()
 	defer cleanupMust()
 	defer cleanupParseFiles()
@@ -54,7 +54,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	reqCont := middleware.DefaultContext
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockUR.Mock,
 		&mockTokR.Mock,
 		&mockErrResp.Mock,

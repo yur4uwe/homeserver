@@ -3,7 +3,7 @@ package search
 import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
-	"homeserver/test"
+	"homeserver/test/helpers"
 	"homeserver/web-server/pkg/templates"
 	"testing"
 
@@ -61,7 +61,7 @@ func TestParseSize(t *testing.T) {
 
 func TestFileToSearchEntry(t *testing.T) {
 	mockIsFileTypeAvailable := new(MockIsFileTypeAvailable)
-	cleanup := test.MockFunction(&IsFileTypeAvailable, mockIsFileTypeAvailable.IsFileTypeAvailable, func() {})
+	cleanup := helpers.MockFunction(&IsFileTypeAvailable, mockIsFileTypeAvailable.IsFileTypeAvailable, func() {})
 	defer cleanup()
 
 	mockIsFileTypeAvailable.On("IsFileTypeAvailable", "pdf").Return(true)
@@ -122,7 +122,7 @@ func TestFolderToSearchEntry(t *testing.T) {
 
 func TestTransformEntries(t *testing.T) {
 	mockIsFileTypeAvailable := new(MockIsFileTypeAvailable)
-	cleanup := test.MockFunction(&IsFileTypeAvailable, mockIsFileTypeAvailable.IsFileTypeAvailable, func() {})
+	cleanup := helpers.MockFunction(&IsFileTypeAvailable, mockIsFileTypeAvailable.IsFileTypeAvailable, func() {})
 	defer cleanup()
 
 	mockIsFileTypeAvailable.On("IsFileTypeAvailable", "txt").Return(true)

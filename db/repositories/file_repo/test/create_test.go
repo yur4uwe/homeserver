@@ -8,7 +8,7 @@ import (
 	"homeserver/db"
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"

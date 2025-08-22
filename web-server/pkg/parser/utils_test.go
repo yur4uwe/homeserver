@@ -3,7 +3,7 @@ package parser
 import (
 	"errors"
 	"homeserver/constants"
-	"homeserver/test"
+	"homeserver/test/helpers"
 	"html/template"
 	"testing"
 
@@ -34,7 +34,7 @@ func TestLoadIcon(t *testing.T) {
 	mockOS.On("ReadFile", constants.Rootd+"static/assets/test-icon.svg").Return([]byte("<svg>Mock Icon</svg>"), nil)
 
 	// Replace osReadFile with the mock
-	cleanup := test.MockFunction(&osReadFile, mockOS.ReadFile, func() {})
+	cleanup := helpers.MockFunction(&osReadFile, mockOS.ReadFile, func() {})
 	defer cleanup()
 
 	t.Run("TestLoadIconSuccess", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestNewAlert(t *testing.T) {
 	mockTemplate.On("ParseFiles", []string{constants.Rootd + "static/templates/modal.html"}).Return(template.Must(template.New("mock").Parse("Mock Template: {{.Title}} - {{.Message}}")), nil)
 
 	// Replace templateParseFiles with the mock
-	cleanup := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanup := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
 	defer cleanup()
 
 	t.Run("TestNewAlertSuccess", func(t *testing.T) {

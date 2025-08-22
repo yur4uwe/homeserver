@@ -4,8 +4,8 @@ import (
 	"errors"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +20,7 @@ func TestDeleteFile(t *testing.T) {
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 	mockErrRes := new(mocks.ErrorResponseMock)
 
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrRes.ErrorResponse, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrRes.ErrorResponse, func() {})
 	defer cleanupErrResp()
 
 	mockReqContext := middleware.DefaultContext
@@ -31,7 +31,7 @@ func TestDeleteFile(t *testing.T) {
 
 	handler := DeleteFile(mockDB, mockReqContext)
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockFR.Mock,
 	)
 

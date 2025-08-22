@@ -1,16 +1,20 @@
 package main
 
 import (
+	"homeserver/constants"
 	"homeserver/db"
 	"homeserver/db/repositories"
 	"homeserver/web-server/pkg/setup"
+	"homeserver/web-server/pkg/utils"
 	"log"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load("../../.env", "../../.env.test"); err != nil {
+	constants.Rootd = utils.GetProjectRoot()
+
+	if err := godotenv.Load(constants.Rootd+".env", constants.Rootd+".env.test"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 

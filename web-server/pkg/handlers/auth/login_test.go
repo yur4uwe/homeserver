@@ -6,8 +6,8 @@ import (
 	"errors"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
@@ -28,11 +28,11 @@ func TestLoginHandler(t *testing.T) {
 	mockTemplate := new(mocks.MockTemplate)
 	mockTokens := new(mocks.MockTokens)
 
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
-	cleanupMust := test.MockFunction(&Must, mockTemplate.Must, func() {})
-	cleanupParseFiles := test.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
-	cleanupParseTemplate := test.MockFunction(&ParseTemplateToString, mockParser.ParseTemplateToString, func() {})
-	cleanupNewToken := test.MockFunction(&NewToken, mockTokens.NewToken, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&Must, mockTemplate.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupParseTemplate := helpers.MockFunction(&ParseTemplateToString, mockParser.ParseTemplateToString, func() {})
+	cleanupNewToken := helpers.MockFunction(&NewToken, mockTokens.NewToken, func() {})
 	defer cleanupErrResp()
 	defer cleanupMust()
 	defer cleanupParseFiles()
@@ -41,7 +41,7 @@ func TestLoginHandler(t *testing.T) {
 
 	reqCont := middleware.DefaultContext
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockUR.Mock,
 		&mockTokR.Mock,
 		&mockErrResp.Mock,

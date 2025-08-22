@@ -2,7 +2,7 @@ package utils
 
 import (
 	"homeserver/constants"
-	"homeserver/test"
+	"homeserver/test/helpers"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,11 +10,11 @@ import (
 
 func TestPageUtils(t *testing.T) {
 	mockPages := []string{"/login", "/search/", "/"}
-	cleanupPages := test.MockGlobalVar(&constants.Pages, mockPages, func() {})
+	cleanupPages := helpers.MockGlobalVar(&constants.Pages, mockPages, func() {})
 	defer cleanupPages()
 
 	mockProtectedPages := []string{"/settings", "/upload"}
-	cleanupProtectedPages := test.MockGlobalVar(&constants.ProtectedPages, mockProtectedPages, func() {})
+	cleanupProtectedPages := helpers.MockGlobalVar(&constants.ProtectedPages, mockProtectedPages, func() {})
 	defer cleanupProtectedPages()
 
 	t.Run("IsPage returns true for valid pages", func(t *testing.T) {

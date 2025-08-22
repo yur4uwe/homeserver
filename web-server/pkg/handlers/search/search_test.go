@@ -6,8 +6,8 @@ import (
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"strings"
 	"testing"
 
@@ -30,7 +30,7 @@ func TestFileSearchHandler(t *testing.T) {
 		Size:      2048,
 	}
 
-	resetter := test.NewMocksResetter(&mockFR.Mock)
+	resetter := helpers.NewMocksResetter(&mockFR.Mock)
 
 	t.Run("success", func(t *testing.T) {
 		resetter()

@@ -1,8 +1,8 @@
 package scripts
 
 import (
-	"homeserver/test"
-	"homeserver/test/mocks/mocksos"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks/mocksos"
 	"os"
 	"testing"
 
@@ -11,15 +11,15 @@ import (
 
 func TestChangeClassNames(t *testing.T) {
 	mockOS := new(mocksos.MockOS)
-	cleanupReadFile := test.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
-	cleanupReadDir := test.MockFunction(&ReadDir, mockOS.ReadDir, func() {})
-	cleanupWriteFile := test.MockFunction(&WriteFile, mockOS.WriteFile, func() {})
+	cleanupReadFile := helpers.MockFunction(&ReadFile, mockOS.ReadFile, func() {})
+	cleanupReadDir := helpers.MockFunction(&ReadDir, mockOS.ReadDir, func() {})
+	cleanupWriteFile := helpers.MockFunction(&WriteFile, mockOS.WriteFile, func() {})
 
 	mockSvg := []byte(`<svg><style>.st0{fill:#000;}</style></svg>`)
 
 	mockDirEntry := new(mocksos.MockDirEntry)
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockOS.Mock,
 		&mockDirEntry.Mock,
 	)

@@ -6,8 +6,8 @@ import (
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers"
+	"homeserver/test/helpers/mocks"
 	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
@@ -22,12 +22,12 @@ func TestRenameFileHandler(t *testing.T) {
 	mockDB := repositories.NewRepositories(nil, mockFR, nil, nil, nil)
 
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrResp := test.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrResp := helpers.MockFunction(&ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	mockNewAlert := new(mocks.MockParser)
-	cleanupNewAlert := test.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
+	cleanupNewAlert := helpers.MockFunction(&NewAlert, mockNewAlert.NewAlert, func() {})
 
-	resetter := test.NewMocksResetter(
+	resetter := helpers.NewMocksResetter(
 		&mockFR.Mock,
 		&mockErrResp.Mock,
 		&mockNewAlert.Mock,

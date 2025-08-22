@@ -2,7 +2,7 @@ package utils
 
 import (
 	"homeserver/constants"
-	"homeserver/test"
+	"homeserver/test/helpers"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +10,7 @@ import (
 
 func TestAvailableFileTypes(t *testing.T) {
 	mockAvailableFileTypes := []string{"jpg", "png", "txt"}
-	cleanupAvailableFileTypes := test.MockGlobalVar(&constants.AvailableFileTypes, mockAvailableFileTypes, func() {})
+	cleanupAvailableFileTypes := helpers.MockGlobalVar(&constants.AvailableFileTypes, mockAvailableFileTypes, func() {})
 	defer cleanupAvailableFileTypes()
 
 	t.Run("IsFileTypeAvailable returns true for available file types", func(t *testing.T) {

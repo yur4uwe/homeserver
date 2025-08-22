@@ -9,8 +9,7 @@ import (
 	"homeserver/db"
 	filerepo "homeserver/db/repositories/file_repo"
 	fschema "homeserver/db/repositories/file_repo/schema"
-	"homeserver/test"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,7 +39,7 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
-	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
+	release := helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
 	expected := *file
@@ -86,7 +85,7 @@ func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
 	// Patch FixDuplicates to return error
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return((*fschema.UserFile)(nil), errors.New("duplicate error"))
-	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
+	release := helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
 	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
@@ -109,7 +108,7 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
-	release := test.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
+	release := helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
 	defer release()
 
 	mockRows := &mocks.MockRows{}

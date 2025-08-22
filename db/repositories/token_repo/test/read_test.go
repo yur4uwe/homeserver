@@ -9,7 +9,7 @@ import (
 	"homeserver/db"
 	tokenrepo "homeserver/db/repositories/token_repo"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"

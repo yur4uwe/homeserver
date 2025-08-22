@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"homeserver/test/mocks"
+	"homeserver/test/helpers/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
