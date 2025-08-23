@@ -8,7 +8,7 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
-	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/errresp"
 	"homeserver/web-server/pkg/utils/formatters"
 	"net/http"
 	"strings"
@@ -16,7 +16,7 @@ import (
 
 var (
 	NewAlert      = parser.NewAlert
-	ErrorResponse = err.ErrorResponse
+	ErrorResponse = errresp.ErrorResponse
 )
 
 func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, is_folder bool) {

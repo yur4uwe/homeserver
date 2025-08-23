@@ -15,11 +15,14 @@ import (
 	"homeserver/db/repositories"
 	"homeserver/file-server/pkg/handlers"
 	"homeserver/file-server/pkg/middleware"
+	"homeserver/web-server/pkg/utils"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	constants.Rootd = utils.GetProjectRoot()
+
 	info, err := os.Stat(constants.Rootd + ".env")
 	if err != nil {
 		log.Fatalf("Error stating .env file: %v", err)

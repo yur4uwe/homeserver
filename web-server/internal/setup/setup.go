@@ -26,7 +26,6 @@ func Setup() (*repositories.Repositories, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	defer connection.Close()
 
 	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
 

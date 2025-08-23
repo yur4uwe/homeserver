@@ -13,6 +13,7 @@ import (
 
 var (
 	ReadFile = os.ReadFile
+	Getenv   = os.Getenv
 
 	IsPage = utils.IsPage
 

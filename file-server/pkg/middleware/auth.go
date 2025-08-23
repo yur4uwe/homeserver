@@ -5,6 +5,7 @@ import (
 	"homeserver/constants"
 	"homeserver/db/repositories"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/file-server/internal/respfail"
 	"net/http"
 	"strconv"
 	"strings"
@@ -17,14 +18,14 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 			pathParts := strings.Split(r.URL.Path, "/")[1:]
 			if len(pathParts) != 2 {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
+				respfail.ErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 				return
 			}
 
 			entryType := pathParts[0]
 			entryId, err := strconv.Atoi(pathParts[1])
 			if err != nil {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
+				respfail.ErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 				return
 			}
 
@@ -36,7 +37,7 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 				fol := folschema.NewUserFolderBuilder().WithID(entryId)
 				fol, err := conn.FolderRepo.GetFolder(r.Context(), fol)
 				if err != nil {
-					http.Error(w, "Bad Request", http.StatusNotFound)
+					respfail.ErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 					return
 				}
 
@@ -47,7 +48,7 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			case "files":
 				f, err := conn.FileRepo.GetFileByID(r.Context(), entryId)
 				if err != nil {
-					http.Error(w, "Bad Request", http.StatusNotFound)
+					respfail.ErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 					return
 				}
 
@@ -56,7 +57,7 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 				r = r.WithContext(context.WithValue(r.Context(), constants.EntryKey, f))
 			default:
-				http.Error(w, "Bad Request", http.StatusBadRequest)
+				respfail.ErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 				return
 			}
 
@@ -66,13 +67,13 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			}
 
 			userId, err := conn.TokenRepo.CheckToken(r.Context(), token)
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			if err != nil && !strings.Contains(err.Error(), "token") {
+				respfail.ErrorResponse(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
 
-			if trusted_source != sid && owner != userId {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			if (trusted_source == "" || trusted_source != sid) && owner != userId {
+				respfail.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 

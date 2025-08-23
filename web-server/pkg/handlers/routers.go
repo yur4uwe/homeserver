@@ -11,7 +11,7 @@ import (
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/errresp"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	ErrorResponse      = err.ErrorResponse
+	ErrorResponse      = errresp.ErrorResponse
 	ParsePathWithUName = parser.ParsePathWithUName
 
 	DownloadFile = upload.DownloadFile
@@ -149,6 +149,7 @@ func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 		data.Parent = strings.Join(parent, "/")
 		data.URIParent = ParseQuerySlice(parent)
+		data.DownloadPath = fmt.Sprintf("http://%s:%s", Getenv(constants.FileSrvHost), Getenv(constants.FileSrvPort))
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

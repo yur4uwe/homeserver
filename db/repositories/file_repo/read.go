@@ -13,15 +13,14 @@ import (
 )
 
 func (repo *FileRepo) GetFileByID(ctx context.Context, id int) (*fschema.UserFile, error) {
-	query := qbselect.New().Build()
-	// query := qbselect.New().Select(fschema.FieldsList()...).From(dbconsts.DBFilesTable.Name).Where("id = $1").Build()
+	query := qbselect.New().
+		Columns(fschema.FieldsList()...).
+		From(dbconsts.DBFilesTable.Name).
+		Where("id = $1").
+		Build()
 
 	var file []fschema.UserFile
-	rows, err := repo.db.Pool.Query(
-		ctx,
-		query,
-		id,
-	)
+	rows, err := repo.db.Pool.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"archive/zip"
 	"fmt"
 	"homeserver/constants"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/file-server/internal/respfail"
+	"homeserver/file-server/internal/zipper"
 	"net/http"
 )
 
@@ -17,7 +20,7 @@ func PageHandler(w http.ResponseWriter, r *http.Request) {
 func FileHandler(w http.ResponseWriter, r *http.Request) {
 	entry := r.Context().Value(constants.EntryKey).(*fschema.UserFile)
 	if entry == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
+		respfail.ErrorResponse(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -26,15 +29,23 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		entry.Filename, entry.Extension, entry.Path, entry.OwnerID,
 	)
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Filename))
+	w.Header().Set("Content-Type", "application/zip")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("<h1>File Management</h1>"))
+
+	zw := zip.NewWriter(w)
+	defer zw.Close()
+
+	if err := zipper.ZipFile(zw, entry.AbsolutePath(), entry.Filename+"."+entry.Extension); err != nil {
+		respfail.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func FolderHandler(w http.ResponseWriter, r *http.Request) {
 	entry := r.Context().Value(constants.EntryKey).(*folschema.UserFolder)
 	if entry == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
+		respfail.ErrorResponse(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -43,7 +54,12 @@ func FolderHandler(w http.ResponseWriter, r *http.Request) {
 		entry.Name, entry.Path, entry.OwnerID,
 	)
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Name))
+	w.Header().Set("Content-Type", "application/zip")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("<h1>Folder Management</h1>"))
+
+	if err := zipper.ZipFolder(w, entry); err != nil {
+		respfail.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

@@ -7,7 +7,7 @@ import (
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
-	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/errresp"
 	"homeserver/web-server/pkg/utils/formatters"
 	"html/template"
 	"net/http"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	ErrorResponse = err.ErrorResponse
+	ErrorResponse = errresp.ErrorResponse
 	NewAlert      = parser.NewAlert
 	LoadIcon      = parser.LoadIcon
 	VerFailed     = SendVerificationFailurePage

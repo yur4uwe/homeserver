@@ -20,6 +20,7 @@ type SearchPageData struct {
 	URIDirectory string
 	Parent       string
 	URIParent    string
+	DownloadPath string
 	QueryResults bool
 	Entries      []SearchEntry
 }
