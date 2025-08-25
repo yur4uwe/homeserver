@@ -1,7 +1,7 @@
 package err_test
 
 import (
-	"homeserver/web-server/pkg/utils/err"
+	"homeserver/web-server/pkg/utils/errresp"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,7 +33,7 @@ func TestErrorResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			err.ErrorResponse(w, tt.message, tt.status)
+			errresp.ErrorResponse(w, tt.message, tt.status)
 
 			assert.Equal(t, tt.status, w.Code, "Expected status code to match")
 			assert.Equal(t, tt.expectedHeader, w.Header().Get("HX-Trigger"), "Expected HX-Trigger header to match")

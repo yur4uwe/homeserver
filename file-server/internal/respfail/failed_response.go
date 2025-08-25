@@ -1,10 +1,29 @@
 package respfail
 
-import "net/http"
+import (
+	"context"
+	"homeserver/constants"
+	"homeserver/file-server/internal/templates"
+	"html/template"
+	"net/http"
+)
 
-func ErrorResponse(w http.ResponseWriter, message string, status int) {
-	w.Header().Set("Content-Disposition", `attachment; filename="error.txt"`)
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte("Download failed: " + message))
+func ErrorResponse(w http.ResponseWriter, r *http.Request, message string, status int) {
+	r = r.WithContext(context.WithValue(r.Context(), "status", status))
+
+	tmpl, err := template.ParseFiles(constants.Rootd + "static/templates/load_error.html")
+	if err != nil {
+		http.Error(w, "Failed to load error template", http.StatusInternalServerError)
+		return
+	}
+
+	data := templates.ErrorData{
+		Title:   "Oops, we encountered an error",
+		Message: message,
+	}
+
+	w.WriteHeader(status)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Failed to render error template", http.StatusInternalServerError)
+	}
 }

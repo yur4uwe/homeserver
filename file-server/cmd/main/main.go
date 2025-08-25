@@ -13,6 +13,7 @@ import (
 	"homeserver/constants"
 	"homeserver/db"
 	"homeserver/db/repositories"
+	"homeserver/file-server/internal/logger"
 	"homeserver/file-server/pkg/handlers"
 	"homeserver/file-server/pkg/middleware"
 	"homeserver/web-server/pkg/utils"
@@ -41,11 +42,14 @@ func main() {
 
 	conn := repositories.NewRepositories(repositories.InitRepositories(connection))
 
+	fs := http.FileServer(http.Dir(constants.Rootd + "static/"))
+
 	mux := http.NewServeMux()
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.HandleFunc("/files/", handlers.FileHandler)
 	mux.HandleFunc("/folders/", handlers.FolderHandler)
 
-	handler := middleware.Wrapper(mux, conn)
+	handler := middleware.Wrapper(mux, conn, &logger.Logger{})
 
 	server := &http.Server{
 		Addr:    ":" + os.Getenv(constants.FileSrvPort),
