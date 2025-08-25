@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"homeserver/constants/fsconsts"
 	"net/http"
 )
 
@@ -27,7 +28,7 @@ func (l *Logger) Warn(msg string) {
 }
 
 func (l *Logger) Request(r *http.Request) {
-	status, ok := r.Context().Value("status").(int)
+	status, ok := r.Context().Value(fsconsts.StatusKey).(int)
 	if !ok {
 		status = http.StatusOK
 	}

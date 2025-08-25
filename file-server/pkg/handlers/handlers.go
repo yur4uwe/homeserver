@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
+	"homeserver/constants/fsconsts"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/file-server/internal/respfail"
@@ -30,7 +31,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		entry.Filename, entry.Extension, entry.Path, entry.OwnerID,
 	)
 
-	r = r.WithContext(context.WithValue(r.Context(), "status", http.StatusOK))
+	r = r.WithContext(context.WithValue(r.Context(), fsconsts.StatusKey, http.StatusOK))
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Filename))
 	w.Header().Set("Content-Type", "application/zip")
@@ -52,7 +53,7 @@ func FolderHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r = r.WithContext(context.WithValue(r.Context(), "status", http.StatusOK))
+	r = r.WithContext(context.WithValue(r.Context(), fsconsts.StatusKey, http.StatusOK))
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Name))
 	w.Header().Set("Content-Type", "application/zip")
