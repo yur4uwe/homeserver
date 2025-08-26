@@ -31,8 +31,6 @@ func TestSignedURL(t *testing.T) {
 		{
 			name:      "valid url and time",
 			rawurl:    "http://example.com/resource/123",
-			entryType: "resource",
-			id:        "123",
 			expires:   time.Now().Add(1 * time.Hour),
 			isValid:   true,
 			shouldErr: false,
@@ -40,8 +38,6 @@ func TestSignedURL(t *testing.T) {
 		{
 			name:      "expired url",
 			rawurl:    "http://example.com/resource/456",
-			entryType: "resource",
-			id:        "456",
 			expires:   time.Now().Add(-1 * time.Hour),
 			isValid:   false,
 			shouldErr: false,
@@ -49,26 +45,6 @@ func TestSignedURL(t *testing.T) {
 		{
 			name:      "invalid url format",
 			rawurl:    "::::not a url::::",
-			entryType: "resource",
-			id:        "789",
-			expires:   time.Now().Add(1 * time.Hour),
-			isValid:   false,
-			shouldErr: true,
-		},
-		{
-			name:      "empty id",
-			rawurl:    "http://example.com/resource/",
-			entryType: "resource",
-			id:        "",
-			expires:   time.Now().Add(1 * time.Hour),
-			isValid:   false,
-			shouldErr: true,
-		},
-		{
-			name:      "empty entryType",
-			rawurl:    "http://example.com//123",
-			entryType: "",
-			id:        "123",
 			expires:   time.Now().Add(1 * time.Hour),
 			isValid:   false,
 			shouldErr: true,
@@ -76,8 +52,6 @@ func TestSignedURL(t *testing.T) {
 		{
 			name:      "url with query params",
 			rawurl:    "http://example.com/resource/123?foo=bar",
-			entryType: "resource",
-			id:        "123",
 			expires:   time.Now().Add(1 * time.Hour),
 			isValid:   true,
 			shouldErr: false,
@@ -86,7 +60,7 @@ func TestSignedURL(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name+": "+tc.rawurl, func(t *testing.T) {
-			signedURL, err := crypto.SignedURL(tc.rawurl, tc.entryType, tc.id, tc.expires)
+			signedURL, err := crypto.SignedURL(tc.rawurl, tc.expires)
 			if tc.shouldErr {
 				assert.Error(t, err)
 			} else {

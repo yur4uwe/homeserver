@@ -21,8 +21,8 @@ func TestValidateSignedURL(t *testing.T) {
 		mockOS.AssertExpectations(t)
 	})()
 
-	validFileURL, _ := crypto.SignedURL("http://example.com/file/789", "file", "789", time.Now().Add(1*time.Hour))
-	expiredFileURL, _ := crypto.SignedURL("http://example.com/file/999", "file", "999", time.Now().Add(-1*time.Hour))
+	validFileURL, _ := crypto.SignedURL("http://example.com/file/789", time.Now().Add(1*time.Hour))
+	expiredFileURL, _ := crypto.SignedURL("http://example.com/file/999", time.Now().Add(-1*time.Hour))
 
 	t.Run("valid signed url", func(t *testing.T) {
 		assert.True(t, crypto.ValidateSignedURL(validFileURL))

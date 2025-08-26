@@ -6,8 +6,10 @@ import (
 	"errors"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	uschema "homeserver/db/repositories/user_repo/schema"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
+	"homeserver/web-server/pkg/crypto"
 	"homeserver/web-server/pkg/handlers/auth"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
@@ -18,6 +20,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -45,6 +48,7 @@ func TestVerificationHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
 	mockVerFail := new(VerFailureMock)
 	mockTemplate := new(mocks.MockTemplate)
+	mockTokens := new(mocks.MockTokens)
 	mockReqCont := middleware.DefaultContext
 
 	cleanupNewAlert := helpers.MockFunction(&auth.NewAlert, mockParser.NewAlert, func() {})
@@ -53,6 +57,7 @@ func TestVerificationHandler(t *testing.T) {
 	cleanupVerFailed := helpers.MockFunction(&auth.VerFailed, mockVerFail.verFailed, func() {})
 	cleanupMust := helpers.MockFunction(&auth.Must, mockTemplate.Must, func() {})
 	cleanupParseFiles := helpers.MockFunction(&auth.ParseFiles, mockTemplate.ParseFiles, func() {})
+	cleanupValidateToken := helpers.MockFunction(&auth.ValidateToken, mockTokens.ValidateToken, func() {})
 
 	defer func() {
 		cleanupNewAlert()
@@ -61,9 +66,13 @@ func TestVerificationHandler(t *testing.T) {
 		cleanupVerFailed()
 		cleanupMust()
 		cleanupParseFiles()
+		cleanupValidateToken()
 	}()
 
-	resetter := helpers.NewMocksResetter(&mockTokR.Mock, &mockParser.Mock)
+	mockVerFail.On("verFailed", mock.Anything, mock.Anything, mock.Anything).Return()
+	mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return("Missing request context")
+
+	resetter := helpers.NewMocksResetter(&mockTokR.Mock, &mockParser.Mock, &mockTokens.Mock)
 
 	handler := auth.VerificationHandler(mockDB)
 
@@ -71,13 +80,22 @@ func TestVerificationHandler(t *testing.T) {
 		return template.Must(template.New("verification").Parse(inner_text))
 	}
 
+	goodClaims := &crypto.CustomClaims{
+		Seed: "test_seed",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: int64(999999999),
+		},
+	}
+
+	badClaims := &crypto.CustomClaims{
+		Seed: "test_seed",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: int64(0),
+		},
+	}
+
 	t.Run("missing request context", func(t *testing.T) {
 		resetter()
-
-		mockErrResp.On(
-			"ErrorResponse",
-			mock.Anything, mock.Anything, mock.Anything,
-		).Return("Missing request context")
 
 		req := httptest.NewRequest(http.MethodGet, "/verification?token=abc123", nil)
 		rec := httptest.NewRecorder()
@@ -88,13 +106,26 @@ func TestVerificationHandler(t *testing.T) {
 		assert.Contains(t, rec.Body.String(), "Missing request context")
 	})
 
+	t.Run("missing expiration", func(t *testing.T) {
+		resetter()
+
+		req := httptest.NewRequest(http.MethodGet, "/verification?vt=abc123", nil)
+		rec := httptest.NewRecorder()
+
+		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, mockReqCont))
+
+		handler.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "Tampered verification link")
+	})
+
 	t.Run("missing token", func(t *testing.T) {
 		resetter()
 
-		mockVerFail.On("verFailed", mock.Anything, mock.Anything, mock.Anything).Return()
 		mockParser.On("LoadIcon", mock.Anything).Return("icon")
 
-		req := httptest.NewRequest(http.MethodGet, "/verification", nil)
+		req := httptest.NewRequest(http.MethodGet, "/verification?exp=9999999999", nil)
 		rec := httptest.NewRecorder()
 
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, mockReqCont))
@@ -106,22 +137,36 @@ func TestVerificationHandler(t *testing.T) {
 		mockVerFail.AssertCalled(t, "verFailed", rec, mock.Anything, http.StatusBadRequest)
 	})
 
-	t.Run("invalid token", func(t *testing.T) {
+	t.Run("Invalid Token", func(t *testing.T) {
 		resetter()
 
-		mockTokR.On(
-			"VerifyToken",
-			mock.Anything, "badtoken",
-		).Return(errors.New("invalid token"))
-
-		mockVerFail.On(
-			"verFailed",
-			mock.Anything, mock.Anything, http.StatusInternalServerError,
-		).Return()
+		mockTokens.On("ValidateToken", mock.AnythingOfType("string")).Return(badClaims, false)
 
 		mockParser.On("LoadIcon", mock.Anything).Return("icon")
 
-		req := httptest.NewRequest(http.MethodGet, "/verification?token=badtoken", nil)
+		req := httptest.NewRequest(http.MethodGet, "/verification?vt=badtoken&exp=99999999999", nil)
+		rec := httptest.NewRecorder()
+
+		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, mockReqCont))
+
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "Failed to verify token")
+	})
+
+	t.Run("invalid token", func(t *testing.T) {
+		resetter()
+
+		mockTokens.On("ValidateToken", mock.AnythingOfType("string")).Return(goodClaims, true)
+
+		mockTokR.On(
+			"QueryToken",
+			mock.Anything, "badtoken",
+		).Return((*uschema.User)(nil), errors.New("invalid token"))
+
+		mockParser.On("LoadIcon", mock.Anything).Return("icon")
+
+		req := httptest.NewRequest(http.MethodGet, "/verification?vt=badtoken&exp=9999999999", nil)
 		rec := httptest.NewRecorder()
 
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, mockReqCont))
@@ -134,7 +179,13 @@ func TestVerificationHandler(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		resetter()
 
+		user := &uschema.User{
+			Email: goodClaims.Seed,
+		}
+
+		mockTokR.On("QueryToken", mock.Anything, "goodtoken").Return(user, nil)
 		mockTokR.On("VerifyToken", mock.Anything, "goodtoken").Return(nil)
+		mockTokens.On("ValidateToken", mock.AnythingOfType("string")).Return(goodClaims, true)
 		mockParser.On("LoadIcon", mock.Anything).Return("icon")
 		mockParser.On(
 			"NewAlert",
@@ -152,7 +203,7 @@ func TestVerificationHandler(t *testing.T) {
 			mock.Anything,
 		).Return(newTemplate("<html><body>Verification</body></html>"), nil)
 
-		req := httptest.NewRequest(http.MethodGet, "/verification?token=goodtoken", nil)
+		req := httptest.NewRequest(http.MethodGet, "/verification?vt=goodtoken&exp=9999999999", nil)
 		rec := httptest.NewRecorder()
 
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, mockReqCont))

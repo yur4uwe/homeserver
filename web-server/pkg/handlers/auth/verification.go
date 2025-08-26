@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/crypto"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/parser"
 	"homeserver/web-server/pkg/templates"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"gopkg.in/gomail.v2"
 )
@@ -24,6 +26,7 @@ var (
 	VerFailed     = SendVerificationFailurePage
 	Must          = template.Must
 	ParseFiles    = template.ParseFiles
+	ValidateToken = crypto.ValidateToken
 )
 
 func SendVerificationFailurePage(w http.ResponseWriter, verification *templates.VerificationPageData, errCode int) {
@@ -31,11 +34,14 @@ func SendVerificationFailurePage(w http.ResponseWriter, verification *templates.
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(errCode)
+	verification.Icon = template.HTML(LoadIcon("x"))
 	verification.Success = false
 	tmpl.Execute(w, verification)
 }
 
 func SendVerificationEmail(form formatters.RegisterForm, verification_token string) {
+	expires := time.Now().Add(24 * time.Hour)
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", "tsg9515@gmail.com")
 	m.SetHeader("To", form.Email)
@@ -44,10 +50,10 @@ func SendVerificationEmail(form formatters.RegisterForm, verification_token stri
 		fmt.Sprintf(`
 			<p>Thank you for registering, %s!</p>
 			<p>Please verify your email address by clicking the link below:</p>
-			<p><a href="http://localhost:8080/verification?token=%s">Verify Email</a></p>
+			<p><a href="http://localhost:8080/verification?vt=%s&exp=%d">Verify Email</a></p>
 			<p>If you did not register, please ignore this email.</p>
 			<p>Best regards,<br>Your HomeServer Team</p>
-		`, form.Username, verification_token),
+		`, form.Username, verification_token, expires.Unix()),
 	)
 
 	port, _ := strconv.Atoi(os.Getenv(constants.EmailPort))
@@ -74,27 +80,60 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 			Success: false,
 			Error:   "",
 			Causes:  []template.HTML{},
-			Icon:    template.HTML(LoadIcon("x")),
 		}
 
-		token := r.URL.Query().Get("token")
+		expirationStr := r.URL.Query().Get("exp")
+		expiration, err := strconv.ParseInt(expirationStr, 10, 64)
+		if err != nil {
+			verification.Error = "Tampered verification link"
+			VerFailed(w, verification, http.StatusBadRequest)
+			return
+		}
+
+		if time.Now().Unix() > expiration {
+			verification.Error = "Verification link expired"
+			verification.Causes = append(verification.Causes, template.HTML("The link has expired. Please request a new verification email."))
+			VerFailed(w, verification, http.StatusBadRequest)
+			return
+		}
+
+		token := r.URL.Query().Get("vt")
 		if token == "" {
-			reqCont.LogHistory.ErrLog("Missing verification token in request\n", "VerificationHandler:58")
 			verification.Error = "Missing verification token"
 			verification.Causes = append(verification.Causes, template.HTML("You shouldn't be here"))
 			VerFailed(w, verification, http.StatusBadRequest)
 			return
 		}
 
+		claims, valid := ValidateToken(token)
+		if !valid {
+			verification.Error = "Failed to verify token"
+			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
+			VerFailed(w, verification, http.StatusBadRequest)
+			return
+		}
+
 		reqCont.LogHistory.Log("[Handler] Verification token received: '" + token + "'")
 
-		err := repos.TokenRepo.VerifyToken(r.Context(), token)
+		user, err := repos.TokenRepo.QueryToken(r.Context(), token)
 		if err != nil {
-			reqCont.LogHistory.ErrLog("Failed to check verification token: "+err.Error(), "VerificationHandler:64")
 			verification.Error = "Failed to check verification token"
 			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
 			verification.Causes = append(verification.Causes, template.HTML("You refreshed the page with already verified token"))
 			VerFailed(w, verification, http.StatusInternalServerError)
+			return
+		}
+
+		if claims.Seed != user.Email {
+			verification.Error = "Failed to verify email"
+			verification.Causes = append(verification.Causes, template.HTML("The email associated with this token is invalid."))
+			VerFailed(w, verification, http.StatusBadRequest)
+		}
+
+		if err := repos.TokenRepo.VerifyToken(r.Context(), token); err != nil {
+			verification.Error = "Failed to verify email"
+			verification.Causes = append(verification.Causes, template.HTML("The email associated with this token is invalid."))
+			VerFailed(w, verification, http.StatusBadRequest)
 			return
 		}
 

@@ -17,14 +17,13 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func NewToken(seed string) (string, error) {
+func NewToken(seed string, expires time.Time) (string, error) {
 	secret := []byte(Getenv(constants.TokenSecret))
-	expiration := time.Now().Add(24 * time.Hour).Unix()
 
 	claims := &CustomClaims{
 		Seed: seed,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiration,
+			ExpiresAt: expires.Unix(),
 		},
 	}
 

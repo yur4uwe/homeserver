@@ -70,7 +70,9 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		newToken, err := NewToken(r.RemoteAddr)
+		expires := time.Now().Add(24 * time.Hour)
+
+		newToken, err := NewToken(user.Email, expires)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to generate new token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -87,7 +89,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			Name:     "authTokenHS",
 			Value:    newToken,
 			Path:     "/",
-			Expires:  time.Now().Add(5 * time.Hour),
+			Expires:  expires,
 			HttpOnly: true,
 		})
 

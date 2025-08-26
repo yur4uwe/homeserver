@@ -8,6 +8,7 @@ import (
 	"homeserver/constants/tconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbselect"
+	"homeserver/db/query_builder/qbupdate"
 	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
@@ -23,15 +24,7 @@ func (r *TokenRepo) VerifyToken(ctx context.Context, token string) error {
 		Where("auth_token = $1 AND email_verified = false").
 		Build()
 
-	// query := querybuilder.New().
-	// 	Select(uconsts.ID, uconsts.Username).
-	// 	From("users").
-	// 	Where("auth_token = $1 AND email_verified = false").
-	// 	Build()
-
 	var user []uschema.User
-	// Can fail if the token does not exist == user does not exist
-	// Can fail if email is already verified
 	rows, err := r.db.Pool.Query(ctx, query, token)
 	if err != nil {
 		return fmt.Errorf("error verifying token: %v", err)
@@ -46,18 +39,17 @@ func (r *TokenRepo) VerifyToken(ctx context.Context, token string) error {
 		return fmt.Errorf("unexpected error: %v", err)
 	}
 
-	// Can fail if the username is empty
 	if user[0].ID == 0 {
 		return fmt.Errorf("invalid user ID for token verification")
 	}
 
-	// query = querybuilder.New().
-	// 	Update(dbconsts.DBUsersTable.Name).
-	// 	Set(uconsts.EmailVerified).
-	// 	Where("id = $2").
-	// 	Build()
+	upd_query := qbupdate.New().
+		From(dbconsts.DBUsersTable.Name).
+		Set("email_verified").
+		Where("id = $2").
+		Build()
 
-	tag, err := r.db.Pool.Exec(ctx, query, true, user[0].ID)
+	tag, err := r.db.Pool.Exec(ctx, upd_query, true, user[0].ID)
 	if err != nil {
 		return fmt.Errorf("error updating email verification status: %v", err)
 	}

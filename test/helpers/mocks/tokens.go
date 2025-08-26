@@ -1,17 +1,25 @@
 package mocks
 
-import "github.com/stretchr/testify/mock"
+import (
+	"homeserver/web-server/pkg/crypto"
+	"time"
+
+	"github.com/stretchr/testify/mock"
+)
 
 type MockTokens struct {
 	mock.Mock
 }
 
-func (m *MockTokens) NewToken() (string, error) {
-	args := m.Called()
+func (m *MockTokens) NewToken(seed string, expires time.Time) (string, error) {
+	args := m.Called(seed, expires)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockTokens) ValidateToken(token string) bool {
+func (m *MockTokens) ValidateToken(token string) (*crypto.CustomClaims, bool) {
 	args := m.Called(token)
-	return args.Bool(0)
+	if !args.Bool(1) {
+		return nil, false
+	}
+	return args.Get(0).(*crypto.CustomClaims), true
 }

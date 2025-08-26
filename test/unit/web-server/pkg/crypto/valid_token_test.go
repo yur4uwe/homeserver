@@ -26,7 +26,7 @@ func TestValidateToken(t *testing.T) {
 	seed := "test-seed"
 
 	// Generate a valid token
-	tokenStr, err := crypto.NewToken(seed)
+	tokenStr, err := crypto.NewToken(seed, time.Now().Add(24*time.Hour))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenStr)
 

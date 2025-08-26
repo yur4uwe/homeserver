@@ -11,6 +11,7 @@ import (
 	"homeserver/web-server/pkg/utils/formatters"
 	"net/http"
 	"os"
+	"time"
 )
 
 var (
@@ -51,21 +52,21 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		verification_token, err := NewToken(r.RemoteAddr)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to generate verification token: %v\n", err.Error())
-			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		err = repos.TokenRepo.CreateToken(r.Context(), inserted_user.ID, verification_token)
+		verification_hash, err := NewToken(inserted_user.Email, time.Now().Add(24*time.Hour))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		go VerSuccess(form, verification_token)
+		err = repos.TokenRepo.CreateToken(r.Context(), inserted_user.ID, verification_hash)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
+			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		go VerSuccess(form, verification_hash)
 
 		w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")

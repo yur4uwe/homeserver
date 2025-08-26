@@ -142,7 +142,7 @@ func TestLoginHandler(t *testing.T) {
 
 				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
 				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
-				mockTokens.On("NewToken").Return("", errors.New("token error"))
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("", errors.New("token error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
 			requestBody:    "identificator=u&password=p",
@@ -158,7 +158,7 @@ func TestLoginHandler(t *testing.T) {
 
 				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
 				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
-				mockTokens.On("NewToken").Return("token123", nil)
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)
 				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
@@ -175,7 +175,7 @@ func TestLoginHandler(t *testing.T) {
 
 				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
 				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
-				mockTokens.On("NewToken").Return("token123", nil)
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)
 				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("", errors.New("header error"))
 				mockLog.On("ErrLog", mock.Anything, mock.Anything).Return()
@@ -194,7 +194,7 @@ func TestLoginHandler(t *testing.T) {
 
 				user := &uschema.User{ID: 1, Username: "u", Email: "e", EmailVerified: true}
 				mockUR.On("Query", mock.Anything, mock.AnythingOfType("*uschema.User")).Return(user, nil)
-				mockTokens.On("NewToken").Return("token123", nil)
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)
 				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
 				mockParser.On("ParseTemplateToString", mock.Anything, mock.Anything).Return("<header>", nil)
 				mockTemplate.On("Must", mock.Anything, mock.Anything).Return(mockedTemplate)

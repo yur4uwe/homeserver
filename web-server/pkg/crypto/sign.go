@@ -8,26 +8,33 @@ import (
 	"homeserver/constants"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
-func SignedURL(rawurl string, entryType, id string, expires time.Time) (string, error) {
-	if entryType == "" || id == "" {
-		return "", fmt.Errorf("invalid input: entryType and id must not be empty")
-	}
+func CheckHash(data, hash string) bool {
+	return hmac.Equal([]byte(HashSeed(data)), []byte(hash))
+}
 
+func HashSeed(data string) string {
 	secret := []byte(Getenv(constants.SourceSecret))
+	hash := hmac.New(sha256.New, secret)
+	hash.Write([]byte(data))
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func SignedURL(rawurl string, expires time.Time) (string, error) {
+	if expires.IsZero() {
+		return "", fmt.Errorf("invalid input: expires must not be zero")
+	}
 
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return "", err
 	}
 	exp := expires.Unix()
-	data := entryType + "|" + id + "|" + strconv.FormatInt(exp, 10)
-	mac := hmac.New(sha256.New, secret)
-	mac.Write([]byte(data))
-	signature := hex.EncodeToString(mac.Sum(nil))
+	data := u.Path + "|" + strconv.FormatInt(exp, 10)
+
+	signature := HashSeed(data)
 
 	q := u.Query()
 	q.Set("sid", signature)
@@ -37,20 +44,10 @@ func SignedURL(rawurl string, entryType, id string, expires time.Time) (string, 
 }
 
 func ValidateSignedURL(rawurl string) bool {
-	secret := []byte(Getenv(constants.SourceSecret))
-
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return false
 	}
-
-	parts := strings.Split(u.Path, "/")
-	if len(parts) < 3 {
-		return false
-	}
-
-	entryType := parts[1]
-	id := parts[2]
 
 	q := u.Query()
 	sid := q.Get("sid")
@@ -59,9 +56,7 @@ func ValidateSignedURL(rawurl string) bool {
 	if err != nil || time.Now().Unix() > exp {
 		return false
 	}
-	data := entryType + "|" + id + "|" + expStr
-	mac := hmac.New(sha256.New, secret)
-	mac.Write([]byte(data))
-	expectedSig := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(sid), []byte(expectedSig))
+
+	data := u.Path + "|" + expStr
+	return CheckHash(data, sid)
 }

@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+var (
+	ValidateToken = crypto.ValidateToken
+)
+
 func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -32,11 +36,12 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				reqCont.AuthToken = authToken.Value
 			}
 
-			if claims, valid := crypto.ValidateToken(reqCont.AuthToken); !valid || claims == nil || claims.Seed != r.RemoteAddr {
+			claims, valid := ValidateToken(reqCont.AuthToken)
+			if !valid || claims == nil {
 				reqCont.AuthToken = ""
 			}
 
-			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil {
+			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil && claims.Seed == user.Email {
 				reqCont.Requester = user
 			} else {
 				reqCont.AuthToken = ""

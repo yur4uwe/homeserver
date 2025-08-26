@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"homeserver/db/repositories"
@@ -72,7 +71,6 @@ func TestRegisterHandler(t *testing.T) {
 		name           string
 		setupMocks     func()
 		requestBody    string
-		contentType    string
 		context        bool
 		wantCode       int
 		wantBodySubstr string
@@ -87,8 +85,6 @@ func TestRegisterHandler(t *testing.T) {
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 			},
 			requestBody:    "",
-			contentType:    "",
-			context:        false,
 			wantCode:       http.StatusInternalServerError,
 			wantBodySubstr: "Missing request context",
 		},
@@ -97,8 +93,8 @@ func TestRegisterHandler(t *testing.T) {
 			setupMocks: func() {
 				resetter()
 			},
-			requestBody:    "username=&email=e&password=p&confirm=p",
-			contentType:    "application/x-www-form-urlencoded",
+			requestBody: "username=&email=e&password=p&confirm-password=p",
+
 			context:        true,
 			wantCode:       http.StatusOK,
 			wantBodySubstr: "Username is required",
@@ -120,8 +116,8 @@ func TestRegisterHandler(t *testing.T) {
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return((*uschema.User)(nil), errors.New("db error"))
 			},
-			requestBody:    "username=username&email=e@example.com&password=p&confirm=p",
-			contentType:    "application/x-www-form-urlencoded",
+			requestBody: "username=username&email=e@example.com&password=p&confirm-password=p",
+
 			context:        true,
 			wantCode:       http.StatusInternalServerError,
 			wantBodySubstr: "",
@@ -140,10 +136,10 @@ func TestRegisterHandler(t *testing.T) {
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
-				mockTokens.On("NewToken").Return("", errors.New("token error"))
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("", errors.New("token error"))
 			},
-			requestBody:    "username=u&email=e@example.com&password=p&confirm=p",
-			contentType:    "application/x-www-form-urlencoded",
+			requestBody: "username=u&email=e@example.com&password=p&confirm-password=p",
+
 			context:        true,
 			wantCode:       http.StatusInternalServerError,
 			wantBodySubstr: "",
@@ -162,11 +158,11 @@ func TestRegisterHandler(t *testing.T) {
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
-				mockTokens.On("NewToken").Return("token123", nil)
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)
 				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(errors.New("token db error"))
 			},
-			requestBody:    "username=u&email=e@example.com&password=p&confirm=p",
-			contentType:    "application/x-www-form-urlencoded",
+			requestBody: "username=u&email=e@example.com&password=p&confirm-password=p",
+
 			context:        true,
 			wantCode:       http.StatusInternalServerError,
 			wantBodySubstr: "",
@@ -183,8 +179,8 @@ func TestRegisterHandler(t *testing.T) {
 				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e@example.com"}, nil)
+				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)
 				mockTokR.On("CreateToken", mock.Anything, 1, "token123").Return(nil)
-				mockTokens.On("NewToken").Return("token123", nil)
 				mockVerificationEmail.On("SendVerificationEmail", form, "token123").Return()
 				mockTemplate.On("Must", mock.Anything, mock.Anything).Return(template)
 				mockTemplate.On("ParseFiles", mock.Anything).Return(template, nil)
@@ -193,8 +189,8 @@ func TestRegisterHandler(t *testing.T) {
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return("Success!!!")
 			},
-			requestBody:    "username=u&email=e@example.com&password=p&confirm=p",
-			contentType:    "application/x-www-form-urlencoded",
+			requestBody: "username=u&email=e@example.com&password=p&confirm-password=p",
+
 			context:        true,
 			wantCode:       http.StatusOK,
 			wantBodySubstr: "",
@@ -205,14 +201,8 @@ func TestRegisterHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMocks()
-
-			var req *http.Request
-			if tt.contentType != "" {
-				req = httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(tt.requestBody))
-				req.Header.Set("Content-Type", tt.contentType)
-			} else {
-				req = httptest.NewRequest(http.MethodPost, "/register", bytes.NewBufferString(tt.requestBody))
-			}
+			req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(tt.requestBody))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			if tt.context {
 				req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, reqCont))

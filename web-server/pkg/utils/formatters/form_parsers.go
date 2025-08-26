@@ -1,6 +1,9 @@
 package formatters
 
-import "net/http"
+import (
+	"homeserver/constants/authconsts"
+	"net/http"
+)
 
 type LoginForm struct {
 	Identificator string `json:"identificator"`
@@ -25,16 +28,22 @@ type RegisterForm struct {
 func RegisterFormFromRequest(r *http.Request) RegisterForm {
 	var form RegisterForm
 
-	register_fields := []string{"username", "email", "password", "confirm"}
+	register_fields := []string{
+		authconsts.UsernameField,
+		authconsts.EmailField,
+		authconsts.PasswordField,
+		authconsts.ConfirmPasswordField,
+	}
+
 	for _, field := range register_fields {
 		switch field {
-		case "username":
+		case authconsts.UsernameField:
 			form.Username = r.FormValue(field)
-		case "email":
+		case authconsts.EmailField:
 			form.Email = r.FormValue(field)
-		case "password":
+		case authconsts.PasswordField:
 			form.Password = r.FormValue(field)
-		case "confirm":
+		case authconsts.ConfirmPasswordField:
 			form.Confirm = r.FormValue(field)
 		}
 	}

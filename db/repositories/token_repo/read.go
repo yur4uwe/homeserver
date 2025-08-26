@@ -28,12 +28,6 @@ func (r *TokenRepo) CheckToken(ctx context.Context, token string) (int, error) {
 		Where("auth_token = $1 AND email_verified = true").
 		Build()
 
-	// query := querybuilder.New().
-	// 	Select("id").
-	// 	From("users").
-	// 	Where("auth_token = $1 AND email_verified = true").
-	// 	Build()
-
 	var userID int
 	err := r.db.Pool.QueryRow(ctx, query, token).Scan(&userID)
 	if err != nil {
@@ -52,12 +46,6 @@ func (r *TokenRepo) QueryToken(ctx context.Context, token string) (*uschema.User
 		From(dbconsts.DBUsersTable.Name).
 		Where("auth_token = $1").
 		Build()
-
-	// query := querybuilder.New().
-	// 	Select(uschema.FieldsList(uconsts.Password)...).
-	// 	From("users").
-	// 	Where("auth_token = $1").
-	// 	Build()
 
 	var user []uschema.User
 	rows, err := r.db.Pool.Query(ctx, query, token)

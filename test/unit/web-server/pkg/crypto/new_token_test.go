@@ -27,7 +27,7 @@ func TestNewToken(t *testing.T) {
 
 	seed := "test-seed"
 
-	tokenStr, err := crypto.NewToken(seed)
+	tokenStr, err := crypto.NewToken(seed, time.Now().Add(24*time.Hour))
 	assert.NoError(t, err, "NewToken should not return error")
 	assert.NotEmpty(t, tokenStr, "NewToken should return a token string")
 
@@ -53,7 +53,7 @@ func TestNewToken_InvalidInput(t *testing.T) {
 	defer os.Unsetenv(constants.TokenSecret)
 
 	// Empty seed
-	tokenStr, err := crypto.NewToken("")
+	tokenStr, err := crypto.NewToken("", time.Now().Add(24*time.Hour))
 	assert.NoError(t, err, "Should still create a token with empty seed")
 	assert.NotEmpty(t, tokenStr)
 
@@ -62,7 +62,7 @@ func TestNewToken_InvalidInput(t *testing.T) {
 	for i := range longSeed {
 		longSeed[i] = 'a'
 	}
-	tokenStr, err = crypto.NewToken(string(longSeed))
+	tokenStr, err = crypto.NewToken(string(longSeed), time.Now().Add(24*time.Hour))
 	assert.NoError(t, err, "Should create a token with a long seed")
 	assert.NotEmpty(t, tokenStr)
 }
