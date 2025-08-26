@@ -5,7 +5,7 @@ import (
 	"homeserver/constants"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/web-server/pkg/auth"
+	"homeserver/web-server/pkg/crypto"
 	"homeserver/web-server/pkg/middleware"
 	"homeserver/web-server/pkg/templates"
 	"homeserver/web-server/pkg/utils/formatters"
@@ -15,7 +15,7 @@ import (
 
 var (
 	VerSuccess = SendVerificationEmail
-	NewToken   = auth.NewToken
+	NewToken   = crypto.NewToken
 )
 
 func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
@@ -51,7 +51,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		verification_token, err := NewToken()
+		verification_token, err := NewToken(r.RemoteAddr)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to generate verification token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	"homeserver/web-server/pkg/crypto"
 	"homeserver/web-server/pkg/templates"
 	"html/template"
 	"net/http"
@@ -29,6 +30,10 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				reqCont.AuthToken = ""
 			} else {
 				reqCont.AuthToken = authToken.Value
+			}
+
+			if claims, valid := crypto.ValidateToken(reqCont.AuthToken); !valid || claims == nil || claims.Seed != r.RemoteAddr {
+				reqCont.AuthToken = ""
 			}
 
 			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil {

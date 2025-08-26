@@ -15,6 +15,8 @@ var requiredVars = []string{
 	constants.EmailHost,
 	constants.EmailPort,
 	constants.EmailUser,
+	constants.SourceSecret,
+	constants.TokenSecret,
 }
 
 func CheckVariables() error {

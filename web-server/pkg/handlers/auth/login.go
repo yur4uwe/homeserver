@@ -70,7 +70,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		newToken, err := NewToken()
+		newToken, err := NewToken(r.RemoteAddr)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to generate new token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)

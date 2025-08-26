@@ -10,4 +10,6 @@ const (
 	EmailHost     = "EMAIL_HOST"
 	EmailPort     = "EMAIL_PORT"
 	EmailUser     = "EMAIL_USER"
+	SourceSecret  = "SOURCE_SECRET"
+	TokenSecret   = "TOKEN_SECRET"
 )
