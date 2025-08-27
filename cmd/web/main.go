@@ -1,0 +1,25 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	"homeserver/constants"
+	"homeserver/internal/routes"
+	"homeserver/internal/server"
+	"homeserver/internal/setup"
+)
+
+func main() {
+	repos, cleanup, err := setup.Setup(true)
+	if err != nil {
+		log.Fatalf("Setup error: %v", err)
+	}
+	defer cleanup()
+
+	handler := routes.NewWebRouter(repos)
+
+	if err := server.Run(handler, os.Getenv(constants.WebSrvPort)); err != nil {
+		log.Fatalf("Server error: %v", err)
+	}
+}

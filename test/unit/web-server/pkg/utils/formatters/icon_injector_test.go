@@ -1,8 +1,8 @@
 package formatters_test
 
 import (
+	"homeserver/pkg/utils/formatters"
 	"homeserver/test/helpers"
-	"homeserver/web-server/pkg/utils/formatters"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

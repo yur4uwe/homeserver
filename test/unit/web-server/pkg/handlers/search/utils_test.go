@@ -3,9 +3,9 @@ package search_test
 import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/internal/templates"
+	"homeserver/pkg/handlers/web/search"
 	"homeserver/test/helpers"
-	"homeserver/web-server/pkg/handlers/search"
-	"homeserver/web-server/pkg/templates"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

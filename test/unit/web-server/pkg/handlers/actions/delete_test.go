@@ -10,10 +10,10 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/pkg/handlers/web/actions"
+	middleware "homeserver/pkg/middleware/web"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
-	"homeserver/web-server/pkg/handlers/actions"
-	"homeserver/web-server/pkg/middleware"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -3,9 +3,9 @@ package parser_test
 import (
 	"errors"
 	"homeserver/constants"
+	"homeserver/pkg/parser"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks/mocksos"
-	"homeserver/web-server/pkg/parser"
 	"html/template"
 	"testing"
 

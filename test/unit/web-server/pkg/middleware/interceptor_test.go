@@ -2,10 +2,10 @@ package middleware_test
 
 import (
 	"context"
+	"homeserver/internal/templates"
+	middleware "homeserver/pkg/middleware/web"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
-	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/templates"
 	"net/http"
 	"net/http/httptest"
 	"testing"

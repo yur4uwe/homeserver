@@ -3,11 +3,11 @@ package handlers_test
 import (
 	"context"
 	"fmt"
+	webhandlers "homeserver/pkg/handlers/web"
+	middleware "homeserver/pkg/middleware/web"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
 	"homeserver/test/helpers/mocks/mocksos"
-	"homeserver/web-server/pkg/handlers"
-	"homeserver/web-server/pkg/middleware"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -21,9 +21,9 @@ func TestWelcomePageHandler(t *testing.T) {
 	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
 
-	cleanupMust := helpers.MockFunction(&handlers.Must, mockTemplates.Must, func() {})
-	cleanupParseFiles := helpers.MockFunction(&handlers.ParseFiles, mockTemplates.ParseFiles, func() {})
-	cleanupErrorResponse := helpers.MockFunction(&handlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&webhandlers.Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&webhandlers.ParseFiles, mockTemplates.ParseFiles, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&webhandlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	defer func() {
 		cleanupMust()
@@ -45,7 +45,7 @@ func TestWelcomePageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.WelcomePageHandler(rec, req)
+		webhandlers.WelcomePageHandler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "Welcome")
@@ -57,7 +57,7 @@ func TestWelcomePageHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 
-		handlers.WelcomePageHandler(rec, req)
+		webhandlers.WelcomePageHandler(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)
@@ -68,9 +68,9 @@ func TestUploadPageHandler(t *testing.T) {
 	mockTemplates := new(mocks.MockTemplate)
 	mockErrResp := new(mocks.ErrorResponseMock)
 
-	cleanupMust := helpers.MockFunction(&handlers.Must, mockTemplates.Must, func() {})
-	cleanupParseFiles := helpers.MockFunction(&handlers.ParseFiles, mockTemplates.ParseFiles, func() {})
-	cleanupErrorResponse := helpers.MockFunction(&handlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupMust := helpers.MockFunction(&webhandlers.Must, mockTemplates.Must, func() {})
+	cleanupParseFiles := helpers.MockFunction(&webhandlers.ParseFiles, mockTemplates.ParseFiles, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&webhandlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	resetter := helpers.NewMocksResetter(
 		&mockTemplates.Mock,
@@ -98,7 +98,7 @@ func TestUploadPageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.UploadPageHandler(rec, req)
+		webhandlers.UploadPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "Upload")
@@ -112,7 +112,7 @@ func TestUploadPageHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/upload", nil)
 		rec := httptest.NewRecorder()
 
-		handlers.UploadPageHandler(rec, req)
+		webhandlers.UploadPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)
@@ -121,16 +121,16 @@ func TestUploadPageHandler(t *testing.T) {
 
 func TestStaticPageHandler(t *testing.T) {
 	mockErrResp := new(mocks.ErrorResponseMock)
-	cleanupErrorResponse := helpers.MockFunction(&handlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
+	cleanupErrorResponse := helpers.MockFunction(&webhandlers.ErrorResponse, mockErrResp.ErrorResponse, func() {})
 
 	mockOS := new(mocksos.MockOS)
-	cleanupReadFile := helpers.MockFunction(&handlers.ReadFile, mockOS.ReadFile, func() {})
+	cleanupReadFile := helpers.MockFunction(&webhandlers.ReadFile, mockOS.ReadFile, func() {})
 
 	isPageMock := new(IsPageMock)
-	cleanupIsPage := helpers.MockFunction(&handlers.IsPage, isPageMock.IsPage, func() {})
+	cleanupIsPage := helpers.MockFunction(&webhandlers.IsPage, isPageMock.IsPage, func() {})
 
 	mockWelcomePage := new(WelcomeMock)
-	cleanupWelcome := helpers.MockFunction(&handlers.WelcomePage, mockWelcomePage.WelcomePageHandler, func() {})
+	cleanupWelcome := helpers.MockFunction(&webhandlers.WelcomePage, mockWelcomePage.WelcomePageHandler, func() {})
 
 	resetter := helpers.NewMocksResetter(
 		&mockErrResp.Mock,
@@ -158,7 +158,7 @@ func TestStaticPageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.StaticPageHandler(rec, req)
+		webhandlers.StaticPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "static content")
@@ -176,7 +176,7 @@ func TestStaticPageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.StaticPageHandler(rec, req)
+		webhandlers.StaticPageHandler(rec, req)
 
 		mockWelcomePage.AssertCalled(t, "WelcomePageHandler", rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -191,7 +191,7 @@ func TestStaticPageHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 
-		handlers.StaticPageHandler(rec, req)
+		webhandlers.StaticPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)
@@ -208,7 +208,7 @@ func TestStaticPageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.StaticPageHandler(rec, req)
+		webhandlers.StaticPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
@@ -226,7 +226,7 @@ func TestStaticPageHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req = req.WithContext(context.WithValue(req.Context(), middleware.ReqContKey, modContext))
 
-		handlers.StaticPageHandler(rec, req)
+		webhandlers.StaticPageHandler(rec, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		mockErrResp.AssertCalled(t, "ErrorResponse", mock.Anything, mock.AnythingOfType("string"), http.StatusInternalServerError)

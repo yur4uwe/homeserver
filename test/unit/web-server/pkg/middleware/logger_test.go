@@ -2,8 +2,8 @@ package middleware_test
 
 import (
 	"context"
+	middleware "homeserver/pkg/middleware/web"
 	"homeserver/test/helpers/mocks"
-	"homeserver/web-server/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"

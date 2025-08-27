@@ -2,8 +2,8 @@ package utils
 
 import (
 	"homeserver/constants"
+	"homeserver/pkg/utils"
 	"homeserver/test/helpers"
-	"homeserver/web-server/pkg/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

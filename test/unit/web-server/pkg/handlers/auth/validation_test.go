@@ -2,8 +2,8 @@ package auth_test
 
 import (
 	"homeserver/constants/authconsts"
-	"homeserver/web-server/pkg/handlers/auth"
-	"homeserver/web-server/pkg/utils/formatters"
+	"homeserver/pkg/handlers/web/auth"
+	"homeserver/pkg/utils/formatters"
 	"strings"
 	"testing"
 

@@ -1,7 +1,7 @@
 package generics_test
 
 import (
-	"homeserver/web-server/pkg/utils/generics"
+	"homeserver/pkg/utils/generics"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

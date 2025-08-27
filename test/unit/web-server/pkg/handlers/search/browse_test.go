@@ -7,9 +7,9 @@ import (
 	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/pkg/handlers/web/search"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
-	"homeserver/web-server/pkg/handlers/search"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

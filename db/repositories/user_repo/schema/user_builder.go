@@ -3,7 +3,7 @@ package uschema
 import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
-	"homeserver/web-server/pkg/utils/generics"
+	"homeserver/pkg/utils/generics"
 	"slices"
 	"strings"
 	"time"

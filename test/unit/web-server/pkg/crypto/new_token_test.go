@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"homeserver/constants"
+	"homeserver/pkg/crypto"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks/mocksos"
-	"homeserver/web-server/pkg/crypto"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"

@@ -2,9 +2,9 @@ package crypto_test
 
 import (
 	"homeserver/constants"
+	"homeserver/pkg/crypto"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks/mocksos"
-	"homeserver/web-server/pkg/crypto"
 	"testing"
 	"time"
 

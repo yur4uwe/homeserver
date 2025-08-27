@@ -4,8 +4,8 @@ import (
 	"context"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"homeserver/web-server/pkg/middleware"
-	"homeserver/web-server/pkg/templates"
+	"homeserver/internal/templates"
+	middleware "homeserver/pkg/middleware/web"
 	"net/http"
 
 	"github.com/stretchr/testify/mock"

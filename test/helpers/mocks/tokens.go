@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"homeserver/web-server/pkg/crypto"
+	"homeserver/pkg/crypto"
 	"time"
 
 	"github.com/stretchr/testify/mock"

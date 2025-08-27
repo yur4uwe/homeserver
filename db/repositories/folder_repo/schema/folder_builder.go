@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/constants/dbconsts"
-	"homeserver/web-server/pkg/utils/generics"
+	"homeserver/pkg/utils/generics"
 	"os"
 	"strings"
 	"time"
