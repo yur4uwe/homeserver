@@ -3,46 +3,52 @@ package folderrepo
 import (
 	"context"
 	"fmt"
+	"homeserver/constants/dbconsts"
 	"homeserver/constants/folconsts"
+	"homeserver/db/query_builder/qbdelete"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
-func (r *FolderRepo) DeleteFolderByID(ctx context.Context, folderID int, ownerID int) (int, error) {
+func (r *FolderRepo) DeleteFolderByID(ctx context.Context, folderID int, ownerID int) (*folschema.UserFolder, error) {
 	if folderID <= 0 {
-		return 0, fmt.Errorf("invalid folder ID")
+		return nil, fmt.Errorf("invalid folder ID")
 	}
 
-	var deletedID int
-	err := r.db.Pool.QueryRow(
-		ctx,
-		`DELETE FROM folders WHERE id = $1 AND owner_id = $2 RETURNING id`,
-		folderID,
-		ownerID,
-	).Scan(&deletedID)
+	query := qbdelete.New().From(dbconsts.DBUsersTable.Name).Where("id = $1 AND owner_id = $2").Returning(folschema.FieldsList()...).Build()
+
+	fol, err := r.db.QueryOne(ctx, query, folderID, ownerID)
 	if err != nil {
-		return 0, fmt.Errorf("error deleting folder entry: %v", err)
+		return nil, fmt.Errorf("error deleting folder entry: %v", err)
 	}
 
-	return deletedID, nil
+	return &fol, nil
 }
 
-func (r *FolderRepo) DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (int, error) {
+func (r *FolderRepo) DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error) {
 	if folder.ShouldHaveFields(owner.Username)(folconsts.Path, folconsts.FolderName, folconsts.OwnerID) != nil {
-		return 0, fmt.Errorf("invalid folder data")
+		return nil, fmt.Errorf("invalid folder data")
 	}
 
-	var deletedID int
-	err := r.db.Pool.QueryRow(
-		ctx,
-		`DELETE FROM folders WHERE path = $1 AND name = $2 AND owner_id = $3 RETURNING id`,
-		folder.Path,
-		folder.Name,
-		owner.ID,
-	).Scan(&deletedID)
+	valid_fields := folder.GetValidFieldsList()
+
+	whereClause := "WHERE "
+	for i, field := range valid_fields {
+		if i > 0 {
+			whereClause += " AND "
+		}
+		whereClause += fmt.Sprintf("%s = $%d", field, i+1)
+	}
+
+	args := make([]any, 0, len(valid_fields))
+	args = append(args, folder.GetValidFieldsData()...)
+
+	query := qbdelete.New().From(dbconsts.DBFoldersTable.Name).Where(whereClause).Returning(folschema.FieldsList()...).Build()
+
+	fol, err := r.db.QueryOne(ctx, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("error deleting folder entry: %v", err)
+		return nil, fmt.Errorf("error deleting folder entry: %v", err)
 	}
 
-	return deletedID, nil
+	return &fol, nil
 }

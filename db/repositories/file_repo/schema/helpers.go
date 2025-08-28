@@ -130,20 +130,26 @@ func (uf *UserFile) GetValidFieldsData() []any {
 	if uf.Directory != 0 {
 		validFields = append(validFields, uf.Directory)
 	}
+	if uf.OwnerID != 0 {
+		validFields = append(validFields, uf.OwnerID)
+	}
 	if uf.Size != 0 {
 		validFields = append(validFields, uf.Size)
 	}
 	if uf.ContentType != "" {
 		validFields = append(validFields, uf.ContentType)
 	}
-	if uf.OwnerID != 0 {
-		validFields = append(validFields, uf.OwnerID)
+	if len(uf.TrustedSource) != 0 {
+		validFields = append(validFields, uf.TrustedSource)
 	}
 	if !uf.CreatedAt.IsZero() {
 		validFields = append(validFields, uf.CreatedAt)
 	}
 	if !uf.UpdatedAt.IsZero() {
 		validFields = append(validFields, uf.UpdatedAt)
+	}
+	if uf.Metadata != nil {
+		validFields = append(validFields, uf.Metadata)
 	}
 	return validFields
 }
@@ -165,33 +171,51 @@ func (uf *UserFile) GetValidFieldsList() []string {
 	if uf.Directory > 0 {
 		validFields = append(validFields, fconsts.Directory)
 	}
+	if uf.OwnerID > 0 {
+		validFields = append(validFields, fconsts.OwnerID)
+	}
 	if uf.Size > 0 {
 		validFields = append(validFields, fconsts.Size)
+	}
+	if len(uf.TrustedSource) != 0 {
+		validFields = append(validFields, fconsts.TrustedSource)
 	}
 	if uf.ContentType != "" {
 		validFields = append(validFields, fconsts.ContentType)
 	}
-	if uf.OwnerID > 0 {
-		validFields = append(validFields, fconsts.OwnerID)
+	if !uf.CreatedAt.IsZero() {
+		validFields = append(validFields, fconsts.CreatedAt)
 	}
+	if !uf.UpdatedAt.IsZero() {
+		validFields = append(validFields, fconsts.UpdatedAt)
+	}
+	if uf.Metadata != nil {
+		validFields = append(validFields, fconsts.Metadata)
+	}
+
 	return validFields
 }
 
 func (uf *UserFile) MergeFiles(new_file *UserFile) {
+	need_to_prevent_duplicates := false
+
 	if new_file == nil {
 		return
 	}
 
 	if new_file.Filename != "" {
 		uf.Filename = new_file.Filename
+		need_to_prevent_duplicates = true
 	}
 
 	if new_file.Extension != "" {
 		uf.Extension = new_file.Extension
+		need_to_prevent_duplicates = true
 	}
 
 	if new_file.Path != "" {
 		uf.Path = new_file.Path
+		need_to_prevent_duplicates = true
 	}
 
 	if new_file.Directory != 0 {
@@ -210,14 +234,21 @@ func (uf *UserFile) MergeFiles(new_file *UserFile) {
 		uf.Metadata = new_file.Metadata
 	}
 
-	uf.UpdatedAt = time.Now()
-
-	new_file, err := PreventDuplicateFileName(uf)
-	if err != nil {
-		panic(err)
+	if len(new_file.TrustedSource) != 0 {
+		uf.TrustedSource = new_file.TrustedSource
 	}
 
-	*uf = *new_file
+	uf.UpdatedAt = time.Now()
+
+	if need_to_prevent_duplicates {
+		var err error
+		new_file, err = PreventDuplicateFileName(uf)
+		if err != nil {
+			panic(err)
+		}
+
+		*uf = *new_file
+	}
 }
 
 func PreventDuplicateFileName(file *UserFile) (*UserFile, error) {

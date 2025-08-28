@@ -32,10 +32,7 @@ func Setup(loadIcons bool) (*repositories.Repositories, func(), error) {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	connection, err := db.NewConnection()
-	if err != nil {
-		return nil, nil, err
-	}
+	connection := db.NewPool()
 
 	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
 

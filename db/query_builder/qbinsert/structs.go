@@ -5,7 +5,9 @@ import (
 )
 
 type InsertQueryBuilder struct {
-	bb        basebuilder.BaseBuilder
-	columns   []string
-	valuesNum int
+	bb              basebuilder.BaseBuilder
+	columns         []string
+	conflictColumns []string
+	conflictAction  string
+	valuesNum       int
 }

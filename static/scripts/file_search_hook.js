@@ -44,30 +44,24 @@ document.addEventListener('DOMContentLoaded', function () {
     renameAction.forEach(item => {
         item.addEventListener('click', function () {
             const row = item.closest('tr');
-            const fileNameCell = row.querySelector('.file-name');
-            if (!fileNameCell) {
-                console.error('No .file-name cell found in row');
+            const fileName = row.getAttribute('data-name');
+            const fileID = row.getAttribute('data-id');
+
+            let newName = prompt('Enter new name for ' + fileName, fileName);
+            if (!newName) {
                 return;
             }
-            const fileSig = fileNameCell.textContent.trim().split('.');
-            const fileName = fileSig.shift();
-            const fileExtension = fileSig.pop();
-            let newName = prompt('Enter new name for ' + fileName, fileName);
-            if (newName) {
-                newName = encodeURI(newName + '.' + fileExtension);
-                console.log('Renaming ' + fileName + ' to ' + newName);
-                const filePathData = row.getAttribute('data-path');
-                let filePath = filePathData ? filePathData.trim() : '';
-                if (filePath) {
-                    filePath = encodeURI(filePath);
-                }
 
-                const origFileName = encodeURI(fileName + '.' + fileExtension);
-
-                htmx.ajax('PATCH', '/api/v1/file-actions/' + filePath + origFileName + "?desired_name=" + newName, {
+            htmx.ajax('PATCH',
+                '/api/v1/file-actions/' + fileID +
+                "?desired_name=" + encodeURI(newName) +
+                "&is_folder=" + row.classList.contains('search-folder') +
+                "&orig_name=" + encodeURI(fileName),
+                {
                     target: "tr[data-id='" + row.getAttribute('data-id') + "'] td.file-name"
-                });
-            }
+                }
+            );
+
         });
     });
 
@@ -75,10 +69,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     for (const item of shareActions) {
         const shareCallback = () => {
-            const fileId = item.getAttribute('data-id');
-            const fileType = item.getAttribute('data-is-folder');
+            const fileId = item.parentElement.getAttribute('data-id');
+            const fileType = item.parentElement.getAttribute('data-is-folder');
 
-            fetch(`/api/v1/file-actions/share?is_folder=${fileType}&id=${fileId}`)
+            fetch(`/api/v1/file-actions/${fileId}?is_folder=${fileType}`)
                 .then(response => {
                     (async () => {
                         const hxTrigger = JSON.parse(response.headers.get('HX-Trigger'));

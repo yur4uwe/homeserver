@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
@@ -14,8 +15,7 @@ import (
 	"time"
 )
 
-func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) {
-	fileID := r.URL.Query().Get("id")
+func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, fileId int) {
 	isFolder := r.URL.Query().Get("is_folder") == "true"
 
 	file_srv_host := os.Getenv(constants.FileSrvHost)
@@ -25,9 +25,9 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 
 	path := ""
 	if isFolder {
-		path += "/folders/" + fileID
+		path += "/folders/" + strconv.Itoa(fileId)
 	} else {
-		path += "/files/" + fileID
+		path += "/files/" + strconv.Itoa(fileId)
 	}
 
 	exp := strconv.FormatInt(time.Now().Add(24*time.Hour).Unix(), 10)
@@ -37,22 +37,28 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 
 	query := "?sid=" + url_hash + "&exp=" + exp
 
-	entry_id, err := strconv.Atoi(fileID)
-	if err != nil {
-		ErrorResponse(w, "Invalid file ID", http.StatusBadRequest)
-		return
-	}
-
 	if isFolder {
 		fvp := folschema.NewUserFolderBuilder().WithTrustedSource([]byte(url_hash))
-		folder := folschema.NewUserFolderBuilder().WithID(entry_id).WithOwnerID(reqCont.Requester.ID)
+		folder := folschema.NewUserFolderBuilder().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
 
-		repos.FolderRepo.UpdateFolder(r.Context(), folder, fvp, reqCont.Requester)
+		newfol, err := repos.FolderRepo.UpdateFolder(r.Context(), folder, fvp, reqCont.Requester)
+		if err != nil {
+			ErrorResponse(w, "Error updating folder", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Printf("Folder %s updated successfully\n", newfol.TrustedSource)
 	} else {
 		fvp := fschema.NewUserFileBuilder().WithTrustedSource([]byte(url_hash))
-		file := fschema.NewUserFileBuilder().WithID(entry_id).WithOwnerID(reqCont.Requester.ID)
+		file := fschema.NewUserFileBuilder().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
 
-		repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
+		newfile, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
+		if err != nil {
+			ErrorResponse(w, "Error updating file", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Printf("File %s updated successfully\n", newfile.TrustedSource)
 	}
 
 	w.WriteHeader(http.StatusOK)

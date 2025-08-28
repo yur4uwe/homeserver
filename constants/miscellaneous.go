@@ -12,4 +12,5 @@ const (
 const (
 	AuthCookieName = "authTokenHS"
 	SIDQueryKey    = "sid"
+	ExpQueryKey    = "exp"
 )

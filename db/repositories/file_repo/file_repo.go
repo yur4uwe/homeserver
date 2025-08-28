@@ -5,6 +5,8 @@ import (
 	"homeserver/db"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type InFileRepo interface {
@@ -16,16 +18,17 @@ type InFileRepo interface {
 	FuzzySearch(ctx context.Context, search_query string, directory string, owner *uschema.User) ([]fschema.UserFile, error)
 	GetFilesByDirectory(ctx context.Context, directory string, owner *uschema.User) ([]fschema.UserFile, error)
 
-	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (int, error)
-	DeleteFileByID(ctx context.Context, fileID int, owner *uschema.User) error
+	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
+	DeleteFileByID(ctx context.Context, fileID int, owner *uschema.User) (*fschema.UserFile, error)
 
 	UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
 }
 
 type FileRepo struct {
-	db *db.Database
+	db *db.Database[fschema.UserFile]
 }
 
-func NewFileRepo(database *db.Database) *FileRepo {
-	return &FileRepo{db: database}
+func NewFileRepo(pool *pgxpool.Pool) *FileRepo {
+	database := db.Database[fschema.UserFile]{Pool: pool}
+	return &FileRepo{db: &database}
 }

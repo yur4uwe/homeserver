@@ -4,6 +4,8 @@ import (
 	"context"
 	"homeserver/db"
 	uschema "homeserver/db/repositories/user_repo/schema"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type InUserRepo interface {
@@ -15,11 +17,13 @@ type InUserRepo interface {
 }
 
 type UserRepo struct {
-	db *db.Database
+	db *db.Database[uschema.User]
 }
 
-func NewUserRepo(db *db.Database) *UserRepo {
+func NewUserRepo(pool *pgxpool.Pool) *UserRepo {
+	database := db.Database[uschema.User]{Pool: pool}
+
 	return &UserRepo{
-		db: db,
+		db: &database,
 	}
 }

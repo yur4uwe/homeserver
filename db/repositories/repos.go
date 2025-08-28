@@ -1,12 +1,13 @@
 package repositories
 
 import (
-	"homeserver/db"
 	filerepo "homeserver/db/repositories/file_repo"
 	folderrepo "homeserver/db/repositories/folder_repo"
 	tablerepo "homeserver/db/repositories/table_repo"
 	tokenrepo "homeserver/db/repositories/token_repo"
 	userrepo "homeserver/db/repositories/user_repo"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repositories struct {
@@ -31,7 +32,7 @@ func NewRepositories(
 	}
 }
 
-func InitRepositories(db *db.Database) (userrepo.InUserRepo, filerepo.InFileRepo,
+func InitRepositories(db *pgxpool.Pool) (userrepo.InUserRepo, filerepo.InFileRepo,
 	folderrepo.InFolderRepo, tokenrepo.InTokenRepo,
 	tablerepo.InTableRepo) {
 	return userrepo.NewUserRepo(db),

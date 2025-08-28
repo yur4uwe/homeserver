@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
 	folschema "homeserver/db/repositories/folder_repo/schema"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
@@ -20,6 +22,18 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			}
 
 			sid := r.URL.Query().Get(constants.SIDQueryKey)
+
+			expStr := r.URL.Query().Get(constants.ExpQueryKey)
+
+			if expStr == "" {
+				expStr = "0"
+			}
+
+			exp, err := strconv.ParseInt(expStr, 10, 64)
+			if err != nil {
+				respfail.ErrorResponse(w, r, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 
 			pathParts := strings.Split(r.URL.Path, "/")[1:]
 			if len(pathParts) != 2 {
@@ -70,14 +84,21 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			if authToken, _ := r.Cookie(constants.AuthCookieName); authToken != nil {
 				token = authToken.Value
 			}
+			userId, _ := conn.TokenRepo.CheckToken(r.Context(), token)
 
-			userId, err := conn.TokenRepo.CheckToken(r.Context(), token)
-			if err != nil && !strings.Contains(err.Error(), "token") {
-				respfail.ErrorResponse(w, r, "Internal Server Error", http.StatusInternalServerError)
+			fmt.Println("User ID:", userId)
+
+			if token != "" && userId == owner {
+				next.ServeHTTP(w, r)
 				return
 			}
 
-			if (trusted_source == "" || trusted_source != sid) && owner != userId {
+			if sid == "" || trusted_source == "" || trusted_source != sid {
+				respfail.ErrorResponse(w, r, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if exp < time.Now().Unix() {
 				respfail.ErrorResponse(w, r, "Unauthorized", http.StatusUnauthorized)
 				return
 			}

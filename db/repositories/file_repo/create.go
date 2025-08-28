@@ -17,7 +17,7 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
-	fields := fschema.FieldsList(fconsts.ID, fconsts.CreatedAt, fconsts.UpdatedAt, fconsts.Metadata)
+	fields := fschema.FieldsList(fconsts.ID, fconsts.CreatedAt, fconsts.UpdatedAt, fconsts.Metadata, fconsts.TrustedSource)
 
 	if err := file.ShouldHaveFields(owner.Username)(fields...); err != nil {
 		return nil, err
@@ -28,6 +28,8 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
+	args := file.GetValidFieldsData()
+
 	query := qbinsert.New().
 		Columns(fields...).
 		Into(dbconsts.DBFilesTable.Name).
@@ -35,11 +37,7 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		Build()
 
 	var inserted_file []fschema.UserFile
-	rows, err := repo.db.Pool.Query(
-		ctx,
-		query,
-		file.ID, file.Filename, file.Extension, file.Path, file.Directory, file.Size, file.ContentType, file.OwnerID, file.Metadata,
-	)
+	rows, err := repo.db.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,8 @@ import (
 	"homeserver/db"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type InFolderRepo interface {
@@ -13,16 +15,18 @@ type InFolderRepo interface {
 	GetChildren(ctx context.Context, path, name string, owner *uschema.User) ([]folschema.UserFolder, error)
 	CreateFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 	UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fvp *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
-	DeleteFolderByID(ctx context.Context, id int, ownerID int) (int, error)
-	DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (int, error)
+	DeleteFolderByID(ctx context.Context, id int, ownerID int) (*folschema.UserFolder, error)
+	DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 }
 
 type FolderRepo struct {
-	db *db.Database
+	db *db.Database[folschema.UserFolder]
 }
 
-func NewFolderRepo(database *db.Database) InFolderRepo {
+func NewFolderRepo(pool *pgxpool.Pool) InFolderRepo {
+	database := db.Database[folschema.UserFolder]{Pool: pool}
+
 	return &FolderRepo{
-		db: database,
+		db: &database,
 	}
 }

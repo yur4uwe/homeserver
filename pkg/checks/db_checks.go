@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/constants/dbconsts"
-	"homeserver/db"
 	"homeserver/db/repositories"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var RequiredDBTables = []*dbconsts.DBTable{
@@ -81,17 +82,17 @@ func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) err
 	return nil
 }
 
-func CheckDatabaseExtensions(connection *db.Database) error {
-	if _, err := connection.Pool.Exec(context.Background(), "CREATE EXTENSION IF NOT EXISTS pg_trgm;"); err != nil {
+func CheckDatabaseExtensions(connection *pgxpool.Pool) error {
+	if _, err := connection.Exec(context.Background(), "CREATE EXTENSION IF NOT EXISTS pg_trgm;"); err != nil {
 		return fmt.Errorf("error creating extension: %v", err)
 	}
 
-	if _, err := connection.Pool.Exec(context.Background(), "SELECT set_limit(0.1);"); err != nil {
+	if _, err := connection.Exec(context.Background(), "SELECT set_limit(0.1);"); err != nil {
 		return fmt.Errorf("error setting similarity threshold: %v", err)
 	}
 
 	var similarityThreshold string
-	err := connection.Pool.QueryRow(context.Background(), "SELECT show_limit();").Scan(&similarityThreshold)
+	err := connection.QueryRow(context.Background(), "SELECT show_limit();").Scan(&similarityThreshold)
 	if err != nil {
 		return fmt.Errorf("error finding similarity threshold: %v", err)
 	}
@@ -101,8 +102,8 @@ func CheckDatabaseExtensions(connection *db.Database) error {
 	return nil
 }
 
-func CheckTableIndices(connection *db.Database) error {
-	if _, err := connection.Pool.Exec(context.Background(),
+func CheckTableIndices(connection *pgxpool.Pool) error {
+	if _, err := connection.Exec(context.Background(),
 		`CREATE INDEX IF NOT EXISTS user_files_filename_trgm_idx 
 		ON user_files 
 		USING gin (filename gin_trgm_ops);`,

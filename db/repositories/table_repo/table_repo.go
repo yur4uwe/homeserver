@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/dbconsts"
-	"homeserver/db"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type InTableRepo interface {
@@ -14,18 +15,18 @@ type InTableRepo interface {
 }
 
 type TableRepo struct {
-	db *db.Database
+	pool *pgxpool.Pool
 }
 
-func NewTableRepo(db *db.Database) *TableRepo {
+func NewTableRepo(pool *pgxpool.Pool) *TableRepo {
 	return &TableRepo{
-		db: db,
+		pool: pool,
 	}
 }
 
 func (repo *TableRepo) DropTable(ctx context.Context, table_name string) error {
 	query := fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE;`, table_name)
-	_, err := repo.db.Pool.Exec(ctx, query)
+	_, err := repo.pool.Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("error dropping table %s: %v", table_name, err)
 	}
@@ -36,7 +37,7 @@ func (repo *TableRepo) DropTable(ctx context.Context, table_name string) error {
 func (repo *TableRepo) TableExists(ctx context.Context, table_name string) (bool, error) {
 	query := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s');`, table_name)
 	var exists bool
-	err := repo.db.Pool.QueryRow(ctx, query).Scan(&exists)
+	err := repo.pool.QueryRow(ctx, query).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("error checking if table %s exists: %v", table_name, err)
 	}
@@ -45,7 +46,7 @@ func (repo *TableRepo) TableExists(ctx context.Context, table_name string) (bool
 
 func (repo *TableRepo) CreateTable(ctx context.Context, table *dbconsts.DBTable) error {
 	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (%s);`, table.Name, table.SQLCreation)
-	_, err := repo.db.Pool.Exec(ctx, query)
+	_, err := repo.pool.Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("error creating table %s: %v", table.Name, err)
 	}

@@ -15,6 +15,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -68,37 +69,25 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		isFolder := r.URL.Query().Get("is_folder") == "true"
-
-		entryPath, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"))
-		if err != nil || entryPath == "" {
+		entryIdStr, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"))
+		if err != nil {
 			ErrorResponse(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
 
-		pathSlice, err := ParsePathWithUName(entryPath, reqCont.Requester.Username)
+		entryId, err := strconv.Atoi(entryIdStr)
 		if err != nil {
-			ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			ErrorResponse(w, "Invalid file ID", http.StatusBadRequest)
 			return
 		}
 
-		relativePath := pathSlice[:len(pathSlice)-1]
-		fileName := pathSlice[len(pathSlice)-1]
-
-		reqCont.LogHistory.Log(
-			fmt.Sprintf(
-				"FileActionsRouter called: method=%s, is_folder=%t, relativePath=%v, file_name=%s",
-				r.Method, isFolder, relativePath, fileName,
-			),
-		)
-
 		switch r.Method {
 		case http.MethodGet:
-			ShareFileHandler(w, r, repos, reqCont)
+			ShareFileHandler(w, r, repos, reqCont, entryId)
 		case http.MethodDelete:
-			DeleteFileHandler(w, r, repos, reqCont, relativePath, fileName)
+			DeleteFileHandler(w, r, repos, reqCont, entryId)
 		case http.MethodPatch:
-			RenameFileHandler(w, r, repos, reqCont, relativePath, fileName, isFolder)
+			RenameFileHandler(w, r, repos, reqCont, entryId)
 		default:
 			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}

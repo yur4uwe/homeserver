@@ -28,9 +28,9 @@
         <tbody>
             {{range .Entries}}
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
-                .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}" hx-trigger="dblclick" {{end}}
-                data-path="{{.Path}}" data-name="{{.Name}}" data-id="{{.ID}}" hx-on:delete-success-{{if
-                .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="this.remove()">
+                .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}" hx-trigger="dblclick" {{else}}
+                data-extension="{{.Extension}}" {{end}} data-path="{{.Path}}" data-name="{{.Name}}" data-id="{{.ID}}"
+                hx-on:delete-success-{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="this.remove()">
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
                         <div hx-trigger="load" hx-target="this" hx-push-url="false"
@@ -60,15 +60,16 @@
                     <input type="checkbox" id="{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}"
                         class="actions-menu-toggle" hidden>
 
-                    <ul class="actions-menu-content" hx-push-url="false" hx-target="#modal-content" hx-swap="innerHTML">
-                        <li class="share-action" data-id="{{.ID}}" data-is-folder="{{.IsFolder}}">
+                    <ul class="actions-menu-content" data-id="{{.ID}}" data-is-folder="{{.IsFolder}}"
+                        hx-push-url="false" hx-target="#modal-content" hx-swap="innerHTML">
+                        <li class="share-action">
                             Share
                         </li>
                         <li class="rename-action">
                             Rename
                         </li>
                         <li hx-confirm="Do you really want to delete {{.Name}}{{.Extension}} {{if .IsFolder}}folder{{else}}file{{end}}?"
-                            hx-delete="/api/v1/file-actions/{{.URIPath}}{{.URIName}}{{.Extension}}?is_folder={{.IsFolder}}">
+                            hx-delete="/api/v1/file-actions/{{.ID}}?is_folder={{.IsFolder}}">
                             Delete
                         </li>
                     </ul>

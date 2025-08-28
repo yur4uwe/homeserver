@@ -4,29 +4,22 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
-	folschema "homeserver/db/repositories/folder_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
 	"net/http"
-	"strings"
+	"os"
 )
 
 func DeleteFileHandler(
 	w http.ResponseWriter, r *http.Request,
 	repos *repositories.Repositories,
 	reqCont *middleware.AdditionalRequestContext,
-	relativePath []string, fileName string,
+	entryId int,
 ) {
-	entryNameSlice := strings.Split(fileName, ".")
+	isFolder := r.URL.Query().Get("is_folder") == "true"
 
 	var alert string
-	if len(entryNameSlice) < 2 {
-		folder := folschema.NewUserFolderBuilder().
-			WithName(entryNameSlice[0]).
-			WithPath(strings.Join(relativePath, "/")).
-			WithOwnerID(reqCont.Requester.ID)
-
-		id, err := repos.FolderRepo.DeleteFolder(r.Context(), folder, reqCont.Requester)
+	if isFolder {
+		fol, err := repos.FolderRepo.DeleteFolderByID(r.Context(), entryId, reqCont.Requester.ID)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting folder: %v", err), http.StatusInternalServerError)
 			return
@@ -35,19 +28,18 @@ func DeleteFileHandler(
 		alert = NewAlert(
 			"Folder Deleted",
 			"check",
-			fmt.Sprintf("Folder '%s' has been deleted successfully.", folder.Name),
+			"Folder has been deleted successfully.",
 			constants.Success,
 		)
 
-		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", id))
-	} else {
-		file := fschema.NewUserFileBuilder().
-			WithFilename(entryNameSlice[0]).
-			WithExtension(entryNameSlice[1]).
-			WithPath(strings.Join(relativePath, "/")).
-			WithOwnerID(reqCont.Requester.ID)
+		if err := os.RemoveAll(fol.AbsolutePath()); err != nil {
+			ErrorResponse(w, fmt.Sprintf("Error removing folder from filesystem: %v", err), http.StatusInternalServerError)
+			return
+		}
 
-		id, err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester)
+		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", fol.ID))
+	} else {
+		f, err := repos.FileRepo.DeleteFileByID(r.Context(), entryId, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
 			return
@@ -56,11 +48,16 @@ func DeleteFileHandler(
 		alert = NewAlert(
 			"File Deleted",
 			"check",
-			fmt.Sprintf("File '%s.%s' has been deleted successfully.", entryNameSlice[0], entryNameSlice[1]),
+			"File has been deleted successfully.",
 			constants.Success,
 		)
 
-		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-file-%d", id))
+		if err := os.RemoveAll(f.AbsolutePath()); err != nil {
+			ErrorResponse(w, fmt.Sprintf("Error removing file from filesystem: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-file-%d", f.ID))
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

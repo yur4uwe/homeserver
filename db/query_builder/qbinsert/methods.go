@@ -34,6 +34,14 @@ func (qb *InsertQueryBuilder) Returning(cols ...string) *InsertQueryBuilder {
 	return qb
 }
 
+// OnConflict sets the columns to check for conflicts and the action to take.
+// Example: qb.OnConflict([]string{"name", "path"}, "DO NOTHING")
+func (qb *InsertQueryBuilder) OnConflict(columns []string, action string) *InsertQueryBuilder {
+	qb.conflictColumns = append([]string{}, columns...)
+	qb.conflictAction = action
+	return qb
+}
+
 // Build assembles the INSERT SQL query.
 func (qb *InsertQueryBuilder) Build() string {
 	table := qb.bb.GetFrom()
@@ -60,6 +68,11 @@ func (qb *InsertQueryBuilder) Build() string {
 	}
 
 	query := fmt.Sprintf("INSERT INTO %s %s VALUES %s", table, columns, strings.Join(valuePlaceholders, ", "))
+
+	// Add ON CONFLICT clause if specified
+	if len(qb.conflictColumns) > 0 && qb.conflictAction != "" {
+		query += fmt.Sprintf(" ON CONFLICT (%s) %s", strings.Join(qb.conflictColumns, ", "), qb.conflictAction)
+	}
 
 	if returning := qb.bb.GetReturning(); len(returning) > 0 {
 		query += " RETURNING " + basebuilder.ParseColumns(returning)

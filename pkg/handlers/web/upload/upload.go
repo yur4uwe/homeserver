@@ -4,6 +4,7 @@ import (
 	"homeserver/constants"
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
 	"io"
 	"net/http"
@@ -60,11 +61,51 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 			path_str = reqCont.Requester.Username
 		}
 
+		directory_id := 0
+
+		path_parts := strings.Split(path_str, "/")
+
+		for i, part := range path_parts {
+			if part == "" {
+				continue
+			}
+
+			curr_path := strings.Join(path_parts[:i], "/")
+
+			fol := folschema.NewUserFolderBuilder().
+				WithName(part).
+				WithOwnerID(reqCont.Requester.ID)
+
+			if curr_path != "" {
+				fol = fol.WithPath(curr_path)
+				fol = fol.WithParent(&directory_id)
+			}
+
+			nfol, err := repos.FolderRepo.CreateFolder(r.Context(), fol, reqCont.Requester)
+			if err != nil {
+				select {
+				case <-done:
+					// Handle cancellation
+					reqCont.LogHistory.ErrLog("Request canceled during folder creation", "DownloadFile:66")
+					ErrorResponse(w, "Request canceled", http.StatusRequestTimeout)
+					return
+				default:
+					// Handle other errors
+					reqCont.LogHistory.ErrLog("Error creating folder: "+err.Error(), "DownloadFile:71")
+					ErrorResponse(w, "Error creating folder", http.StatusInternalServerError)
+					return
+				}
+			}
+
+			directory_id = nfol.ID
+		}
+
 		new_file := fschema.NewUserFileBuilder().
 			WithFilename(file_sig[0]).
 			WithPath(path_str).
 			WithExtension(file_sig[1]).
 			WithSize(header.Size).
+			WithDirectory(directory_id).
 			WithContentType(header.Header.Get("Content-Type")).
 			WithOwnerID(reqCont.Requester.ID)
 

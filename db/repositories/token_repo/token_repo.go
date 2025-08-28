@@ -4,6 +4,8 @@ import (
 	"context"
 	"homeserver/db"
 	uschema "homeserver/db/repositories/user_repo/schema"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type InTokenRepo interface {
@@ -15,11 +17,13 @@ type InTokenRepo interface {
 }
 
 type TokenRepo struct {
-	db *db.Database
+	db *db.Database[uschema.User]
 }
 
-func NewTokenRepo(db *db.Database) *TokenRepo {
+func NewTokenRepo(pool *pgxpool.Pool) *TokenRepo {
+	database := db.Database[uschema.User]{Pool: pool}
+
 	return &TokenRepo{
-		db: db,
+		db: &database,
 	}
 }

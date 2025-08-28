@@ -7,7 +7,6 @@ import (
 	"homeserver/constants/folconsts"
 	"homeserver/db/query_builder/qbinsert"
 	folschema "homeserver/db/repositories/folder_repo/schema"
-	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -29,34 +28,16 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 	}
 
 	query := qbinsert.New().
-		Columns(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
+		Columns(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt, folconsts.TrustedSource)...).
 		Into(dbconsts.DBFoldersTable.Name).
 		Returning(folschema.FieldsList()...).
+		OnConflict([]string{folconsts.FolderName, folconsts.Path, folconsts.OwnerID}, "DO UPDATE SET name = EXCLUDED.name").
 		Build()
-	// query := querybuilder.New().
-	// 	Insert(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt)...).
-	// 	Into(dbconsts.DBFoldersTable.Name).
-	// 	Values(len(folschema.FieldsList(folconsts.ID, folconsts.CreatedAt))).
-	// 	Returning(folschema.FieldsList()...).
-	// 	Build()
 
-	inserted_folder := []folschema.UserFolder{}
-	rows, err := r.db.Pool.Query(
-		ctx,
-		query,
-		folder.Name, folder.Path, folder.Parent, folder.OwnerID,
-	)
+	inserted_folder, err := r.db.QueryOne(ctx, query, folder.Name, folder.Path, folder.Parent, folder.OwnerID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = helpers.ScanRows(rows, &inserted_folder); err != nil {
-		return nil, err
-	}
-
-	if len(inserted_folder) != 1 {
-		return nil, fmt.Errorf("unexpected error: %d rows returned", len(inserted_folder))
-	}
-
-	return &inserted_folder[0], nil
+	return &inserted_folder, nil
 }
