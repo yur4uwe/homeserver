@@ -23,7 +23,7 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		return nil, err
 	}
 
-	file, err := PreventDuplicateFileName(file)
+	file, err := FixDuplicates(file)
 	if err != nil {
 		return nil, err
 	}

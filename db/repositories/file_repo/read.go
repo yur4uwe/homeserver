@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/dbconsts"
+	"homeserver/constants/fconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbselect"
 	fschema "homeserver/db/repositories/file_repo/schema"
@@ -41,11 +42,15 @@ func (repo *FileRepo) GetFullFileInfo(ctx context.Context, file *fschema.UserFil
 		return nil, err
 	}
 
-	if err := file.ShouldHaveFields(owner.Username)(fschema.FieldsList()...); err != nil {
+	if err := file.ShouldHaveFields(owner.Username)(fconsts.Filename, fconsts.Path); err != nil {
 		return nil, err
 	}
 
-	query := qbselect.New().Build()
+	query := qbselect.New().
+		Columns(fschema.FieldsList()...).
+		From(dbconsts.DBFilesTable.Name).
+		Where("filename = $1 AND path = $2 AND owner_id = $3").
+		Build()
 
 	// query := querybuilder.New().
 	// 	Select(fschema.FieldsList()...).
@@ -79,7 +84,11 @@ func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) (
 		return nil, err
 	}
 
-	query := qbselect.New().Build()
+	query := qbselect.New().
+		Columns(fschema.FieldsList()...).
+		From(dbconsts.DBFilesTable.Name).
+		Where("owner_id = $1").
+		Build()
 	// query := querybuilder.New().
 	// 	Select(fschema.FieldsList()...).
 	// 	From(dbconsts.DBFilesTable.Name).
@@ -95,7 +104,6 @@ func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) (
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	if err := helpers.ScanRows(rows, &files); err != nil {
 		return nil, fmt.Errorf("error scanning files: %v", err)
@@ -127,7 +135,6 @@ func (repo *FileRepo) FuzzySearch(ctx context.Context, search_query string, dire
 	if err != nil {
 		return nil, fmt.Errorf("error searching files: %v", err)
 	}
-	defer rows.Close()
 
 	if err := helpers.ScanRows(rows, &files); err != nil {
 		return nil, fmt.Errorf("error scanning files: %v", err)
@@ -161,7 +168,6 @@ func (repo *FileRepo) GetFilesByDirectory(ctx context.Context, directory string,
 	if err != nil {
 		return nil, fmt.Errorf("error querying files in directory: %v", err)
 	}
-	defer rows.Close()
 
 	var files []fschema.UserFile
 	if err := helpers.ScanRows(rows, &files); err != nil {
@@ -180,7 +186,6 @@ func (repo *FileRepo) GetFiles(ctx context.Context) ([]*fschema.UserFile, error)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	for rows.Next() {
 		var file fschema.UserFile

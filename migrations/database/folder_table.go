@@ -24,7 +24,6 @@ func CreateFolderStructure(connection *db.Database) error {
 	if err != nil {
 		return fmt.Errorf("error querying folder structure: %v", err)
 	}
-	defer rows.Close()
 
 	for rows.Next() {
 		var username, rootFolderName string

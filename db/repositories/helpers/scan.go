@@ -73,5 +73,7 @@ func ScanRows(rows pgx.Rows, dest any) error {
 		sliceVal.Set(reflect.Append(sliceVal, elem))
 	}
 
+	rows.Close()
+
 	return nil
 }

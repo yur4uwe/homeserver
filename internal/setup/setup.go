@@ -4,7 +4,7 @@ import (
 	"homeserver/constants"
 	"homeserver/db"
 	"homeserver/db/repositories"
-	"homeserver/pkg/setup"
+	"homeserver/pkg/checks"
 	"homeserver/pkg/utils"
 	"log"
 	"os"
@@ -39,7 +39,7 @@ func Setup(loadIcons bool) (*repositories.Repositories, func(), error) {
 
 	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
 
-	if err := setup.CheckDatabaseExtensions(connection); err != nil {
+	if err := checks.CheckDatabaseExtensions(connection); err != nil {
 		log.Fatalf("Database extension check error: %v", err)
 		return nil, nil, err
 	}

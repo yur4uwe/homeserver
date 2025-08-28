@@ -1,10 +1,6 @@
 package folschema
 
 import (
-	"fmt"
-	"homeserver/constants"
-	"homeserver/constants/dbconsts"
-	"homeserver/pkg/utils/generics"
 	"os"
 	"strings"
 	"time"
@@ -80,12 +76,7 @@ func (uf *UserFolder) WithOwnerID(ownerID int) *UserFolder {
 	return uf
 }
 
-func (uf *UserFolder) AbsolutePath() string {
-	storagePath := GetStoragePath(constants.StoragePath)
-
-	return fmt.Sprintf("%s%s/%s", storagePath, uf.Path, uf.Name)
-}
-
-func FieldsList(without ...string) []string {
-	return generics.Without(dbconsts.DBFoldersTable.Fields, without...)
+func (uf *UserFolder) WithTrustedSource(trustedSource []byte) *UserFolder {
+	uf.TrustedSource = trustedSource
+	return uf
 }

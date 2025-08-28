@@ -52,7 +52,6 @@ func (r *TokenRepo) QueryToken(ctx context.Context, token string) (*uschema.User
 	if err != nil {
 		return nil, fmt.Errorf("error querying token: %v", err)
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &user); err != nil {
 		return nil, fmt.Errorf("error querying token: %v", err)

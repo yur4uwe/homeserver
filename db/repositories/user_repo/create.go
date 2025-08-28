@@ -25,7 +25,6 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %v", err)
 	}
-	defer rows.Close()
 
 	var inserted_user []uschema.User
 	if err = helpers.ScanRows(rows, &inserted_user); err != nil {

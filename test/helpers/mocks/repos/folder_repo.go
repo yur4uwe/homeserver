@@ -37,9 +37,9 @@ func (m *MockFolderRepo) CreateFolder(ctx context.Context, folder *folschema.Use
 	return args.Get(0).(*folschema.UserFolder), args.Error(1)
 }
 
-func (m *MockFolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fieldsToUpdate []string, owner *uschema.User) error {
-	args := m.Called(ctx, folder, fieldsToUpdate, owner)
-	return args.Error(0)
+func (m *MockFolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fvp *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error) {
+	args := m.Called(ctx, folder, fvp, owner)
+	return args.Get(0).(*folschema.UserFolder), args.Error(1)
 }
 
 func (m *MockFolderRepo) DeleteFolderByID(ctx context.Context, id int, ownerID int) (int, error) {

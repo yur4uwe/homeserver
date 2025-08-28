@@ -26,9 +26,8 @@ func Logger(next http.Handler) http.Handler {
 
 		duration := Since(start)
 
-		header := fmt.Sprintf("Request: %s %s took %v\n", r.Method, url, duration)
-
 		if !strings.HasPrefix(url, "/static/") {
+			header := fmt.Sprintf("Request: %s %s took %v\n", r.Method, url, duration)
 			reqCont.LogHistory.UnloadLogs(header)
 		}
 	})

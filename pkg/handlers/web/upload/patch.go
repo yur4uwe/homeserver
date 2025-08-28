@@ -1,7 +1,6 @@
 package upload
 
 import (
-	"homeserver/constants/fconsts"
 	"homeserver/db/repositories"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
@@ -40,11 +39,9 @@ func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalR
 
 		sig := strings.Split(newFileName, ".")
 
-		fvp := map[string]any{
-			fconsts.Filename: sig[0],
-		}
+		fvp := fschema.NewUserFileBuilder().WithFilename(sig[0])
 
-		err = repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
+		f, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
 			ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
@@ -53,6 +50,6 @@ func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalR
 
 		reqCont.LogHistory.Log("File Renamed successfully: " + oldFileName + " to " + newFileName)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(file.Filename + "." + file.Extension))
+		w.Write([]byte(f.Filename + "." + f.Extension))
 	}
 }

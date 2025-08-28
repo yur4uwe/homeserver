@@ -79,7 +79,7 @@ var (
 			folconsts.ID,
 			folconsts.FolderName,
 			folconsts.Path,
-			folconsts.Parent,
+			folconsts.FolderParent,
 			folconsts.OwnerID,
 			folconsts.TrustedSource,
 			folconsts.CreatedAt,

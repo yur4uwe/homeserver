@@ -153,15 +153,16 @@ func TestFileChecksSuite(t *testing.T) {
 			Metadata:    nil,
 		}
 
-		expectedErr := "file validation failed:\nFileID: " + fconsts.InvalidIDError +
-			"\nFilename: " + fconsts.MissingNameError +
-			"\nExtension: " + fconsts.InvalidExtensionError +
-			"\nPath: " + fconsts.InvalidPathStartError +
-			"\nDirectory: " + fconsts.InvalidDirectoryError +
-			"\nSize: " + fconsts.InvalidSizeError +
-			"\nContentType: " + fconsts.InvalidContentTypeError +
-			"\nOwnerID: " + fconsts.InvalidOwnerIDError +
-			"\nMetadata: " + fconsts.MissingMetadataError
+		expectedErr := "file validation failed:\n" +
+			fconsts.ID + ": " + fconsts.InvalidIDError + "\n" +
+			fconsts.Filename + ": " + fconsts.MissingNameError + "\n" +
+			fconsts.Extension + ": " + fconsts.InvalidExtensionError + "\n" +
+			fconsts.Path + ": " + fconsts.InvalidPathStartError + "\n" +
+			fconsts.Directory + ": " + fconsts.InvalidDirectoryError + "\n" +
+			fconsts.Size + ": " + fconsts.InvalidSizeError + "\n" +
+			fconsts.ContentType + ": " + fconsts.InvalidContentTypeError + "\n" +
+			fconsts.OwnerID + ": " + fconsts.InvalidOwnerIDError + "\n" +
+			fconsts.Metadata + ": " + fconsts.MissingMetadataError
 
 		err := file.ShouldHaveFields("john_doe")(
 			fconsts.ID, fconsts.Filename, fconsts.Extension, fconsts.Path,

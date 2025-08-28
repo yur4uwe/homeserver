@@ -40,16 +40,10 @@ func (m *ActionsMock) DeleteFileHandler(w http.ResponseWriter, r *http.Request, 
 	w.Write([]byte("File deleted successfully"))
 }
 
-func (m *ActionsMock) RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName, desiredName string, isFolder bool) {
-	m.Called(w, r, repos, reqCont, relativePath, fileName, desiredName, isFolder)
+func (m *ActionsMock) RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string, isFolder bool) {
+	m.Called(w, r, repos, reqCont, relativePath, fileName, isFolder)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("File renamed successfully"))
-}
-
-func (m *ActionsMock) OpenFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, relativePath []string, fileName string) {
-	m.Called(w, r, repos, reqCont, relativePath, fileName)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("File opened successfully"))
 }
 
 type SearchMock struct {

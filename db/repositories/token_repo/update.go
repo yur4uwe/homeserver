@@ -29,7 +29,6 @@ func (r *TokenRepo) VerifyToken(ctx context.Context, token string) error {
 	if err != nil {
 		return fmt.Errorf("error verifying token: %v", err)
 	}
-	defer rows.Close()
 
 	if err := helpers.ScanRows(rows, &user); err != nil {
 		return fmt.Errorf("error scanning rows: %v", err)

@@ -12,7 +12,7 @@ type InFolderRepo interface {
 	GetFoldersByOwner(ctx context.Context, ownerID int) ([]folschema.UserFolder, error)
 	GetChildren(ctx context.Context, path, name string, owner *uschema.User) ([]folschema.UserFolder, error)
 	CreateFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
-	UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fieldsToUpdate []string, owner *uschema.User) error
+	UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fvp *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 	DeleteFolderByID(ctx context.Context, id int, ownerID int) (int, error)
 	DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (int, error)
 }

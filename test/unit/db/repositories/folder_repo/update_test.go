@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"homeserver/constants/folconsts"
 	"homeserver/db"
 	folderrepo "homeserver/db/repositories/folder_repo"
 	folschema "homeserver/db/repositories/folder_repo/schema"
@@ -40,7 +39,9 @@ func TestUpdateFolder_Success(t *testing.T) {
 
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.FolderName, folconsts.Path}
+	fvp := folschema.NewUserFolderBuilder().
+		WithName("newdocs").
+		WithPath("john_doe/newdocs")
 
 	newParent := 2
 	newValues := []any{
@@ -60,11 +61,11 @@ func TestUpdateFolder_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
+	fol, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
 	assert.NoError(t, err)
-	assert.Equal(t, "newdocs", folder.Name)
-	assert.Equal(t, "john_doe/newdocs", folder.Path)
-	assert.Equal(t, 2, *folder.Parent)
+	assert.Equal(t, fvp.Name, fol.Name)
+	assert.Equal(t, fvp.Path, fol.Path)
+	assert.Equal(t, 2, *fol.Parent)
 }
 
 func TestUpdateFolder_RejectIDUpdate(t *testing.T) {
@@ -72,11 +73,13 @@ func TestUpdateFolder_RejectIDUpdate(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.ID}
+	fvp := folschema.NewUserFolderBuilder().
+		WithID(folder.ID)
 
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
+	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot update folder ID")
+	assert.Nil(t, f, "folder should be nil")
+	assert.Contains(t, err.Error(), "id should not be set")
 }
 
 func TestUpdateFolder_RejectOwnerIDUpdate(t *testing.T) {
@@ -84,11 +87,13 @@ func TestUpdateFolder_RejectOwnerIDUpdate(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.OwnerID}
+	fvp := folschema.NewUserFolderBuilder().
+		WithOwnerID(owner.ID)
 
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
+	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot update owner ID")
+	assert.Nil(t, f, "folder should be nil")
+	assert.Contains(t, err.Error(), "owner_id should not be set")
 }
 
 func TestUpdateFolder_RejectCreatedAtUpdate(t *testing.T) {
@@ -96,24 +101,14 @@ func TestUpdateFolder_RejectCreatedAtUpdate(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.CreatedAt}
+	fvp := &folschema.UserFolder{
+		CreatedAt: time.Now(),
+	}
 
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
+	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot update created at")
-}
-
-func TestUpdateFolder_InvalidFolderData(t *testing.T) {
-	mockDB := &db.Database{}
-	repo := folderrepo.NewFolderRepo(mockDB)
-	folder := makeUserFolder()
-	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.FolderName, folconsts.Path}
-	folder.Name = ""
-
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid folder data")
+	assert.Nil(t, f, "folder should be nil")
+	assert.Contains(t, err.Error(), "created_at should not be set")
 }
 
 func TestUpdateFolder_DBError(t *testing.T) {
@@ -123,7 +118,8 @@ func TestUpdateFolder_DBError(t *testing.T) {
 
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fieldsToUpdate := []string{folconsts.FolderName, folconsts.Path}
+	fvp := folschema.NewUserFolderBuilder().
+		WithName("name")
 
 	mockRows := &mocks.MockRows{}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
@@ -135,7 +131,8 @@ func TestUpdateFolder_DBError(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFolder(context.Background(), folder, fieldsToUpdate, owner)
+	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
 	assert.Error(t, err)
+	assert.Nil(t, f, "folder should be nil")
 	assert.Contains(t, err.Error(), "error updating folder")
 }

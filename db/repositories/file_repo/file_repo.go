@@ -19,7 +19,7 @@ type InFileRepo interface {
 	DeleteFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (int, error)
 	DeleteFileByID(ctx context.Context, fileID int, owner *uschema.User) error
 
-	UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error
+	UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error)
 }
 
 type FileRepo struct {

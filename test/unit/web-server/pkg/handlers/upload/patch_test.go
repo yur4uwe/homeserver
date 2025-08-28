@@ -62,14 +62,23 @@ func TestPatchFile(t *testing.T) {
 				err = errors.New("file not found")
 			}
 
+			name := strings.Split(generics.Must(url.QueryUnescape(tt.newContent)).(string), ".")
+
+			newf := &fschema.UserFile{}
+
+			if len(name) == 2 {
+				newf.Filename = name[0]
+				newf.Extension = name[1]
+			} else if len(name) == 1 {
+				newf.Filename = name[0]
+			}
+
 			mockFR.On("UpdateFileEntry",
-				mock.Anything, mock.Anything,
-				mock.AnythingOfType("map[string]interface {}"), mockReqContext.Requester,
-			).Return(err).Run(func(args mock.Arguments) {
-				name := strings.Split(generics.Must(url.QueryUnescape(tt.newContent)).(string), ".")
-				args.Get(1).(*fschema.UserFile).Filename = name[0]
-				args.Get(1).(*fschema.UserFile).Extension = name[1]
-			})
+				mock.Anything,
+				mock.AnythingOfType("*fschema.UserFile"),
+				mock.AnythingOfType("*fschema.UserFile"),
+				mockReqContext.Requester,
+			).Return(newf, err)
 			mockErrRes.On("ErrorResponse", mock.Anything, mock.Anything, tt.statusCode).Return()
 
 			req := httptest.NewRequest(

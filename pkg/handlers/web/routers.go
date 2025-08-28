@@ -28,6 +28,7 @@ var (
 
 	DeleteFileHandler = actions.DeleteFileHandler
 	RenameFileHandler = actions.RenameFileHandler
+	ShareFileHandler  = actions.ShareFileHandler
 
 	FileSearchHandler = search.FileSearchHandler
 	BrowseHandler     = search.BrowseHandler
@@ -68,7 +69,6 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 		}
 
 		isFolder := r.URL.Query().Get("is_folder") == "true"
-		desiredName := r.URL.Query().Get("desired_name")
 
 		entryPath, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"))
 		if err != nil || entryPath == "" {
@@ -93,10 +93,12 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 		)
 
 		switch r.Method {
+		case http.MethodGet:
+			ShareFileHandler(w, r, repos, reqCont)
 		case http.MethodDelete:
 			DeleteFileHandler(w, r, repos, reqCont, relativePath, fileName)
 		case http.MethodPatch:
-			RenameFileHandler(w, r, repos, reqCont, relativePath, fileName, desiredName, isFolder)
+			RenameFileHandler(w, r, repos, reqCont, relativePath, fileName, isFolder)
 		default:
 			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}

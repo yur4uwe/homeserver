@@ -11,9 +11,10 @@ document.addEventListener('click', function (event) {
 
     openMenus.forEach(menu => {
         const menuContent = menu.nextElementSibling; // The .actions-menu-content element
+        const menuLabel = menu.previousElementSibling; // The label that toggles the menu
 
         // Check if the click happened outside the menu content
-        if (!menuContent.contains(event.target) && event.target !== menu) {
+        if (!menuContent.contains(event.target) && !menuLabel.contains(event.target) && event.target !== menu) {
             menu.checked = false; // Uncheck the checkbox to close the menu
         }
     });
@@ -69,4 +70,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    const shareActions = document.querySelectorAll('.share-action');
+
+    for (const item of shareActions) {
+        const shareCallback = () => {
+            const fileId = item.getAttribute('data-id');
+            const fileType = item.getAttribute('data-is-folder');
+
+            fetch(`/api/v1/file-actions/share?is_folder=${fileType}&id=${fileId}`)
+                .then(response => {
+                    (async () => {
+                        const hxTrigger = JSON.parse(response.headers.get('HX-Trigger'));
+                        if (!hxTrigger) {
+                            return;
+                        }
+
+                        const evt = new CustomEvent('raise-alert', { detail: hxTrigger['raise-alert'] });
+
+                        document.dispatchEvent(evt);
+                    })();
+
+                    return response.text();
+                })
+                .then(signedUrl => {
+
+                    console.log('File shared successfully:', signedUrl);
+                    navigator.clipboard.writeText(signedUrl);
+                });
+        }
+
+        item.addEventListener('click', shareCallback);
+    }
 });

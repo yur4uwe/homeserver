@@ -49,7 +49,6 @@ func (r *FolderRepo) CreateFolder(ctx context.Context, folder *folschema.UserFol
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &inserted_folder); err != nil {
 		return nil, err

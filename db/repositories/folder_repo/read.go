@@ -27,7 +27,6 @@ func (r *FolderRepo) GetFolder(ctx context.Context, folder *folschema.UserFolder
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &folders); err != nil {
 		return nil, err
@@ -52,7 +51,6 @@ func (r *FolderRepo) GetFolderByID(ctx context.Context, id int) (*folschema.User
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &folder); err != nil {
 		return nil, err
@@ -77,7 +75,6 @@ func (r *FolderRepo) GetFoldersByOwner(ctx context.Context, ownerID int) ([]fols
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &folders); err != nil {
 		return nil, err
@@ -103,7 +100,6 @@ func (r *FolderRepo) GetChildren(ctx context.Context, path, name string, owner *
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	var children []folschema.UserFolder
 

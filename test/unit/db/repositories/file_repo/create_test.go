@@ -38,13 +38,14 @@ func TestCreateFile_Success(t *testing.T) {
 
 	owner := makeOwner()
 	file := &fschema.UserFile{
-		Filename:    "file",
-		Extension:   "txt",
-		Path:        "john_doe/docs",
-		Directory:   1,
-		Size:        1234,
-		ContentType: "text/plain",
-		OwnerID:     42,
+		Filename:      "file",
+		Extension:     "txt",
+		Path:          "john_doe/docs",
+		Directory:     1,
+		Size:          1234,
+		ContentType:   "text/plain",
+		TrustedSource: []byte("trusted"),
+		OwnerID:       42,
 	}
 
 	mockRows := &mocks.MockRows{}

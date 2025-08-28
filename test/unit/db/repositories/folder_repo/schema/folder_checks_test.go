@@ -97,11 +97,11 @@ func TestFolderChecksSuite(t *testing.T) {
 		err := folder.ShouldHaveFields("john_doe")(folconsts.ID, folconsts.FolderName, folconsts.Path, folconsts.FolderParent, folconsts.OwnerID)
 		assert.Error(t, err, "ShouldHaveFields should return an error for invalid fields")
 		errStr := err.Error()
-		assert.Contains(t, errStr, "id:ID must be greater than 0", "Error message should contain ID error")
-		assert.Contains(t, errStr, "name:name cannot be empty", "Error message should contain name error")
-		assert.Contains(t, errStr, "path:path cannot start with a slash", "Error message should contain path error")
-		assert.Contains(t, errStr, "parent:parent ID must be greater than 0", "Error message should contain parent error")
-		assert.Contains(t, errStr, "owner_id:owner ID must be greater than 0", "Error message should contain owner ID error")
+		assert.Contains(t, errStr, "id: ID must be greater than 0", "Error message should contain ID error")
+		assert.Contains(t, errStr, "name: name cannot be empty", "Error message should contain name error")
+		assert.Contains(t, errStr, "path: path cannot start with a slash", "Error message should contain path error")
+		assert.Contains(t, errStr, "parent: parent ID must be greater than 0", "Error message should contain parent error")
+		assert.Contains(t, errStr, "owner_id: owner ID must be greater than 0", "Error message should contain owner ID error")
 
 		mockParentID := 1
 

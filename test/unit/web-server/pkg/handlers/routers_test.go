@@ -169,7 +169,15 @@ func TestFileActionsRouter(t *testing.T) {
 	t.Run("Hands over handling to RenameFileHandler on PATCH", func(t *testing.T) {
 		resetter()
 
-		mockActions.On("RenameFileHandler", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, false).Return()
+		mockActions.On("RenameFileHandler",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.AnythingOfType("[]string"),
+			mock.AnythingOfType("string"),
+			false,
+		).Return()
 		mockParsePath.On(
 			"ParsePathWithUName",
 			mock.Anything, mock.Anything,
@@ -187,7 +195,7 @@ func TestFileActionsRouter(t *testing.T) {
 		handler(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code 200 OK")
-		mockActions.AssertCalled(t, "RenameFileHandler", rec, req, mock.Anything, mock.Anything, []string{"user"}, "file.txt", "newfile.txt", false)
+		mockActions.AssertCalled(t, "RenameFileHandler", rec, req, mock.Anything, mock.Anything, []string{"user"}, "file.txt", false)
 	})
 
 	t.Run("Returns Method Not Allowed for unsupported methods", func(t *testing.T) {

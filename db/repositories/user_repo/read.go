@@ -51,7 +51,6 @@ func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User
 	if err != nil {
 		return nil, fmt.Errorf("error querying user: %v", err)
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &result); err != nil {
 		return nil, err
@@ -80,7 +79,6 @@ func (r *UserRepo) QueryAll(ctx context.Context) ([]uschema.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error querying users: %v", err)
 	}
-	defer rows.Close()
 
 	if err = helpers.ScanRows(rows, &result); err != nil {
 		return nil, err

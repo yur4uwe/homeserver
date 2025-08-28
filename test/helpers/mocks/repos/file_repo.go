@@ -21,9 +21,9 @@ func (m *MockFileRepo) DeleteFile(ctx context.Context, file *fschema.UserFile, o
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockFileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp map[string]any, owner *uschema.User) error {
+func (m *MockFileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {
 	args := m.Called(ctx, file, fvp, owner)
-	return args.Error(0)
+	return args.Get(0).(*fschema.UserFile), args.Error(1)
 }
 
 func (m *MockFileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {

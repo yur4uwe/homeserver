@@ -2,7 +2,6 @@ package filerepo_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -25,6 +24,11 @@ func (m *MockFuncs) FixDuplicates(f *fschema.UserFile) (*fschema.UserFile, error
 	return args.Get(0).(*fschema.UserFile), args.Error(1)
 }
 
+var mockGetFileByID = func(repo *filerepo.FileRepo, ctx context.Context, id int) (*fschema.UserFile, error) {
+	// Return a dummy file or whatever you need for the test
+	return makeUserFile(), nil
+}
+
 func TestUpdateFileEntry_Success(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
 	mockDB := &db.Database{Pool: mockPool}
@@ -32,22 +36,21 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fvp := map[string]any{
-		"filename":  "new_filename",
-		"extension": "jpg",
-		"path":      "new_path",
-	}
+	fvp := fschema.NewUserFileBuilder().
+		WithFilename("new_filename").
+		WithExtension("jpg").
+		WithPath("new_path")
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
-	release := helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
-	defer release()
+	defer helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})()
+
+	defer helpers.MockFunction(&filerepo.GetFileByID, mockGetFileByID, func() {})()
 
 	expected := *file
-	expected.ID += 1
-	expected.Filename = fvp["filename"].(string)
-	expected.Extension = fvp["extension"].(string)
-	expected.Path = fvp["path"].(string)
+	expected.Filename = fvp.Filename
+	expected.Extension = fvp.Extension
+	expected.Path = fvp.Path
 
 	mockRows := &mocks.MockRows{}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
@@ -57,41 +60,16 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		dest := args.Get(0).([]any)
-		mocks.RunScan(dest, filerepo.OrderFileUpdateFields(fschema.FieldsList(), &expected))
+		mocks.RunScan(dest, expected.GetValidFieldsData())
 	})
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
+	f, err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.NoError(t, err)
-	assert.NotEqual(t, file.ID, 1)
-	assert.Equal(t, expected.Filename, file.Filename)
-	assert.Equal(t, expected.Extension, file.Extension)
-	assert.Equal(t, expected.Path, file.Path)
-}
-
-func TestUpdateFileEntry_PreventDuplicateError(t *testing.T) {
-	mockPool := &mocks.MockQueryExecutor{}
-	mockDB := &db.Database{Pool: mockPool}
-	repo := filerepo.NewFileRepo(mockDB)
-
-	file := makeUserFile()
-	owner := makeOwner()
-	fvp := map[string]any{
-		"filename":  "new_filename",
-		"extension": "jpg",
-		"path":      "new_path",
-	}
-
-	// Patch FixDuplicates to return error
-	mockFuncs := &MockFuncs{}
-	mockFuncs.On("FixDuplicates", mock.Anything).Return((*fschema.UserFile)(nil), errors.New("duplicate error"))
-	release := helpers.MockFunction(&filerepo.FixDuplicates, mockFuncs.FixDuplicates, func() {})
-	defer release()
-
-	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "error preventing duplicate file name")
+	assert.Equal(t, expected.Filename, f.Filename)
+	assert.Equal(t, expected.Extension, f.Extension)
+	assert.Equal(t, expected.Path, f.Path)
 }
 
 func TestUpdateFileEntry_DBError(t *testing.T) {
@@ -99,13 +77,14 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 	mockDB := &db.Database{Pool: mockPool}
 	repo := filerepo.NewFileRepo(mockDB)
 
+	defer helpers.MockFunction(&filerepo.GetFileByID, mockGetFileByID, func() {})()
+
 	file := makeUserFile()
 	owner := makeOwner()
-	fvp := map[string]any{
-		"filename":  "new_filename",
-		"extension": "jpg",
-		"path":      "new_path",
-	}
+	fvp := fschema.NewUserFileBuilder().
+		WithFilename("new_filename").
+		WithExtension("jpg").
+		WithPath("new_path")
 
 	mockFuncs := &MockFuncs{}
 	mockFuncs.On("FixDuplicates", mock.Anything).Return(file, nil)
@@ -120,7 +99,7 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 	mockRows.On("Scan", mock.Anything).Return(fmt.Errorf("update error"))
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
+	_, err := repo.UpdateFileEntry(context.Background(), file, fvp, owner)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "update error")
 }

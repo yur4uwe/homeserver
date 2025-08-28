@@ -91,27 +91,27 @@ func TestRenameFileHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resetter()
 
+			newf := &fschema.UserFile{
+				Filename:  tt.renameResult,
+				Extension: "txt",
+			}
+
 			mockFR.On(
 				"UpdateFileEntry",
 				context.Background(),
 				mock.AnythingOfType("*fschema.UserFile"),
-				mock.AnythingOfType("map[string]interface {}"),
+				mock.AnythingOfType("*fschema.UserFile"),
 				mockRequester,
-			).Return(tt.renameErr).Run(func(args mock.Arguments) {
-				dest := args.Get(1).(*fschema.UserFile)
-				if tt.renameResult != "" {
-					dest.Filename = tt.renameResult
-				}
-			})
+			).Return(newf, tt.renameErr)
 			mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, mock.Anything).Return(tt.wantBody)
 
-			req := httptest.NewRequest(http.MethodPatch, "/rename", nil)
+			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/rename?desired_name=%s", tt.desiredName), nil)
 			rec := httptest.NewRecorder()
 
 			additionalContext := middleware.DefaultContext
 			additionalContext.Requester = mockRequester
 
-			actions.RenameFileHandler(rec, req, mockDB, additionalContext, tt.relativePath, tt.fileName, tt.desiredName, tt.is_folder)
+			actions.RenameFileHandler(rec, req, mockDB, additionalContext, tt.relativePath, tt.fileName, tt.is_folder)
 
 			assert.Equal(t, tt.wantCode, rec.Code)
 			assert.Equal(t, tt.wantBody, rec.Body.String())

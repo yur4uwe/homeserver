@@ -1,4 +1,4 @@
-package setup
+package checks
 
 import (
 	"fmt"
@@ -8,7 +8,11 @@ import (
 
 var requiredVars = []string{
 	constants.WebSrvPort,
+	constants.WebSrvHost,
 	constants.FileSrvPort,
+	constants.FileSrvHost,
+	constants.StaticPort,
+	constants.StaticHost,
 	constants.DbURL,
 	constants.StoragePath,
 	constants.EmailPassword,

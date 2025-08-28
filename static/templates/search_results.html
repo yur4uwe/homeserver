@@ -52,15 +52,18 @@
                             hx-swap="innerHTML">
                         </div>
                     </a>
-                    <label for="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}" class="folder-icon acts">
+                    <label for="{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}" class="folder-icon acts">
                         <div hx-trigger="load" hx-target="this" hx-push-url="false" hx-get="/static/assets/more.svg"
                             hx-swap="outerHTML">
                         </div>
                     </label>
-                    <input type="checkbox" id="actions-menu-toggle-{{.Path}}-{{.Name}}{{.Extension}}"
+                    <input type="checkbox" id="{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}"
                         class="actions-menu-toggle" hidden>
 
                     <ul class="actions-menu-content" hx-push-url="false" hx-target="#modal-content" hx-swap="innerHTML">
+                        <li class="share-action" data-id="{{.ID}}" data-is-folder="{{.IsFolder}}">
+                            Share
+                        </li>
                         <li class="rename-action">
                             Rename
                         </li>

@@ -20,6 +20,7 @@ func TestScanRows_SingleRow(t *testing.T) {
 		{Name: "created_at"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 
@@ -57,6 +58,7 @@ func TestScanRows_MultipleRows(t *testing.T) {
 		{Name: "username"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
@@ -91,6 +93,7 @@ func TestScanRows_MissingTag(t *testing.T) {
 		{Name: "password"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
@@ -120,6 +123,7 @@ func TestScanRows_ExtraColumn(t *testing.T) {
 		{Name: "extra_col"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 	mockRows.On("Scan", mock.Anything).Return(nil).Run(func(args mock.Arguments) {
@@ -146,6 +150,7 @@ func TestScanRows_NoRows(t *testing.T) {
 		{Name: "username"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(false).Once()
 
 	type User struct {
@@ -164,6 +169,7 @@ func TestScanRows_ScanError(t *testing.T) {
 		{Name: "username"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 	mockRows.On("Scan", mock.Anything).Return(assert.AnError)
@@ -183,6 +189,7 @@ func TestScanRows_NilDest(t *testing.T) {
 		{Name: "username"},
 	}
 	mockRows.On("FieldDescriptions").Return(fieldDescs)
+	mockRows.On("Close").Return().Once()
 	mockRows.On("Next").Return(true).Once()
 	mockRows.On("Next").Return(false).Once()
 	mockRows.On("Scan", mock.Anything).Return(nil)

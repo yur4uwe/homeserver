@@ -53,7 +53,6 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals ma
 	if err != nil {
 		return fmt.Errorf("failed to update user: %v", err)
 	}
-	defer rows.Close()
 
 	var updated_user []uschema.User
 	if err = helpers.ScanRows(rows, &updated_user); err != nil {
