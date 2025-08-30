@@ -6,83 +6,39 @@ import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbselect"
-	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
 func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User, error) {
-	validFields := user.GetValidFields()
-	if len(validFields) == 0 {
-		return nil, fmt.Errorf("no valid fields to query")
-	}
-
-	whereClause := ""
-	vals := make([]any, 0, len(validFields))
-	for i, field := range validFields {
-		if i > 0 {
-			whereClause += " AND "
-		}
-		whereClause += fmt.Sprintf("%s = $%d", field, i+1)
-		if value, ok := user.Get(field); ok {
-			vals = append(vals, value)
-		}
+	identifier, args := user.Identifier(1)
+	if identifier == "" {
+		return nil, fmt.Errorf("invalid user data")
 	}
 
 	query := qbselect.New().
 		Columns(uschema.FieldsList(uconsts.Password)...).
 		From(dbconsts.DBUsersTable.Name).
-		Where(whereClause).
+		Where(identifier).
 		Build()
 
-	// query := querybuilder.New().
-	// 	Select(uschema.FieldsList(uconsts.Password)...).
-	// 	From(dbconsts.DBUsersTable.Name).
-	// 	Where(whereClause).
-	// 	Build()
-
-	// query := fmt.Sprintf(
-	// 	`SELECT %s FROM users WHERE %s`,
-	// 	strings.Join(uschema.ReturnableFieldsList(), ", "),
-	// 	whereClause,
-	// )
-
-	var result []uschema.User
-	rows, err := r.db.Pool.Query(ctx, query, vals...)
+	result, err := r.db.QueryOne(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying user: %v", err)
 	}
 
-	if err = helpers.ScanRows(rows, &result); err != nil {
-		return nil, err
-	}
-
-	if len(result) != 1 {
-		return nil, fmt.Errorf("unexpected error: %d rows returned", len(result))
-	}
-
-	return &result[0], nil
+	return &result, nil
 }
 
 func (r *UserRepo) QueryAll(ctx context.Context) ([]uschema.User, error) {
-	// query := querybuilder.New().
-	// 	Select(uschema.FieldsList()...).
-	// 	From(dbconsts.DBUsersTable.Name).
-	// 	Build()
-
 	query := qbselect.New().
 		Columns(uschema.FieldsList()...).
 		From(dbconsts.DBUsersTable.Name).
 		Build()
 
-	var result []uschema.User
-	rows, err := r.db.Pool.Query(ctx, query)
+	results, err := r.db.QueryMany(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error querying users: %v", err)
 	}
 
-	if err = helpers.ScanRows(rows, &result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return results, nil
 }

@@ -2,13 +2,11 @@ package filerepo
 
 import (
 	"context"
-	"fmt"
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/fconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbinsert"
 	fschema "homeserver/db/repositories/file_repo/schema"
-	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -36,19 +34,10 @@ func (repo *FileRepo) CreateFile(ctx context.Context, file *fschema.UserFile, ow
 		Returning(fschema.FieldsList()...).
 		Build()
 
-	var inserted_file []fschema.UserFile
-	rows, err := repo.db.Pool.Query(ctx, query, args...)
+	inserted_file, err := repo.db.QueryOne(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = helpers.ScanRows(rows, &inserted_file); err != nil {
-		return nil, err
-	}
-
-	if len(inserted_file) != 1 {
-		return nil, fmt.Errorf("unexpected error: %d rows returned", len(inserted_file))
-	}
-
-	return &inserted_file[0], nil
+	return &inserted_file, nil
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
+	folschema "homeserver/db/repositories/folder_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
 	"net/http"
 	"os"
@@ -19,7 +21,9 @@ func DeleteFileHandler(
 
 	var alert string
 	if isFolder {
-		fol, err := repos.FolderRepo.DeleteFolderByID(r.Context(), entryId, reqCont.Requester.ID)
+		folder := folschema.New().WithID(entryId).WithOwnerID(reqCont.Requester.ID)
+
+		fol, err := repos.FolderRepo.DeleteFolder(r.Context(), folder, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting folder: %v", err), http.StatusInternalServerError)
 			return
@@ -39,7 +43,9 @@ func DeleteFileHandler(
 
 		w.Header().Set("HX-Trigger", fmt.Sprintf("delete-success-folder-%d", fol.ID))
 	} else {
-		f, err := repos.FileRepo.DeleteFileByID(r.Context(), entryId, reqCont.Requester)
+		file := fschema.New().WithID(entryId).WithOwnerID(reqCont.Requester.ID)
+
+		f, err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error deleting file: %v", err), http.StatusInternalServerError)
 			return

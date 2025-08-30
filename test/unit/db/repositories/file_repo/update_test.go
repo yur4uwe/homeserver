@@ -36,7 +36,7 @@ func TestUpdateFileEntry_Success(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fvp := fschema.NewUserFileBuilder().
+	fvp := fschema.New().
 		WithFilename("new_filename").
 		WithExtension("jpg").
 		WithPath("new_path")
@@ -81,7 +81,7 @@ func TestUpdateFileEntry_DBError(t *testing.T) {
 
 	file := makeUserFile()
 	owner := makeOwner()
-	fvp := fschema.NewUserFileBuilder().
+	fvp := fschema.New().
 		WithFilename("new_filename").
 		WithExtension("jpg").
 		WithPath("new_path")

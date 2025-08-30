@@ -4,30 +4,26 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/dbconsts"
-	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbdelete"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
-func (r *UserRepo) Delete(ctx context.Context, user *uschema.User) error {
-	if err := user.ShouldHaveFields(uconsts.ID); err != nil {
-		return fmt.Errorf("invalid user data: %v", err)
+func (r *UserRepo) Delete(ctx context.Context, user *uschema.User) (*uschema.User, error) {
+	whereClause, args := user.Identifier(1)
+	if whereClause == "" {
+		return nil, fmt.Errorf("invalid user data")
 	}
 
 	query := qbdelete.New().
 		From(dbconsts.DBUsersTable.Name).
-		Where("id = $1").
+		Where(whereClause).
+		Returning(uschema.FieldsList()...).
 		Build()
-	// query := querybuilder.New().Delete().From("users").Where("id = $1").Build()
 
-	tag, err := r.db.Pool.Exec(ctx, query, user.ID)
+	deleted_user, err := r.db.QueryOne(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("error deleting user entry: %v", err)
+		return nil, fmt.Errorf("error deleting user entry: %v", err)
 	}
 
-	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("user not found")
-	}
-
-	return nil
+	return &deleted_user, nil
 }

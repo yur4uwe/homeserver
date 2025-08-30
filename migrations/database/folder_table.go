@@ -3,13 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
-	"homeserver/db"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func CreateFolderStructure(connection *db.Database) error {
+func CreateFolderStructure(connection *pgxpool.Pool) error {
 	ctx := context.Background()
 
-	rows, err := connection.Pool.Query(ctx, `
+	rows, err := connection.Query(ctx, `
 		SELECT
     		u.username,
 			u.id AS owner_id,
@@ -32,7 +33,7 @@ func CreateFolderStructure(connection *db.Database) error {
 			return fmt.Errorf("error scanning folder row: %v", err)
 		}
 		if rootFolderName != "" {
-			tag, err := connection.Pool.Exec(ctx, `
+			tag, err := connection.Exec(ctx, `
 				INSERT INTO user_folders (name, path, parent, owner_id, created_at)
 				VALUES ($1, $2, $3, $4, now())
 			`, rootFolderName, "", nil, ownerID)

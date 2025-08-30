@@ -27,7 +27,7 @@ var (
 	Getenv = os.Getenv
 )
 
-func NewUserFileBuilder() *UserFile {
+func New() *UserFile {
 	clone := DefaultFile
 	return &clone
 }

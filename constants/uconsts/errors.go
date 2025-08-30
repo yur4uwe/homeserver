@@ -13,4 +13,5 @@ const (
 	InvalidEmailFormatError   = "email must contain '@'"
 	InvalidEmailVerifiedError = "email is not verified"
 	InvalidAuthTokenError     = "auth token cannot be empty"
+	InvalidCreatedAtError     = "created at cannot be empty"
 )

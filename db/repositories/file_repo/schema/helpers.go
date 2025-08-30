@@ -14,6 +14,23 @@ var (
 	Stat = os.Stat
 )
 
+func (uf *UserFile) Identificator(ownerName string, placeholder int) (string, []any) {
+	id_err := uf.ShouldHaveFields(ownerName)(fconsts.ID)
+	path_err := uf.ShouldHaveFields(ownerName)(fconsts.Path, fconsts.Filename, fconsts.Extension, fconsts.OwnerID)
+
+	args := make([]any, 0, 4)
+	whereClause := ""
+	if id_err == nil {
+		whereClause = fmt.Sprintf("%s = $%d", fconsts.ID, placeholder)
+		args = append(args, uf.ID)
+	} else if path_err == nil {
+		whereClause = fmt.Sprintf("path = $%d AND filename = $%d AND extension = $%d AND owner_id = $%d", placeholder, placeholder+1, placeholder+2, placeholder+3)
+		args = append(args, uf.Path, uf.Filename, uf.Extension, uf.OwnerID)
+	}
+
+	return whereClause, args
+}
+
 func (uf *UserFile) Get(name string) (any, error) {
 	switch name {
 	case fconsts.ID:

@@ -3,23 +3,24 @@ package database
 import (
 	"context"
 	"fmt"
-	"homeserver/db"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func ResetDatabase(connection *db.Database) error {
+func ResetDatabase(connection *pgxpool.Pool) error {
 	ctx := context.Background()
 
-	_, err := connection.Pool.Exec(ctx, `TRUNCATE TABLE users RESTART IDENTITY CASCADE;`)
+	_, err := connection.Exec(ctx, `TRUNCATE TABLE users RESTART IDENTITY CASCADE;`)
 	if err != nil {
 		return fmt.Errorf("error truncating users table: %v", err)
 	}
 
-	_, err = connection.Pool.Exec(ctx, `TRUNCATE TABLE user_folders RESTART IDENTITY CASCADE;`)
+	_, err = connection.Exec(ctx, `TRUNCATE TABLE user_folders RESTART IDENTITY CASCADE;`)
 	if err != nil {
 		return fmt.Errorf("error truncating user_folders table: %v", err)
 	}
 
-	_, err = connection.Pool.Exec(ctx, `TRUNCATE TABLE user_files RESTART IDENTITY CASCADE;`)
+	_, err = connection.Exec(ctx, `TRUNCATE TABLE user_files RESTART IDENTITY CASCADE;`)
 	if err != nil {
 		return fmt.Errorf("error truncating user_files table: %v", err)
 	}

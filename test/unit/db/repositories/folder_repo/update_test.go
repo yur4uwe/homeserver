@@ -39,7 +39,7 @@ func TestUpdateFolder_Success(t *testing.T) {
 
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fvp := folschema.NewUserFolderBuilder().
+	fvp := folschema.New().
 		WithName("newdocs").
 		WithPath("john_doe/newdocs")
 
@@ -73,7 +73,7 @@ func TestUpdateFolder_RejectIDUpdate(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fvp := folschema.NewUserFolderBuilder().
+	fvp := folschema.New().
 		WithID(folder.ID)
 
 	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
@@ -87,7 +87,7 @@ func TestUpdateFolder_RejectOwnerIDUpdate(t *testing.T) {
 	repo := folderrepo.NewFolderRepo(mockDB)
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fvp := folschema.NewUserFolderBuilder().
+	fvp := folschema.New().
 		WithOwnerID(owner.ID)
 
 	f, err := repo.UpdateFolder(context.Background(), folder, fvp, owner)
@@ -118,7 +118,7 @@ func TestUpdateFolder_DBError(t *testing.T) {
 
 	folder := makeUserFolder()
 	owner := makeOwner()
-	fvp := folschema.NewUserFolderBuilder().
+	fvp := folschema.New().
 		WithName("name")
 
 	mockRows := &mocks.MockRows{}

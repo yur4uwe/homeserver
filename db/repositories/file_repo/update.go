@@ -12,7 +12,6 @@ import (
 
 var (
 	FixDuplicates = fschema.PreventDuplicateFileName
-	GetFileByID   = (*FileRepo).GetFileByID
 )
 
 func (repo *FileRepo) UpdateFileEntry(ctx context.Context, file *fschema.UserFile, fvp *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {

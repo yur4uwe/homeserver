@@ -152,7 +152,7 @@ func TestFileActionsRouter(t *testing.T) {
 		).Return([]string{"user", "file.txt"}, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/file-actions/user/file.txt", nil)
 		rec := httptest.NewRecorder()
@@ -184,7 +184,7 @@ func TestFileActionsRouter(t *testing.T) {
 		).Return([]string{"user", "file.txt"}, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodPatch, "/api/v1/file-actions/user/file.txt?desired_name=newfile.txt", nil)
 		rec := httptest.NewRecorder()
@@ -208,7 +208,7 @@ func TestFileActionsRouter(t *testing.T) {
 		).Return([]string{"user", "file.txt"}, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/file-actions/user/file.txt", nil)
 		rec := httptest.NewRecorder()
@@ -228,7 +228,7 @@ func TestFileActionsRouter(t *testing.T) {
 		mockErrResp.On("ErrorResponse", mock.Anything, "Invalid file path", http.StatusBadRequest).Return()
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/file-actions/", nil)
 		rec := httptest.NewRecorder()
@@ -252,7 +252,7 @@ func TestFileActionsRouter(t *testing.T) {
 		).Return(([]string)(nil), fmt.Errorf("Parse error"))
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/file-actions/user/file.txt", nil)
 		rec := httptest.NewRecorder()
@@ -342,7 +342,7 @@ func TestSearchRouter(t *testing.T) {
 		defer mockSearch.AssertExpectations(t)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/search/?query=test", nil)
 		rec := httptest.NewRecorder()
@@ -381,7 +381,7 @@ func TestSearchRouter(t *testing.T) {
 		defer mockSearch.AssertExpectations(t)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/search/parent/folder", nil)
 		rec := httptest.NewRecorder()
@@ -421,7 +421,7 @@ func TestSearchRouter(t *testing.T) {
 		defer mockTemplate.AssertExpectations(t)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 		modContext.ToRestorePage = true
 
 		req := httptest.NewRequest(http.MethodGet, "/search/?query=test", nil)
@@ -446,7 +446,7 @@ func TestSearchRouter(t *testing.T) {
 		).Return(([]string)(nil), fmt.Errorf("Parse error"))
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/search/", nil)
 		rec := httptest.NewRecorder()
@@ -496,7 +496,7 @@ func TestSearchRouter(t *testing.T) {
 		).Return([]string{"user"}, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/search/?query=test", nil)
 		rec := httptest.NewRecorder()
@@ -531,7 +531,7 @@ func TestSearchRouter(t *testing.T) {
 		).Return([]string{"user"}, nil)
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/search/", nil)
 		rec := httptest.NewRecorder()
@@ -551,7 +551,7 @@ func TestSearchRouter(t *testing.T) {
 		mockErrResp.On("ErrorResponse", mock.Anything, "Internal Server Error: Failed to unescape directory", http.StatusBadRequest).Return()
 
 		modContext := middleware.DefaultContext
-		modContext.Requester = uschema.NewUserBuilder().WithUsername("user")
+		modContext.Requester = uschema.New().WithUsername("user")
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()

@@ -39,7 +39,7 @@ func TestRenameFileHandler(t *testing.T) {
 		cleanupNewAlert()
 	}()
 
-	mockRequester := uschema.NewUserBuilder().
+	mockRequester := uschema.New().
 		WithUsername("testuser").
 		WithID(1)
 

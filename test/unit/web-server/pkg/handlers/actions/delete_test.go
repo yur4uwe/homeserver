@@ -37,7 +37,7 @@ func TestDeleteFileHandler(t *testing.T) {
 		&mockNewAlert.Mock,
 	)
 
-	mockRequester := uschema.NewUserBuilder().
+	mockRequester := uschema.New().
 		WithID(1).
 		WithUsername("testuser")
 
@@ -48,7 +48,7 @@ func TestDeleteFileHandler(t *testing.T) {
 	fileName := "test"
 	fileExtension := "txt"
 	filePath := "folder"
-	fileObj := fschema.NewUserFileBuilder().
+	fileObj := fschema.New().
 		WithFilename(fileName).
 		WithExtension(fileExtension).
 		WithPath(filePath).
@@ -56,7 +56,7 @@ func TestDeleteFileHandler(t *testing.T) {
 
 	folderName := "myfolder"
 	folderPath := "folder"
-	folderObj := folschema.NewUserFolderBuilder().
+	folderObj := folschema.New().
 		WithName(folderName).
 		WithPath(folderPath).
 		WithOwnerID(mockRequester.ID)

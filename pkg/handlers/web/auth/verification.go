@@ -115,7 +115,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Verification token received: '" + token + "'")
 
-		user, err := repos.TokenRepo.QueryToken(r.Context(), token)
+		user, err := repos.TokenRepo.QueryToken(r.Context(), token, false)
 		if err != nil {
 			verification.Error = "Failed to check verification token"
 			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))

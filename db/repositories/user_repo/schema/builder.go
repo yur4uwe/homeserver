@@ -21,7 +21,7 @@ var (
 	}
 )
 
-func NewUserBuilder() *User {
+func New() *User {
 	clone := DefaultUser
 	return &clone
 }
@@ -96,9 +96,21 @@ func (u *User) GetValidFields() []string {
 			if !u.CreatedAt.IsZero() {
 				validFields = append(validFields, field)
 			}
+		case uconsts.EmailVerified:
+			validFields = append(validFields, field)
 		}
 	}
 	return validFields
+}
+
+func (u *User) GetValidFieldsData() []any {
+	valid_fields := u.GetValidFields()
+	data := make([]any, 0, len(valid_fields))
+	for _, field := range valid_fields {
+		value, _ := u.Get(field)
+		data = append(data, value)
+	}
+	return data
 }
 
 func (u *User) Get(field string) (any, bool) {

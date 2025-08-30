@@ -31,7 +31,7 @@ func TestDownloadFile(t *testing.T) {
 	defer helpers.MockFunction(&upload.ErrorResponse, mockErrResp.ErrorResponse, func() {})()
 
 	reqCont := middleware.DefaultContext
-	reqCont.Requester = uschema.NewUserBuilder().
+	reqCont.Requester = uschema.New().
 		WithID(1).
 		WithUsername("testuser")
 
@@ -43,7 +43,7 @@ func TestDownloadFile(t *testing.T) {
 	mockIO := new(mocks.MockIO)
 	defer helpers.MockFunction(&upload.Copy, mockIO.Copy, func() {})()
 
-	mockInsertedFile := fschema.NewUserFileBuilder().
+	mockInsertedFile := fschema.New().
 		WithID(1).
 		WithFullName("myfile.txt").
 		WithPath("testuser/docs").

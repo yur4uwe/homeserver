@@ -72,7 +72,7 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 
 			curr_path := strings.Join(path_parts[:i], "/")
 
-			fol := folschema.NewUserFolderBuilder().
+			fol := folschema.New().
 				WithName(part).
 				WithOwnerID(reqCont.Requester.ID)
 
@@ -100,7 +100,7 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 			directory_id = nfol.ID
 		}
 
-		new_file := fschema.NewUserFileBuilder().
+		new_file := fschema.New().
 			WithFilename(file_sig[0]).
 			WithPath(path_str).
 			WithExtension(file_sig[1]).

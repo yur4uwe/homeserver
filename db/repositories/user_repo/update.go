@@ -6,64 +6,38 @@ import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbupdate"
-	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
-	"slices"
+	"strings"
 )
 
-func (r *UserRepo) Update(ctx context.Context, user *uschema.User, field_vals map[string]any) error {
-	fields := make([]string, 0, len(field_vals))
-	vals := make([]any, 0, len(field_vals)+1)
-
-	for field := range field_vals {
-		if !uschema.IsUserField(field) {
-			return fmt.Errorf("invalid field: %s", field)
-		}
-		if !slices.Contains(uschema.FieldsList(uconsts.ID, uconsts.CreatedAt), field) {
-			return fmt.Errorf("this field is not updatable: %s", field)
-		}
-		fields = append(fields, field)
-		vals = append(vals, field_vals[field])
+func (r *UserRepo) Update(ctx context.Context, user *uschema.User, fvp *uschema.User) (*uschema.User, error) {
+	if err := fvp.ShouldNotHaveFields(uconsts.ID, uconsts.CreatedAt); err != nil {
+		return nil, fmt.Errorf("failed to validate fields: %v", err)
 	}
 
-	if len(fields) == 0 {
-		return fmt.Errorf("no fields to update")
+	valid_fields := fvp.GetValidFields()
+
+	identifier, args := user.Identifier(len(valid_fields) + 1)
+	if !strings.Contains(identifier, uconsts.ID) {
+		return nil, fmt.Errorf("invalid user identifier")
 	}
 
-	if err := user.ShouldHaveFields(uconsts.ID); err != nil {
-		return fmt.Errorf("invalid user data: %v", err)
-	}
+	user.Merge(fvp)
 
 	query := qbupdate.New().
 		From(dbconsts.DBUsersTable.Name).
-		Set(fields...).
-		Where(fmt.Sprintf("id = $%d", len(fields)+1)).
+		Set(valid_fields...).
+		Where(identifier).
 		Build()
 
-	// query := querybuilder.New().
-	// 	Update(dbconsts.DBUsersTable.Name).
-	// 	Set(fields...).
-	// 	Where(fmt.Sprintf("id = $%d", len(fields)+1)).
-	// 	Returning(uschema.FieldsList(uconsts.Password)...).
-	// 	Build()
+	qargs := make([]any, 0, len(args)+len(valid_fields))
+	qargs = append(qargs, args...)
+	qargs = append(qargs, fvp.GetValidFieldsData()...)
 
-	vals = append(vals, user.ID)
-
-	rows, err := r.db.Pool.Query(ctx, query, vals...)
+	updated_user, err := r.db.QueryOne(ctx, query, qargs...)
 	if err != nil {
-		return fmt.Errorf("failed to update user: %v", err)
+		return nil, fmt.Errorf("failed to update user: %v", err)
 	}
 
-	var updated_user []uschema.User
-	if err = helpers.ScanRows(rows, &updated_user); err != nil {
-		return err
-	}
-
-	if len(updated_user) != 1 {
-		return fmt.Errorf("unexpected error: %d rows returned", len(updated_user))
-	}
-
-	*user = updated_user[0]
-
-	return nil
+	return &updated_user, nil
 }

@@ -8,39 +8,43 @@ import (
 	"strings"
 )
 
-func (u *User) ShouldHaveFields(fields ...string) error {
+func (u *User) checkFields(fields []string, should_have bool) error {
 	if len(fields) == 0 {
 		return fmt.Errorf(uconsts.NoFieldsSpecifiedError)
 	}
 
-	var errorMessages = make(map[string]string)
+	var errorMessages []string
 
 	for _, field := range fields {
 		if !slices.Contains(dbconsts.DBUsersTable.Fields, field) {
-			errorMessages[field] = fmt.Sprintf(uconsts.InvalidUserFieldError, field)
+			errorMessages = append(errorMessages, fmt.Sprintf(uconsts.InvalidUserFieldError, field))
 			continue
 		}
 
+		var err error
 		switch field {
 		case uconsts.ID:
-			if err := CheckUserID(u); err != nil {
-				errorMessages[uconsts.ID] = err.Error()
-			}
+			err = CheckUserID(u)
 		case uconsts.Username:
-			if err := CheckUsername(u); err != nil {
-				errorMessages[uconsts.Username] = err.Error()
-			}
-		case uconsts.Email:
-			if err := CheckEmail(u); err != nil {
-				errorMessages[uconsts.Email] = err.Error()
-			}
-		case uconsts.EmailVerified:
-			if err := CheckEmailVerified(u); err != nil {
-				errorMessages[uconsts.EmailVerified] = err.Error()
-			}
+			err = CheckUsername(u)
 		case uconsts.Password:
-			if err := CheckPassword(u); err != nil {
-				errorMessages[uconsts.Password] = err.Error()
+			err = CheckPassword(u)
+		case uconsts.AuthToken:
+			err = CheckAuthToken(u)
+		case uconsts.CreatedAt:
+			err = CheckCreatedAt(u)
+		case uconsts.Email:
+			err = CheckEmail(u)
+
+		}
+
+		if should_have {
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+		} else {
+			if err == nil {
+				errorMessages = append(errorMessages, fmt.Sprintf("%s should not be set", field))
 			}
 		}
 	}
@@ -50,6 +54,14 @@ func (u *User) ShouldHaveFields(fields ...string) error {
 	}
 
 	return nil
+}
+
+func (u *User) ShouldNotHaveFields(fields ...string) error {
+	return u.checkFields(fields, false)
+}
+
+func (u *User) ShouldHaveFields(fields ...string) error {
+	return u.checkFields(fields, true)
 }
 
 func CheckUserID(u *User) error {
@@ -86,6 +98,20 @@ func CheckEmailVerified(u *User) error {
 func CheckPassword(u *User) error {
 	if u.Password == "" {
 		return fmt.Errorf(uconsts.InvalidPasswordError)
+	}
+	return nil
+}
+
+func CheckCreatedAt(u *User) error {
+	if u.CreatedAt.IsZero() {
+		return fmt.Errorf(uconsts.InvalidCreatedAtError)
+	}
+	return nil
+}
+
+func CheckAuthToken(u *User) error {
+	if u.AuthToken != nil && *u.AuthToken == "" {
+		return fmt.Errorf(uconsts.InvalidAuthTokenError)
 	}
 	return nil
 }

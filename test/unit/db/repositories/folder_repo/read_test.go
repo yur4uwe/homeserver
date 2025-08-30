@@ -46,7 +46,7 @@ func TestGetFolder_Success(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithID(expected.ID))
+	folder, err := repo.GetFolder(context.Background(), folschema.New().WithID(expected.ID))
 	assert.NoError(t, err)
 	assert.Equal(t, expected.ID, folder.ID)
 	assert.Equal(t, expected.Name, folder.Name)
@@ -69,7 +69,7 @@ func TestGetFolderByID_DBError(t *testing.T) {
 	mockRows.On("Scan", mock.Anything).Return(errors.New("db error"))
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithID(1))
+	folder, err := repo.GetFolder(context.Background(), folschema.New().WithID(1))
 	assert.Error(t, err)
 	assert.Nil(t, folder)
 }
@@ -118,7 +118,7 @@ func TestGetFolderByPath_DBError(t *testing.T) {
 
 	mockPool.On("Query", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(mockRows, nil)
 
-	folder, err := repo.GetFolder(context.Background(), folschema.NewUserFolderBuilder().WithPath("p").WithName("n"))
+	folder, err := repo.GetFolder(context.Background(), folschema.New().WithPath("p").WithName("n"))
 	assert.Error(t, err)
 	assert.Nil(t, folder)
 }

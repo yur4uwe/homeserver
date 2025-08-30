@@ -10,12 +10,11 @@ import (
 )
 
 type InFolderRepo interface {
-	GetFolder(ctx context.Context, folder *folschema.UserFolder) (*folschema.UserFolder, error)
+	GetFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 	GetFoldersByOwner(ctx context.Context, ownerID int) ([]folschema.UserFolder, error)
 	GetChildren(ctx context.Context, path, name string, owner *uschema.User) ([]folschema.UserFolder, error)
 	CreateFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 	UpdateFolder(ctx context.Context, folder *folschema.UserFolder, fvp *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
-	DeleteFolderByID(ctx context.Context, id int, ownerID int) (*folschema.UserFolder, error)
 	DeleteFolder(ctx context.Context, folder *folschema.UserFolder, owner *uschema.User) (*folschema.UserFolder, error)
 }
 

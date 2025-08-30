@@ -6,7 +6,6 @@ import (
 	"homeserver/constants/dbconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbinsert"
-	"homeserver/db/repositories/helpers"
 	uschema "homeserver/db/repositories/user_repo/schema"
 )
 
@@ -21,19 +20,10 @@ func (r *UserRepo) Create(ctx context.Context, user *uschema.User) (*uschema.Use
 		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
 
-	rows, err := r.db.Pool.Query(ctx, query, user.Username, user.Password, user.Email, nil, false)
+	inserted_user, err := r.db.QueryOne(ctx, query, user.Username, user.Password, user.Email, nil, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %v", err)
 	}
 
-	var inserted_user []uschema.User
-	if err = helpers.ScanRows(rows, &inserted_user); err != nil {
-		return nil, err
-	}
-
-	if len(inserted_user) > 1 {
-		return nil, fmt.Errorf("unexpected error: multiple rows returned")
-	}
-
-	return &inserted_user[0], nil
+	return &inserted_user, nil
 }

@@ -8,6 +8,28 @@ import (
 	"homeserver/pkg/utils/generics"
 )
 
+func (uf *UserFolder) Identificator(ownerName string, placeholder int) (string, []any) {
+	id_err := uf.ShouldHaveFields(ownerName)(folconsts.ID)
+	path_err := uf.ShouldHaveFields(ownerName)(folconsts.Path, folconsts.FolderName, folconsts.OwnerID)
+
+	whereClause := ""
+	var args []any = make([]any, 0, 3)
+	if id_err == nil {
+		whereClause = fmt.Sprintf("%s = $%d", folconsts.ID, placeholder)
+		args = append(args, uf.ID)
+	} else if path_err == nil {
+		for i, field := range []string{folconsts.Path, folconsts.FolderName, folconsts.OwnerID} {
+			if i > 0 {
+				whereClause += " AND "
+			}
+			whereClause += fmt.Sprintf("%s = $%d", field, placeholder+i+1)
+		}
+		args = append(args, uf.Path, uf.Name, uf.OwnerID)
+	}
+
+	return whereClause, args
+}
+
 func (uf *UserFolder) GetValidFieldsList() []string {
 	var validFields []string
 	if uf.ID != 0 {

@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func NewUserFolderBuilder() *UserFolder {
+func New() *UserFolder {
 	clone := DefaultFolder
 	return &clone
 }

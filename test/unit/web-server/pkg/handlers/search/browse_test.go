@@ -24,14 +24,14 @@ func TestBrowseHandler(t *testing.T) {
 
 	resetter := helpers.NewMocksResetter(&mockFR.Mock, &mockFolR.Mock)
 
-	file := fschema.NewUserFileBuilder().
+	file := fschema.New().
 		WithID(1).
 		WithFilename("file1").
 		WithExtension("txt").
 		WithPath("testuser/docs/file1.txt").
 		WithSize(100)
 
-	folder := folschema.NewUserFolderBuilder().
+	folder := folschema.New().
 		WithID(2).
 		WithName("folder1").
 		WithPath("testuser/docs/folder1")

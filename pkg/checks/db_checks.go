@@ -63,11 +63,11 @@ func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) err
 			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
 		}
 
-		rootFolder := folschema.NewUserFolderBuilder().
+		rootFolder := folschema.New().
 			WithName(user.Username).
 			WithOwnerID(user.ID)
 
-		if folder, err := repos.FolderRepo.GetFolder(ctx, rootFolder); err != nil {
+		if folder, err := repos.FolderRepo.GetFolder(ctx, rootFolder, &user); err != nil {
 			return fmt.Errorf("error getting folder for user %s: %v", user.Username, err)
 		} else if folder == nil {
 			if _, err := repos.FolderRepo.CreateFolder(ctx, rootFolder, &user); err != nil {

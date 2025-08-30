@@ -36,7 +36,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		q_user := uschema.NewUserBuilder().
+		q_user := uschema.New().
 			WithPassword(form.Password)
 
 		if strings.Contains(form.Identificator, "@") {

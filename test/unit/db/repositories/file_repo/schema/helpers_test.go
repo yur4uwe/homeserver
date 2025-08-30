@@ -28,7 +28,7 @@ func TestPreventDuplicateFileNames(t *testing.T) {
 		mockOS.On("Getenv", constants.StoragePath).Return("/mock/storage/path/")
 		mockOS.On("Stat", "/mock/storage/path/john_doe/docs/file.txt").Return(nil, os.ErrNotExist)
 
-		mockFile := fschema.NewUserFileBuilder().
+		mockFile := fschema.New().
 			WithFullName("file.txt").
 			WithPath("john_doe/docs")
 
@@ -44,7 +44,7 @@ func TestPreventDuplicateFileNames(t *testing.T) {
 		mockOS.On("Stat", "/mock/storage/path/john_doe/docs/file.txt").Return(nil, nil)
 		mockOS.On("Stat", "/mock/storage/path/john_doe/docs/file_1.txt").Return(nil, os.ErrNotExist)
 
-		mockFile := fschema.NewUserFileBuilder().
+		mockFile := fschema.New().
 			WithFullName("file.txt").
 			WithPath("john_doe/docs")
 

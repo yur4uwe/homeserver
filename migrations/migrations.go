@@ -12,11 +12,8 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	connection, err := db.NewConnection()
-	if err != nil {
-		log.Fatalf("Database connection error: %v", err)
-	}
-	defer connection.Close()
+	pool := db.NewPool()
+	defer pool.Close()
 
 	// if err := database.CreateFolderStructure(connection); err != nil {
 	// 	log.Fatalf("Error creating folder structure: %v", err)

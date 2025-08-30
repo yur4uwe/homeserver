@@ -34,10 +34,7 @@ func main() {
 		log.Fatalf("Test storage path setup error: %v", err)
 	}
 
-	connection, err := db.NewConnection()
-	if err != nil {
-		log.Fatalf("Database connection error: %v", err)
-	}
+	connection := db.NewPool()
 	defer connection.Close()
 
 	repos := repositories.NewRepositories(repositories.InitRepositories(connection))

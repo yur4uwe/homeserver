@@ -9,10 +9,9 @@ import (
 )
 
 type InTokenRepo interface {
-	QueryToken(ctx context.Context, token string) (*uschema.User, error)
+	QueryToken(ctx context.Context, token string, should_be_verified bool) (*uschema.User, error)
 	CreateToken(ctx context.Context, userID int, token string) error
 	DeleteToken(ctx context.Context, token string) error
-	CheckToken(ctx context.Context, token string) (int, error)
 	VerifyToken(ctx context.Context, token string) error
 }
 

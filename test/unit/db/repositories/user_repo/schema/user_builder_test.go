@@ -9,78 +9,78 @@ import (
 )
 
 func TestUserBuilderSuite(t *testing.T) {
-	t.Run("TestNewUserBuilder", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder()
+	t.Run("TestNew", func(t *testing.T) {
+		new_user := uschema.New()
 
 		assert.NotNil(t, new_user, "New user should not be nil")
 		assert.Equal(t, uschema.DefaultUser, *new_user, "New user should match the default user")
 	})
 
 	t.Run("TestWithID", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder().WithID(1)
+		new_user := uschema.New().WithID(1)
 		assert.Equal(t, 1, new_user.ID, "User ID should be set to 1")
 	})
 
 	t.Run("TestWithIDPanic", func(t *testing.T) {
 		assert.Panics(t, func() {
-			uschema.NewUserBuilder().WithID(0)
+			uschema.New().WithID(0)
 		}, "Setting user ID to 0 should panic")
 	})
 
 	t.Run("TestWithUsername", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder().WithUsername("john_doe")
+		new_user := uschema.New().WithUsername("john_doe")
 		assert.Equal(t, "john_doe", new_user.Username, "Username should be set to 'john_doe'")
 	})
 
 	t.Run("TestWithUsernamePanic", func(t *testing.T) {
 		assert.Panics(t, func() {
-			uschema.NewUserBuilder().WithUsername("")
+			uschema.New().WithUsername("")
 		}, "Setting an empty username should panic")
 	})
 
 	t.Run("TestWithPassword", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder().WithPassword("secure_password")
+		new_user := uschema.New().WithPassword("secure_password")
 		assert.Equal(t, "secure_password", new_user.Password, "Password should be set to 'secure_password'")
 	})
 
 	t.Run("TestWithPasswordPanic", func(t *testing.T) {
 		assert.Panics(t, func() {
-			uschema.NewUserBuilder().WithPassword("")
+			uschema.New().WithPassword("")
 		}, "Setting an empty password should panic")
 	})
 
 	t.Run("TestWithEmail", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder().WithEmail("john@example.com")
+		new_user := uschema.New().WithEmail("john@example.com")
 		assert.Equal(t, "john@example.com", new_user.Email, "Email should be set to 'john@example.com'")
 	})
 
 	t.Run("TestWithEmailPanic", func(t *testing.T) {
 		assert.Panics(t, func() {
-			uschema.NewUserBuilder().WithEmail("")
+			uschema.New().WithEmail("")
 		}, "Setting an empty email should panic")
 
 		assert.Panics(t, func() {
-			uschema.NewUserBuilder().WithEmail("invalid_email")
+			uschema.New().WithEmail("invalid_email")
 		}, "Setting an invalid email should panic")
 	})
 
 	t.Run("TestWithAuthToken", func(t *testing.T) {
 		token := "auth_token_123"
-		new_user := uschema.NewUserBuilder().WithAuthToken(&token)
+		new_user := uschema.New().WithAuthToken(&token)
 		assert.Equal(t, &token, new_user.AuthToken, "AuthToken should be set to 'auth_token_123'")
 	})
 
 	t.Run("TestWithEmailVerified", func(t *testing.T) {
-		new_user := uschema.NewUserBuilder().WithEmailVerified(true)
+		new_user := uschema.New().WithEmailVerified(true)
 		assert.True(t, new_user.EmailVerified, "EmailVerified should be set to true")
 
-		new_user = uschema.NewUserBuilder().WithEmailVerified(false)
+		new_user = uschema.New().WithEmailVerified(false)
 		assert.False(t, new_user.EmailVerified, "EmailVerified should be set to false")
 	})
 
 	t.Run("TestGetValidFields", func(t *testing.T) {
 		token := "tok"
-		user := uschema.NewUserBuilder().
+		user := uschema.New().
 			WithID(1).
 			WithUsername("john").
 			WithPassword("pass").
@@ -100,7 +100,7 @@ func TestUserBuilderSuite(t *testing.T) {
 
 	t.Run("TestGet", func(t *testing.T) {
 		token := "tok"
-		user := uschema.NewUserBuilder().
+		user := uschema.New().
 			WithID(1).
 			WithUsername("john").
 			WithPassword("pass").

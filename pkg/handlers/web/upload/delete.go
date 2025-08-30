@@ -21,7 +21,7 @@ func DeleteFile(repos *repositories.Repositories, reqCont *middleware.Additional
 			return
 		}
 
-		file := fschema.NewUserFileBuilder().
+		file := fschema.New().
 			WithPath(filePath).
 			WithOwnerID(reqCont.Requester.ID).
 			WithFullName(filePath)

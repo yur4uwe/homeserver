@@ -37,12 +37,12 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositori
 	if is_folder {
 
 	} else {
-		oldFile := fschema.NewUserFileBuilder().
+		oldFile := fschema.New().
 			WithID(fileId).
 			WithFilename(orig_name).
 			WithOwnerID(reqCont.Requester.ID)
 
-		fvp := fschema.NewUserFileBuilder().WithFilename(desiredName)
+		fvp := fschema.New().WithFilename(desiredName)
 
 		f, err := repos.FileRepo.UpdateFileEntry(r.Context(), oldFile, fvp, reqCont.Requester)
 		if err != nil {

@@ -32,14 +32,14 @@ func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalR
 			return
 		}
 
-		file := fschema.NewUserFileBuilder().
+		file := fschema.New().
 			WithFullName(oldFileName).
 			WithPath(reqCont.Requester.Username).
 			WithOwnerID(reqCont.Requester.ID)
 
 		sig := strings.Split(newFileName, ".")
 
-		fvp := fschema.NewUserFileBuilder().WithFilename(sig[0])
+		fvp := fschema.New().WithFilename(sig[0])
 
 		f, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
 		if err != nil {

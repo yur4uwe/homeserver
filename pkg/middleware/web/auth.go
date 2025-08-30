@@ -41,7 +41,7 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				reqCont.AuthToken = ""
 			}
 
-			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken); err == nil && user != nil && claims.Seed == user.Email {
+			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken, true); err == nil && user != nil && claims.Seed == user.Email {
 				reqCont.Requester = user
 				reqCont.LogHistory.Log(fmt.Sprintf("[AuthMiddleware] Authenticated user: %s", user.Username))
 			} else {

@@ -38,8 +38,8 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 	query := "?sid=" + url_hash + "&exp=" + exp
 
 	if isFolder {
-		fvp := folschema.NewUserFolderBuilder().WithTrustedSource([]byte(url_hash))
-		folder := folschema.NewUserFolderBuilder().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
+		fvp := folschema.New().WithTrustedSource([]byte(url_hash))
+		folder := folschema.New().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
 
 		newfol, err := repos.FolderRepo.UpdateFolder(r.Context(), folder, fvp, reqCont.Requester)
 		if err != nil {
@@ -49,8 +49,8 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 
 		fmt.Printf("Folder %s updated successfully\n", newfol.TrustedSource)
 	} else {
-		fvp := fschema.NewUserFileBuilder().WithTrustedSource([]byte(url_hash))
-		file := fschema.NewUserFileBuilder().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
+		fvp := fschema.New().WithTrustedSource([]byte(url_hash))
+		file := fschema.New().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
 
 		newfile, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
 		if err != nil {

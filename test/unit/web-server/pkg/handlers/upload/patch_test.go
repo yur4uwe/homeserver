@@ -31,7 +31,7 @@ func TestPatchFile(t *testing.T) {
 
 	mockReqContext := middleware.DefaultContext
 	mockReqContext.Requester = uschema.
-		NewUserBuilder().
+		New().
 		WithID(1).
 		WithUsername("testuser")
 

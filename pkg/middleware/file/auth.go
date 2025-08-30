@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	fschema "homeserver/db/repositories/file_repo/schema"
 	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/internal/respfail"
 	"net/http"
@@ -53,8 +54,8 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 			switch entryType {
 			case "folders":
-				fol := folschema.NewUserFolderBuilder().WithID(entryId)
-				fol, err := conn.FolderRepo.GetFolder(r.Context(), fol)
+				fol := folschema.New().WithID(entryId)
+				fol, err := conn.FolderRepo.GetFolder(r.Context(), fol, nil)
 				if err != nil {
 					respfail.ErrorResponse(w, r, "Invalid request format", http.StatusBadRequest)
 					return
@@ -65,7 +66,8 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 				r = r.WithContext(context.WithValue(r.Context(), constants.EntryKey, fol))
 			case "files":
-				f, err := conn.FileRepo.GetFileByID(r.Context(), entryId)
+				file := fschema.New().WithID(entryId)
+				f, err := conn.FileRepo.GetFile(r.Context(), file, nil)
 				if err != nil {
 					respfail.ErrorResponse(w, r, "Invalid request format", http.StatusBadRequest)
 					return
@@ -84,11 +86,11 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			if authToken, _ := r.Cookie(constants.AuthCookieName); authToken != nil {
 				token = authToken.Value
 			}
-			userId, _ := conn.TokenRepo.CheckToken(r.Context(), token)
+			user, _ := conn.TokenRepo.QueryToken(r.Context(), token, true)
 
-			fmt.Println("User ID:", userId)
+			fmt.Println("User ID:", user.ID)
 
-			if token != "" && userId == owner {
+			if token != "" && user.ID == owner {
 				next.ServeHTTP(w, r)
 				return
 			}

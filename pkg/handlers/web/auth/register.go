@@ -40,7 +40,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user := uschema.NewUserBuilder().
+		user := uschema.New().
 			WithUsername(form.Username).
 			WithEmail(form.Email).
 			WithPassword(form.Password)

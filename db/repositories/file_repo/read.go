@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants/dbconsts"
-	"homeserver/constants/fconsts"
 	"homeserver/constants/uconsts"
 	"homeserver/db/query_builder/qbselect"
 	fschema "homeserver/db/repositories/file_repo/schema"
@@ -13,70 +12,29 @@ import (
 	"strings"
 )
 
-func (repo *FileRepo) GetFileByID(ctx context.Context, id int) (*fschema.UserFile, error) {
-	query := qbselect.New().
-		Columns(fschema.FieldsList()...).
-		From(dbconsts.DBFilesTable.Name).
-		Where("id = $1").
-		Build()
-
-	var file []fschema.UserFile
-	rows, err := repo.db.Pool.Query(ctx, query, id)
-	if err != nil {
-		return nil, err
+func (repo *FileRepo) GetFile(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {
+	uname := ""
+	if owner != nil {
+		uname = owner.Username
 	}
 
-	if err := helpers.ScanRows(rows, &file); err != nil {
-		return nil, fmt.Errorf("error scanning file by ID: %v", err)
-	}
-
-	if len(file) != 1 {
-		return nil, fmt.Errorf("expected 1 file, got %d", len(file))
-	}
-
-	return &file[0], nil
-}
-
-func (repo *FileRepo) GetFullFileInfo(ctx context.Context, file *fschema.UserFile, owner *uschema.User) (*fschema.UserFile, error) {
-	if err := owner.ShouldHaveFields(uconsts.ID, uconsts.Username); err != nil {
-		return nil, err
-	}
-
-	if err := file.ShouldHaveFields(owner.Username)(fconsts.Filename, fconsts.Path); err != nil {
-		return nil, err
+	identifier, args := file.Identificator(uname, 1)
+	if identifier == "" {
+		return nil, fmt.Errorf("file is missing required fields")
 	}
 
 	query := qbselect.New().
 		Columns(fschema.FieldsList()...).
 		From(dbconsts.DBFilesTable.Name).
-		Where("filename = $1 AND path = $2 AND owner_id = $3").
+		Where(identifier).
 		Build()
 
-	// query := querybuilder.New().
-	// 	Select(fschema.FieldsList()...).
-	// 	From(dbconsts.DBFilesTable.Name).
-	// 	Where("filename = $1 AND path = $2 AND owner_id = $3").
-	// 	Build()
-
-	var fullFileInfo []fschema.UserFile
-	rows, err := repo.db.Pool.Query(
-		ctx,
-		query,
-		file.Filename, file.Path, owner.ID,
-	)
+	extracted_file, err := repo.db.QueryOne(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := helpers.ScanRows(rows, &fullFileInfo); err != nil {
-		return nil, fmt.Errorf("error scanning full file info: %v", err)
-	}
-
-	if len(fullFileInfo) != 1 {
-		return nil, fmt.Errorf("expected 1 file, got %d", len(fullFileInfo))
-	}
-
-	return &fullFileInfo[0], nil
+	return &extracted_file, nil
 }
 
 func (repo *FileRepo) GetFilesByUser(ctx context.Context, owner *uschema.User) ([]fschema.UserFile, error) {

@@ -31,7 +31,7 @@ func TestAuthMiddleware(t *testing.T) {
 	_, _, _, mockTokR, _ := mocks.InitRepoMocks()
 	mockDB := repositories.NewRepositories(nil, nil, nil, mockTokR, nil)
 	mockTokR.On("QueryToken", mock.Anything, "").Return((*uschema.User)(nil), fmt.Errorf("token not found"))
-	mockTokR.On("QueryToken", mock.Anything, "validToken").Return(uschema.NewUserBuilder(), nil)
+	mockTokR.On("QueryToken", mock.Anything, "validToken").Return(uschema.New(), nil)
 
 	mockLogHistory := new(mocks.MockLogHistory)
 	mockLogHistory.On("Log", mock.Anything).Return()

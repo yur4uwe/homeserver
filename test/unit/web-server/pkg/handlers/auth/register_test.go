@@ -111,7 +111,7 @@ func TestRegisterHandler(t *testing.T) {
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.New().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return((*uschema.User)(nil), errors.New("db error"))
@@ -132,7 +132,7 @@ func TestRegisterHandler(t *testing.T) {
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.New().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
@@ -154,7 +154,7 @@ func TestRegisterHandler(t *testing.T) {
 					Email:    "e@example.com",
 					Password: "p",
 				}
-				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.New().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockErrResp.On("ErrorResponse", mock.Anything, mock.Anything, http.StatusInternalServerError).Return()
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e"}, nil)
@@ -176,7 +176,7 @@ func TestRegisterHandler(t *testing.T) {
 				assert.NoError(t, err)
 
 				form := formatters.RegisterForm{Username: "u", Email: "e@example.com", Password: "p", Confirm: "p"}
-				user := uschema.NewUserBuilder().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
+				user := uschema.New().WithUsername(form.Username).WithEmail(form.Email).WithPassword(form.Password)
 
 				mockUR.On("Create", mock.Anything, user).Return(&uschema.User{ID: 1, Username: "u", Email: "e@example.com"}, nil)
 				mockTokens.On("NewToken", mock.Anything, mock.Anything).Return("token123", nil)

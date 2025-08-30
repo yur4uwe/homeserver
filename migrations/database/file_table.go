@@ -3,13 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
-	"homeserver/db"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SeparateExtensionsFromNames(connection *db.Database) error {
+func SeparateExtensionsFromNames(connection *pgxpool.Pool) error {
 	ctx := context.Background()
 
-	tag, err := connection.Pool.Exec(ctx, `SELECT
+	tag, err := connection.Exec(ctx, `SELECT
   		filename,
   		reverse(split_part(reverse(filename), '.', 1)) AS extension,
   		left(filename, length(filename) - length(reverse(split_part(reverse(filename), '.', 1))) - 1) AS base_filename
