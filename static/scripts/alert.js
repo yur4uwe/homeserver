@@ -8,17 +8,17 @@ document.addEventListener("raise-alert", (event) => {
 function showAlert({ title, message, status, icon }) {
     const alertContainer = document.createElement("div");
     alertContainer.className = `alert alert-${status}`;
-    alertContainer.setAttribute("hx-get", "/nothing")
-    alertContainer.setAttribute("hx-trigger", "load delay:5s")
-    alertContainer.setAttribute("hx-on::before-request", "this.classList.add('removing')")
-    alertContainer.setAttribute("hx-on::after-request", "this.remove()")
+    // alertContainer.setAttribute("hx-get", "/")
+    // alertContainer.setAttribute("hx-trigger", "load delay:5s")
+    // alertContainer.setAttribute("hx-on::before-request", "this.classList.add('removing')")
+    // alertContainer.setAttribute("hx-on::after-request", "this.remove()")
 
     const header = document.createElement("div")
     header.classList.add("alert-header");
 
     const iconWrapper = document.createElement("span");
     iconWrapper.style.width = "40px";
-    iconWrapper.style.height = "30px";
+    iconWrapper.style.height = icon === 'x' ? "30px" : "40px";
     header.appendChild(iconWrapper);
 
     fetch("/static/assets/" + icon + ".svg")

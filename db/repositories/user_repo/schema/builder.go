@@ -18,11 +18,15 @@ var (
 		AuthToken:     nil,
 		CreatedAt:     time.Time{},
 		EmailVerified: false,
+		VerifiedValid: false,
 	}
 )
 
-func New() *User {
+func New(VerifiedValid ...bool) *User {
 	clone := DefaultUser
+	if len(VerifiedValid) > 0 {
+		clone.VerifiedValid = VerifiedValid[0]
+	}
 	return &clone
 }
 
@@ -97,7 +101,9 @@ func (u *User) GetValidFields() []string {
 				validFields = append(validFields, field)
 			}
 		case uconsts.EmailVerified:
-			validFields = append(validFields, field)
+			if u.VerifiedValid || u.EmailVerified {
+				validFields = append(validFields, field)
+			}
 		}
 	}
 	return validFields

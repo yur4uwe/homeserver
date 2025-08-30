@@ -40,7 +40,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user := uschema.New().
+		user := uschema.New(false).
 			WithUsername(form.Username).
 			WithEmail(form.Email).
 			WithPassword(form.Password)
@@ -48,7 +48,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 		inserted_user, err := repos.UserRepo.Create(r.Context(), user)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
-			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+			ErrorResponse(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
 

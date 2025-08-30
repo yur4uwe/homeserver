@@ -28,11 +28,12 @@ func (r *UserRepo) Update(ctx context.Context, user *uschema.User, fvp *uschema.
 		From(dbconsts.DBUsersTable.Name).
 		Set(valid_fields...).
 		Where(identifier).
+		Returning(uschema.FieldsList(uconsts.Password)...).
 		Build()
 
 	qargs := make([]any, 0, len(args)+len(valid_fields))
-	qargs = append(qargs, args...)
 	qargs = append(qargs, fvp.GetValidFieldsData()...)
+	qargs = append(qargs, args...)
 
 	updated_user, err := r.db.QueryOne(ctx, query, qargs...)
 	if err != nil {

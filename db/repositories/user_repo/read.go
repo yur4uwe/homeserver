@@ -10,18 +10,23 @@ import (
 )
 
 func (r *UserRepo) Query(ctx context.Context, user *uschema.User) (*uschema.User, error) {
-	identifier, args := user.Identifier(1)
-	if identifier == "" {
-		return nil, fmt.Errorf("invalid user data")
+	user_fields := user.GetValidFields()
+
+	whereClause := ""
+	for i, field := range user_fields {
+		if i > 0 {
+			whereClause += " AND "
+		}
+		whereClause += fmt.Sprintf("%s = $%d", field, i+1)
 	}
 
 	query := qbselect.New().
 		Columns(uschema.FieldsList(uconsts.Password)...).
 		From(dbconsts.DBUsersTable.Name).
-		Where(identifier).
+		Where(whereClause).
 		Build()
 
-	result, err := r.db.QueryOne(ctx, query, args...)
+	result, err := r.db.QueryOne(ctx, query, user.GetValidFieldsData()...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying user: %v", err)
 	}

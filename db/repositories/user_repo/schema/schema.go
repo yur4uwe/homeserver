@@ -10,4 +10,5 @@ type User struct {
 	AuthToken     *string   `db:"auth_token" json:"auth_token,omitempty"`
 	CreatedAt     time.Time `db:"created_at" json:"created_at"`
 	EmailVerified bool      `db:"email_verified" json:"email_verified"`
+	VerifiedValid bool
 }

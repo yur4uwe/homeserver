@@ -12,6 +12,7 @@ import (
 	middleware "homeserver/pkg/middleware/web"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/utils/errresp"
+	"homeserver/pkg/utils/formatters"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -172,35 +173,48 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 		new_email := r.FormValue("email")
 		new_password := r.FormValue("password")
 
-		var err error
-		if new_username != "" && new_username != reqCont.Requester.Username {
-			reqCont.LogHistory.Log("[Handler] Username change requested")
-			if uname_err := account.HandleUsernameChange(r, repos); uname_err != nil {
-				err = uname_err
+		alertMsg := ""
+		data := templates.SettingsPageData{
+			Username: reqCont.Requester.Username,
+			Email:    reqCont.Requester.Email,
+		}
+
+		var err = map[string]string{}
+		if uname_err := account.HandleUsernameChange(r.Context(), repos, reqCont, new_username); uname_err != nil {
+			err["username"] = uname_err.Error()
+		} else {
+			data.Username = new_username
+			alertMsg += "Username changed successfully. "
+		}
+
+		if em_err := account.HandleEmailChange(r.Context(), repos, reqCont, new_email); em_err != nil {
+			err["email"] = em_err.Error()
+		} else {
+			data.Email = new_email
+			alertMsg += "Email changed successfully. "
+		}
+
+		if pass_err := account.HandlePasswordChange(r.Context(), repos, reqCont, new_password, r.FormValue("confirm-password")); pass_err != nil {
+			err["password"] = pass_err.Error()
+		} else {
+			alertMsg += "Password changed successfully. "
+		}
+
+		if len(err) > 0 {
+			data.Username = reqCont.Requester.Username
+			data.Email = reqCont.Requester.Email
+
+			errs := ""
+			for k, v := range err {
+				errs += fmt.Sprintf("%s: %s\n", k, v)
 			}
+
+			data.Error = errs
+		} else if alertMsg != "" {
+			w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", alertMsg, constants.Success))
 		}
 
-		if new_email != "" && new_email != reqCont.Requester.Email {
-			reqCont.LogHistory.Log("[Handler] Email change requested")
-			if em_err := account.HandleEmailChange(r, repos); em_err != nil {
-				err = em_err
-			}
-		}
-
-		if new_password != "" && new_password == r.FormValue("confirm-password") {
-			reqCont.LogHistory.Log("[Handler] Password change requested")
-			if pass_err := account.HandlePasswordChange(r, repos); pass_err != nil {
-				err = pass_err
-			}
-		}
-
-		if err != nil {
-			reqCont.LogHistory.ErrLog("[Handler] Account settings update error: "+err.Error(), "AccountSettingsRouter:40")
-			ErrorResponse(w, "Internal Server Error: Failed to update account settings", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Account settings updated successfully"))
+		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/settings.html"))
+		tmpl.Execute(w, data)
 	}
 }

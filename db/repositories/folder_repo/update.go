@@ -15,21 +15,26 @@ func (r *FolderRepo) UpdateFolder(ctx context.Context, folder *folschema.UserFol
 		return nil, fmt.Errorf("inappropriate fields found: %v", err)
 	}
 
-	identifier, args := folder.Identificator(owner.Username, 1)
+	valid_fields := fvp.GetValidFieldsList()
+
+	identifier, args := folder.Identificator(owner.Username, len(valid_fields)+1)
 	if identifier == "" {
 		return nil, fmt.Errorf("invalid folder data")
 	}
-
 	folder.MergeFolders(fvp)
 
 	query := qbupdate.New().
 		From(dbconsts.DBFoldersTable.Name).
-		Set(folder.GetValidFieldsList()...).
+		Set(valid_fields...).
 		Where(identifier).
 		Returning(folschema.FieldsList()...).
 		Build()
 
-	row, err := r.db.QueryOne(ctx, query, args...)
+	qargs := make([]any, 0, len(valid_fields)+len(args))
+	qargs = append(qargs, fvp.GetValidFieldsData()...)
+	qargs = append(qargs, args...)
+
+	row, err := r.db.QueryOne(ctx, query, qargs...)
 	if err != nil {
 		return nil, fmt.Errorf("error updating folder: %v", err)
 	}

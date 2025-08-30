@@ -1,6 +1,7 @@
 <div id="settings-container">
     <h1>Settings</h1>
-    <form id="settings-form" hx-patch="/api/v1/account/settings" hx-push-url="false">
+    <form id="settings-form" hx-patch="/api/v1/account/settings" hx-swap="outerHTML" hx-target="#settings-container"
+        hx-push-url="false">
         <div class="settings-field" id="username-wrapper">
             <fieldset>
                 <legend>Username:</legend>
@@ -28,6 +29,10 @@
                 <input type="password" name="confirm-password" placeholder="Confirm Your Password">
             </fieldset>
         </div>
+
+        {{if .Error}}
+        <div class="error" style="margin-bottom: 1rem; white-space: pre-wrap;">{{.Error}}</div>
+        {{end}}
 
         <button class="button">Save Changes</button>
     </form>

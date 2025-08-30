@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	Mkdir  = os.Mkdir
+	Mkdir  = os.MkdirAll
 	Getenv = os.Getenv
 )
 

@@ -1,32 +1,56 @@
 package account
 
 import (
+	"context"
 	"fmt"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/pkg/crypto"
+	"homeserver/pkg/handlers/web/auth"
 	middleware "homeserver/pkg/middleware/web"
-	"net/http"
+	"homeserver/pkg/utils/formatters"
+	"strings"
+	"time"
 )
 
-func HandleEmailChange(r *http.Request, repos *repositories.Repositories) error {
-	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
-	if !ok {
-		return fmt.Errorf("missing request context")
-	}
-
-	reqCont.LogHistory.Log("[Handler] Email change requested")
-
-	new_email := r.FormValue("email")
-	if new_email == "" {
+func HandleEmailChange(
+	ctx context.Context,
+	repos *repositories.Repositories,
+	reqCont *middleware.AdditionalRequestContext,
+	email string,
+) error {
+	if email == "" {
 		return fmt.Errorf("email cannot be empty")
 	}
 
-	fvp := uschema.New().WithEmail(new_email)
-
-	_, err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
-	if err != nil {
-		return fmt.Errorf("failed to update email: %w", err)
+	if email == reqCont.Requester.Email {
+		return fmt.Errorf("new email is the same as the current email")
 	}
+
+	if !strings.Contains(email, "@") {
+		return fmt.Errorf("invalid email format")
+	}
+
+	fvp := uschema.New(true).WithEmail(email).WithEmailVerified(false)
+
+	_, err := repos.UserRepo.Update(ctx, reqCont.Requester, fvp)
+	if err != nil {
+		return fmt.Errorf("failed to update email")
+	}
+
+	tkn, err := crypto.NewToken(email, time.Now().Add(24*time.Hour))
+	if err != nil {
+		panic(err)
+	}
+
+	if err := repos.TokenRepo.CreateToken(ctx, reqCont.Requester.ID, tkn); err != nil {
+		panic(err)
+	}
+
+	go auth.SendVerificationEmail(formatters.RegisterForm{
+		Username: reqCont.Requester.Username,
+		Email:    email,
+	}, tkn)
 
 	return nil
 }

@@ -29,7 +29,27 @@ document.addEventListener('keydown', function (event) {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function () {
+function mutationObserver() {
+    const targetNode = document.getElementById('search-results');
+    if (!targetNode) return;
+
+    const observer = new MutationObserver(mountActions);
+    observer.observe(targetNode, { childList: true, subtree: true });
+}
+
+function copyWhenFocused(text) {
+    if (document.hasFocus()) {
+        navigator.clipboard.writeText(text);
+    } else {
+        const onFocus = () => {
+            navigator.clipboard.writeText(text);
+            window.removeEventListener('focus', onFocus);
+        };
+        window.addEventListener('focus', onFocus);
+    }
+}
+
+function mountActions() {
     const searchResults = document.querySelectorAll('.search-result');
 
     searchResults.forEach(result => {
@@ -42,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const renameAction = document.querySelectorAll('.rename-action');
 
     renameAction.forEach(item => {
-        item.addEventListener('click', function () {
+        const renameCallback = () => {
             const row = item.closest('tr');
             const fileName = row.getAttribute('data-name');
             const fileID = row.getAttribute('data-id');
@@ -61,8 +81,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     target: "tr[data-id='" + row.getAttribute('data-id') + "'] td.file-name"
                 }
             );
+        }
 
-        });
+        if (!item._isListening) {
+            item.addEventListener('click', renameCallback);
+            item._isListening = true;
+        }
     });
 
     const shareActions = document.querySelectorAll('.share-action');
@@ -88,12 +112,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     return response.text();
                 })
                 .then(signedUrl => {
-
-                    console.log('File shared successfully:', signedUrl);
-                    navigator.clipboard.writeText(signedUrl);
+                    copyWhenFocused(signedUrl);
                 });
         }
 
-        item.addEventListener('click', shareCallback);
+        if (!item._isListening) {
+            item.addEventListener('click', shareCallback);
+            item._isListening = true;
+        }
     }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    mountActions();
+    mutationObserver();
 });

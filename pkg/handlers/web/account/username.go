@@ -1,31 +1,32 @@
 package account
 
 import (
+	"context"
 	"fmt"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
-	"net/http"
 )
 
-func HandleUsernameChange(r *http.Request, repos *repositories.Repositories) error {
-	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
-	if !ok {
-		return fmt.Errorf("missing request context")
-	}
-
-	reqCont.LogHistory.Log("[Handler] Username change requested")
-
-	new_username := r.FormValue("username")
-	if new_username == "" {
+func HandleUsernameChange(
+	ctx context.Context,
+	repos *repositories.Repositories,
+	reqCont *middleware.AdditionalRequestContext,
+	uname string,
+) error {
+	if uname == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
 
-	fvp := uschema.New().WithUsername(new_username)
+	if uname == reqCont.Requester.Username {
+		return fmt.Errorf("new username is the same as the current username")
+	}
 
-	_, err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
+	fvp := uschema.New().WithUsername(uname)
+
+	_, err := repos.UserRepo.Update(ctx, reqCont.Requester, fvp)
 	if err != nil {
-		return fmt.Errorf("failed to update username: %w", err)
+		return fmt.Errorf("failed to update username")
 	}
 
 	return nil

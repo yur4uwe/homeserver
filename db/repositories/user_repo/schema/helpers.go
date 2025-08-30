@@ -49,4 +49,7 @@ func (u *User) Merge(another *User) {
 	if another.AuthToken != nil {
 		u.AuthToken = another.AuthToken
 	}
+	if another.VerifiedValid {
+		u.VerifiedValid = another.VerifiedValid
+	}
 }

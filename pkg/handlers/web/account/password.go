@@ -1,29 +1,27 @@
 package account
 
 import (
+	"context"
 	"fmt"
 	"homeserver/db/repositories"
 	uschema "homeserver/db/repositories/user_repo/schema"
 	middleware "homeserver/pkg/middleware/web"
-	"net/http"
 )
 
-func HandlePasswordChange(r *http.Request, repos *repositories.Repositories) error {
-	reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
-	if !ok {
-		return fmt.Errorf("missing request context")
+func HandlePasswordChange(
+	ctx context.Context,
+	repos *repositories.Repositories,
+	reqCont *middleware.AdditionalRequestContext,
+	password string,
+	confirm_password string,
+) error {
+	if password != confirm_password {
+		return fmt.Errorf("passwords do not match")
 	}
 
-	reqCont.LogHistory.Log("[Handler] Password change requested")
+	fvp := uschema.New().WithPassword(password)
 
-	new_password := r.FormValue("password")
-	if new_password == "" {
-		return fmt.Errorf("password cannot be empty")
-	}
-
-	fvp := uschema.New().WithPassword(new_password)
-
-	_, err := repos.UserRepo.Update(r.Context(), reqCont.Requester, fvp)
+	_, err := repos.UserRepo.Update(ctx, reqCont.Requester, fvp)
 	if err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
