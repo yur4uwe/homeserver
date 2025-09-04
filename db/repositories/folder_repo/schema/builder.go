@@ -42,9 +42,6 @@ func (uf *UserFolder) WithName(name string) *UserFolder {
 	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
 		panic("Folder name cannot contain slashes")
 	}
-	if strings.Contains(name, ".") {
-		panic("Folder name cannot contain periods")
-	}
 	uf.Name = name
 	return uf
 }

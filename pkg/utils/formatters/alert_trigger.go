@@ -16,5 +16,5 @@ func AlertEventBuilder(title, message, status string) string {
 		panic(fmt.Sprintf("Unknown status: %s", status))
 	}
 
-	return fmt.Sprintf(`{"raise-alert": {"title": "%s", "value": "%s", "status": "%s", "icon": "%s"}}`, title, message, status, icon)
+	return fmt.Sprintf(`{"raise-alert": {"title": "%s", "message": "%s", "status": "%s", "icon": "%s"}}`, title, message, status, icon)
 }

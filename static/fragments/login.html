@@ -1,6 +1,6 @@
 <div class="login-container">
     <h2>Login</h2>
-    <form class="login-form" hx-post="/api/v1/login" hx-target="#main-content" hx-target-error="#error-resp">
+    <form class="login-form" hx-post="/api/v1/login" hx-target="#main-content">
         <a class="back-arrow" hx-get="/" hx-target="#main-content" hx-push-url="true">
             <div class="back-arrow-icon" style="width: 20px; height: 20px;">
                 <div hx-target="this" hx-push-url="false" hx-trigger="load" hx-get="/static/assets/arrow-left.svg"

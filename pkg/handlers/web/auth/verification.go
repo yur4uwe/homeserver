@@ -154,7 +154,6 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		alert := formatters.AlertEventBuilder("Verification success", "Your email has been verified successfully!", constants.Success)
 
-		reqCont.PageContent.ModalContent = template.HTML(alert)
 		reqCont.RerenderBody = true
 
 		w.Header().Set("HX-Trigger", alert)

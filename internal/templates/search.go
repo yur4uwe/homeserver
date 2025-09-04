@@ -21,6 +21,8 @@ type SearchPageData struct {
 	Parent       string
 	URIParent    string
 	DownloadPath string
+	ActiveTab    int
+	PageNumbers  []int
 	QueryResults bool
 	Entries      []SearchEntry
 }

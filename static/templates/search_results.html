@@ -30,7 +30,8 @@
             <tr class="search-result {{if .IsFolder}} search-folder {{else}} search-file {{end}}" draggable="false" {{if
                 .IsFolder}} hx-get="/search/{{.URIPath}}{{.URIName}}" hx-trigger="dblclick" {{else}}
                 data-extension="{{.Extension}}" {{end}} data-path="{{.Path}}" data-name="{{.Name}}" data-id="{{.ID}}"
-                hx-on:delete-success-{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="this.remove()">
+                hx-on:delete-success-{{if .IsFolder}}folder{{else}}file{{end}}-{{.ID}}="this.remove()"
+                onclick="this.classList.toggle('selected');">
                 <td class="file-type">
                     <div class="{{if .IsFolder}}folder-icon{{else}}file-icon{{end}}">
                         <div hx-trigger="load" hx-target="this" hx-push-url="false"
@@ -62,10 +63,10 @@
 
                     <ul class="actions-menu-content" data-id="{{.ID}}" data-is-folder="{{.IsFolder}}"
                         hx-push-url="false" hx-target="#modal-content" hx-swap="innerHTML">
-                        <li class="share-action">
+                        <li class="share-action" onclick="shareCallback(this)">
                             Share
                         </li>
-                        <li class="rename-action">
+                        <li class="rename-action" onclick="renameCallback(this)">
                             Rename
                         </li>
                         <li hx-confirm="Do you really want to delete {{.Name}}{{.Extension}} {{if .IsFolder}}folder{{else}}file{{end}}?"

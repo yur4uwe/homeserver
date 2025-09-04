@@ -31,8 +31,8 @@ var fieldDescs = []pgconn.FieldDescription{
 
 func TestCreateFile_Success(t *testing.T) {
 	mockPool := &mocks.MockQueryExecutor{}
-	mockDB := &db.Database{Pool: mockPool}
-	repo := filerepo.NewFileRepo(mockDB)
+	mockDB := &db.Database[fschema.UserFile]{Pool: mockPool}
+	repo := filerepo.NewFileRepo(mockPool)
 
 	expected := makeUserFile()
 

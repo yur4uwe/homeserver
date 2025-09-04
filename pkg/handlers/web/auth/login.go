@@ -47,12 +47,12 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		user, err := repos.UserRepo.Query(r.Context(), q_user)
 		if err != nil {
-			if err.Error() == "no rows in result set" {
+			if strings.Contains(err.Error(), "0 rows") {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
 
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.Header().Set("HX-Retarget", "#error-resp")
-				w.Header().Set("HX-Reswap", "innerHTML")
-				w.WriteHeader(http.StatusUnauthorized)
+				w.WriteHeader(http.StatusOK)
 				w.Write([]byte("Unauthorized: Invalid credentials"))
 				return
 			}

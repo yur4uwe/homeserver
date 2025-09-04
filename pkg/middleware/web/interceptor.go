@@ -38,11 +38,7 @@ func Interceptor(next http.Handler) http.Handler {
 			reqCont.LogHistory.Log("[Interceptor] ToRestorePage is true, restoring page")
 			tmpl := Must(ParseFiles(constants.Rootd+"static/index.html", constants.Rootd+"static/layout.html")) // Use the global variable for mocking
 
-			if interceptor.statusCode < 400 {
-				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
-			} else {
-				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
-			}
+			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 
 			if err := tmpl.ExecuteTemplate(w, "index.html", reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:89")
@@ -58,11 +54,7 @@ func Interceptor(next http.Handler) http.Handler {
 
 			tmpl := Must(ParseFiles(constants.Rootd + "static/layout.html")) // Use the global variable for mocking
 
-			if interceptor.statusCode < 400 {
-				reqCont.PageContent.Content = template.HTML(interceptor.body.String())
-			} else {
-				reqCont.PageContent.ModalContent = template.HTML(interceptor.body.String())
-			}
+			reqCont.PageContent.Content = template.HTML(interceptor.body.String())
 
 			if err := tmpl.Execute(w, reqCont.PageContent); err != nil {
 				reqCont.LogHistory.ErrLog("Failed to execute template: "+err.Error(), "Interceptor:60")

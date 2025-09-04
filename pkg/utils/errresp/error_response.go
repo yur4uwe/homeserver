@@ -1,7 +1,8 @@
 package errresp
 
 import (
-	"fmt"
+	"homeserver/constants"
+	"homeserver/pkg/utils/formatters"
 	"net/http"
 )
 
@@ -13,6 +14,6 @@ const (
 )
 
 func ErrorResponse(w http.ResponseWriter, message string, status int) {
-	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"raise-alert": {"title": "Error", "value": "%s", "status": "%s", "icon": "x"}}`, message, AlertError))
+	w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Error", message, constants.Error))
 	w.WriteHeader(status)
 }

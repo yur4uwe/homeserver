@@ -15,6 +15,10 @@ func HandlePasswordChange(
 	password string,
 	confirm_password string,
 ) error {
+	if password == "" {
+		return fmt.Errorf("password cannot be empty")
+	}
+
 	if password != confirm_password {
 		return fmt.Errorf("passwords do not match")
 	}

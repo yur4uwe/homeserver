@@ -5,8 +5,7 @@ import (
 	"homeserver/db"
 	fschema "homeserver/db/repositories/file_repo/schema"
 	uschema "homeserver/db/repositories/user_repo/schema"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"homeserver/interfaces"
 )
 
 type InFileRepo interface {
@@ -26,7 +25,7 @@ type FileRepo struct {
 	db *db.Database[fschema.UserFile]
 }
 
-func NewFileRepo(pool *pgxpool.Pool) *FileRepo {
+func NewFileRepo(pool interfaces.QueryExecutor) *FileRepo {
 	database := db.Database[fschema.UserFile]{Pool: pool}
 	return &FileRepo{db: &database}
 }

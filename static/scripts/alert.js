@@ -1,8 +1,6 @@
 document.addEventListener("raise-alert", (event) => {
     console.log(event.detail);
-
-    const { title, value: message, status, icon } = event.detail;
-    showAlert({ title, message, status, icon });
+    showAlert(event.detail);
 });
 
 function showAlert({ title, message, status, icon }) {

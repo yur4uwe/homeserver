@@ -181,6 +181,7 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 		var err = map[string]string{}
 		if uname_err := account.HandleUsernameChange(r.Context(), repos, reqCont, new_username); uname_err != nil {
+			data.Username = reqCont.Requester.Username
 			err["username"] = uname_err.Error()
 		} else {
 			data.Username = new_username
@@ -188,6 +189,7 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 		}
 
 		if em_err := account.HandleEmailChange(r.Context(), repos, reqCont, new_email); em_err != nil {
+			data.Email = reqCont.Requester.Email
 			err["email"] = em_err.Error()
 		} else {
 			data.Email = new_email
@@ -200,7 +202,7 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 			alertMsg += "Password changed successfully. "
 		}
 
-		if len(err) > 0 {
+		if len(err) == 3 {
 			data.Username = reqCont.Requester.Username
 			data.Email = reqCont.Requester.Email
 
@@ -212,6 +214,11 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 			data.Error = errs
 		} else if alertMsg != "" {
 			w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", alertMsg, constants.Success))
+		}
+
+		if strings.Contains(alertMsg, "Email") {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
 		}
 
 		tmpl := Must(ParseFiles(constants.Rootd + "static/templates/settings.html"))
