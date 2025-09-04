@@ -39,12 +39,12 @@ func main() {
 
 	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
 
-	if err := checks.CheckDatabaseTables(repos); err != nil {
-		log.Fatalf("Database table setup error: %v", err)
-	}
-
 	if err := checks.CheckDatabaseExtensions(connection); err != nil {
 		log.Fatalf("Database extension setup error: %v", err)
+	}
+
+	if err := checks.CheckDatabaseTables(repos); err != nil {
+		log.Fatalf("Database table setup error: %v", err)
 	}
 
 	if err := checks.CheckUserFolders(repos); err != nil {

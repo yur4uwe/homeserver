@@ -45,8 +45,7 @@ func (repo *TableRepo) TableExists(ctx context.Context, table_name string) (bool
 }
 
 func (repo *TableRepo) CreateTable(ctx context.Context, table *dbconsts.DBTable) error {
-	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (%s);`, table.Name, table.SQLCreation)
-	_, err := repo.pool.Exec(ctx, query)
+	_, err := repo.pool.Exec(ctx, table.SQLCreation)
 	if err != nil {
 		return fmt.Errorf("error creating table %s: %v", table.Name, err)
 	}
