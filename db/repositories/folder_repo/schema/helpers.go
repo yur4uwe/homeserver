@@ -9,6 +9,14 @@ import (
 )
 
 func (uf *UserFolder) Identificator(ownerName string, placeholder int) (string, []any) {
+	if uf.Parent == nil && uf.Name == ownerName {
+		whereClause := fmt.Sprintf("%s = $%d AND %s = $%d",
+			folconsts.FolderName, placeholder,
+			folconsts.OwnerID, placeholder+1,
+		)
+		return whereClause, []any{uf.Name, uf.OwnerID}
+	}
+
 	id_err := uf.ShouldHaveFields(ownerName)(folconsts.ID)
 	path_err := uf.ShouldHaveFields(ownerName)(folconsts.Path, folconsts.FolderName, folconsts.OwnerID)
 

@@ -8,10 +8,6 @@ document.addEventListener("raise-alert", (event) => {
 function showAlert({ title, message, status, icon }) {
     const alertContainer = document.createElement("div");
     alertContainer.className = `alert alert-${status}`;
-    // alertContainer.setAttribute("hx-get", "/")
-    // alertContainer.setAttribute("hx-trigger", "load delay:5s")
-    // alertContainer.setAttribute("hx-on::before-request", "this.classList.add('removing')")
-    // alertContainer.setAttribute("hx-on::after-request", "this.remove()")
 
     const header = document.createElement("div")
     header.classList.add("alert-header");
@@ -47,5 +43,6 @@ function showAlert({ title, message, status, icon }) {
 
     modal.appendChild(alertContainer);
 
-    htmx.process(modal);
+    setTimeout(() => alertContainer.classList.add("removing"), 5000);
+    setTimeout(() => alertContainer.remove(), 6000);
 }

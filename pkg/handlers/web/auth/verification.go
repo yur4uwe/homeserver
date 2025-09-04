@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"homeserver/constants"
 	"homeserver/db/repositories"
+	folschema "homeserver/db/repositories/folder_repo/schema"
 	"homeserver/internal/templates"
 	"homeserver/pkg/crypto"
 	middleware "homeserver/pkg/middleware/web"
@@ -137,14 +138,26 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
+		rootf := folschema.New().
+			WithName(user.Username).
+			WithOwnerID(user.ID)
+
+		if _, err = repos.FolderRepo.CreateFolder(r.Context(), rootf, user); err != nil {
+			verification.Error = "Failed to create user root folder"
+			verification.Causes = append(verification.Causes, template.HTML("Please contact the administrator."))
+			VerFailed(w, verification, http.StatusInternalServerError)
+			return
+		}
+
 		verification.Success = true
 		verification.Icon = template.HTML(LoadIcon("check"))
 
-		alert := NewAlert("Verification success", "check", "Your email has been verified successfully!", constants.Success)
+		alert := formatters.AlertEventBuilder("Verification success", "Your email has been verified successfully!", constants.Success)
 
 		reqCont.PageContent.ModalContent = template.HTML(alert)
 		reqCont.RerenderBody = true
 
+		w.Header().Set("HX-Trigger", alert)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 

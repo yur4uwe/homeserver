@@ -93,7 +93,8 @@ var (
 				owner_id INTEGER NOT NULL,
 				trusted_source BYTEA UNIQUE,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				CONSTRAINT user_folders_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id)
+				CONSTRAINT user_folders_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id),
+				CONSTRAINT user_folders_unique UNIQUE (name, path, owner_id)
 			);
 		`,
 	}
