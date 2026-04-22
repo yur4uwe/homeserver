@@ -3,13 +3,12 @@ package search
 import (
 	"context"
 	"fmt"
-	"homeserver/db/repositories"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"strings"
 )
 
-func BrowseHandler(ctx context.Context, repos *repositories.Repositories, directory []string, requester *uschema.User) (*templates.SearchPageData, error) {
+func BrowseHandler(ctx context.Context, repos *db.Database, directory []string, requester *db.User) (*templates.SearchPageData, error) {
 	user_relative_directory := directory[1:]
 
 	data := &templates.SearchPageData{
@@ -19,12 +18,12 @@ func BrowseHandler(ctx context.Context, repos *repositories.Repositories, direct
 		Entries:      []templates.SearchEntry{},
 	}
 
-	file_entries, err := repos.FileRepo.GetFilesByDirectory(ctx, strings.Join(directory, "/"), requester)
+	file_entries, err := repos.Files.GetByDirectory(ctx, strings.Join(directory, "/"), requester)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting user files: %v", err)
 	}
 
-	folder_entries, err := repos.FolderRepo.GetChildren(
+	folder_entries, err := repos.Folders.GetChildren(
 		ctx,
 		strings.Join(directory[:len(directory)-1], "/"),
 		directory[len(directory)-1],

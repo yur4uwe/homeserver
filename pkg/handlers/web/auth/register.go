@@ -3,12 +3,11 @@ package auth
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/crypto"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"net/http"
 	"os"
 	"time"
@@ -19,7 +18,7 @@ var (
 	NewToken   = crypto.NewToken
 )
 
-func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
+func RegisterHandler(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -30,7 +29,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Register endpoint accessed")
 
-		form := formatters.RegisterFormFromRequest(r)
+		form := utils.RegisterFormFromRequest(r)
 
 		valid, target, fieldsetHTML := RegisterValidation(form)
 		if !valid {
@@ -40,12 +39,13 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		user := uschema.New(false).
-			WithUsername(form.Username).
-			WithEmail(form.Email).
-			WithPassword(form.Password)
+		user := &db.User{
+			Username: form.Username,
+			Email:    form.Email,
+			Password: form.Password,
+		}
 
-		inserted_user, err := repos.UserRepo.Create(r.Context(), user)
+		inserted_user, err := repos.Users.Create(r.Context(), user)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err.Error())
 			ErrorResponse(w, "Failed to create user", http.StatusInternalServerError)
@@ -59,7 +59,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		err = repos.TokenRepo.CreateToken(r.Context(), inserted_user.ID, verification_hash)
+		err = repos.Tokens.CreateToken(r.Context(), inserted_user.ID, verification_hash)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create verification token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
@@ -68,7 +68,7 @@ func RegisterHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		go VerSuccess(form, verification_hash)
 
-		w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
+		w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

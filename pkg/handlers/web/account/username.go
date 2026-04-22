@@ -3,14 +3,13 @@ package account
 import (
 	"context"
 	"fmt"
-	"homeserver/db/repositories"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	middleware "homeserver/pkg/middleware/web"
 )
 
 func HandleUsernameChange(
 	ctx context.Context,
-	repos *repositories.Repositories,
+	repos *db.Database,
 	reqCont *middleware.AdditionalRequestContext,
 	uname string,
 ) error {
@@ -22,9 +21,9 @@ func HandleUsernameChange(
 		return fmt.Errorf("new username is the same as the current username")
 	}
 
-	fvp := uschema.New().WithUsername(uname)
+	updates := &db.User{Username: uname}
 
-	_, err := repos.UserRepo.Update(ctx, reqCont.Requester, fvp)
+	_, err := repos.Users.Update(ctx, reqCont.Requester, updates)
 	if err != nil {
 		return fmt.Errorf("failed to update username")
 	}

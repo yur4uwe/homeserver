@@ -3,14 +3,13 @@ package respfail
 import (
 	"context"
 	"homeserver/constants"
-	"homeserver/constants/fsconsts"
 	"homeserver/internal/templates"
 	"html/template"
 	"net/http"
 )
 
 func ErrorResponse(w http.ResponseWriter, r *http.Request, message string, status int) {
-	r = r.WithContext(context.WithValue(r.Context(), fsconsts.StatusKey, status))
+	r = r.WithContext(context.WithValue(r.Context(), constants.StatusKey, status))
 
 	tmpl, err := template.ParseFiles(constants.Rootd + "static/templates/load_error.html")
 	if err != nil {

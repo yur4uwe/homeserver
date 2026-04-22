@@ -9,7 +9,7 @@ import (
 
 	"homeserver/pkg/handlers/web/upload"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/generics"
+	"homeserver/pkg/utils"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
 	"net/http"

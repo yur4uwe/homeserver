@@ -1,7 +1,7 @@
 package formatters_test
 
 import (
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"homeserver/test/helpers"
 	"testing"
 

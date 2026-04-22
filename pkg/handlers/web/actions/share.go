@@ -3,19 +3,17 @@ package actions
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"homeserver/pkg/crypto"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 )
 
-func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, fileId int) {
+func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *db.Database, reqCont *middleware.AdditionalRequestContext, fileId int) {
 	isFolder := r.URL.Query().Get("is_folder") == "true"
 
 	file_srv_host := os.Getenv(constants.FileSrvHost)
@@ -38,10 +36,10 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 	query := "?sid=" + url_hash + "&exp=" + exp
 
 	if isFolder {
-		fvp := folschema.New().WithTrustedSource([]byte(url_hash))
-		folder := folschema.New().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
+		updates := &db.UserFolder{TrustedSource: []byte(url_hash)}
+		folder := &db.UserFolder{ID: fileId, OwnerID: reqCont.Requester.ID}
 
-		newfol, err := repos.FolderRepo.UpdateFolder(r.Context(), folder, fvp, reqCont.Requester)
+		newfol, err := repos.Folders.Update(r.Context(), folder, updates, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, "Error updating folder", http.StatusInternalServerError)
 			return
@@ -49,10 +47,11 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 
 		fmt.Printf("Folder %s updated successfully\n", newfol.TrustedSource)
 	} else {
-		fvp := fschema.New().WithTrustedSource([]byte(url_hash))
-		file := fschema.New().WithID(fileId).WithOwnerID(reqCont.Requester.ID)
 
-		newfile, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
+		updates := &db.UserFile{TrustedSource: []byte(url_hash)}
+		file := &db.UserFile{ID: fileId, OwnerID: reqCont.Requester.ID}
+
+		newfile, err := repos.Files.Update(r.Context(), file, updates, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, "Error updating file", http.StatusInternalServerError)
 			return
@@ -62,6 +61,6 @@ func ShareFileHandler(w http.ResponseWriter, r *http.Request, repos *repositorie
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("File Shared", "File has been shared successfully", constants.Success))
+	w.Header().Set("HX-Trigger", utils.AlertEventBuilder("File Shared", "File has been shared successfully", constants.Success))
 	w.Write([]byte(url + path + query))
 }

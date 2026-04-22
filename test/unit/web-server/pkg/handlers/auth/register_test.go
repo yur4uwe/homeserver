@@ -6,7 +6,7 @@ import (
 	"homeserver/db/repositories"
 	"homeserver/pkg/handlers/web/auth"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"homeserver/test/helpers"
 	"homeserver/test/helpers/mocks"
 	"html/template"

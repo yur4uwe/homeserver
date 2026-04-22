@@ -3,12 +3,10 @@ package actions
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db"
 	middleware "homeserver/pkg/middleware/web"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/utils/errresp"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,10 +14,10 @@ import (
 
 var (
 	NewAlert      = parser.NewAlert
-	ErrorResponse = errresp.ErrorResponse
+	ErrorResponse = utils.ErrorResponse
 )
 
-func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext, fileId int) {
+func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *db.Database, reqCont *middleware.AdditionalRequestContext, fileId int) {
 	is_folder := r.URL.Query().Get("is_folder") == "true"
 
 	orig_name, err := url.QueryUnescape(r.URL.Query().Get("orig_name"))
@@ -37,27 +35,29 @@ func RenameFileHandler(w http.ResponseWriter, r *http.Request, repos *repositori
 	if is_folder {
 
 	} else {
-		oldFile := fschema.New().
-			WithID(fileId).
-			WithFilename(orig_name).
-			WithOwnerID(reqCont.Requester.ID)
+		oldFile := &db.UserFile{
+			ID:       fileId,
+			Filename: orig_name,
+			OwnerID:  reqCont.Requester.ID,
+		}
 
-		fvp := fschema.New().WithFilename(desiredName)
+		updates := &db.UserFile{Filename: desiredName}
 
-		f, err := repos.FileRepo.UpdateFileEntry(r.Context(), oldFile, fvp, reqCont.Requester)
+		f, err := repos.Files.Update(r.Context(), oldFile, updates, reqCont.Requester)
 		if err != nil {
 			ErrorResponse(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		oldFile.WithExtension(f.Extension).WithPath(f.Path)
+		oldFile.Extension = f.Extension
+		oldFile.Path = f.Path
 
 		if err := os.Rename(oldFile.AbsolutePath(), f.AbsolutePath()); err != nil {
 			ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", "File successfully renamed", constants.Success))
+		w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "File successfully renamed", constants.Success))
 		w.Write([]byte(f.Filename + "." + f.Extension))
 	}
 }

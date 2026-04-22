@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/respfail"
 	"net/http"
 	"strconv"
@@ -14,7 +12,7 @@ import (
 	"time"
 )
 
-func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
+func Auth(conn *db.Database) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.Contains(r.URL.Path, "/static/") {
@@ -54,8 +52,7 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 			switch entryType {
 			case "folders":
-				fol := folschema.New().WithID(entryId)
-				fol, err := conn.FolderRepo.GetFolder(r.Context(), fol, nil)
+				fol, err := conn.Folders.Get(r.Context(), &db.UserFolder{ID: entryId}, nil)
 				if err != nil {
 					respfail.ErrorResponse(w, r, "Invalid request format", http.StatusBadRequest)
 					return
@@ -66,8 +63,7 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 
 				r = r.WithContext(context.WithValue(r.Context(), constants.EntryKey, fol))
 			case "files":
-				file := fschema.New().WithID(entryId)
-				f, err := conn.FileRepo.GetFile(r.Context(), file, nil)
+				f, err := conn.Files.Get(r.Context(), &db.UserFile{ID: entryId}, nil)
 				if err != nil {
 					respfail.ErrorResponse(w, r, "Invalid request format", http.StatusBadRequest)
 					return
@@ -86,11 +82,13 @@ func Auth(conn *repositories.Repositories) func(http.Handler) http.Handler {
 			if authToken, _ := r.Cookie(constants.AuthCookieName); authToken != nil {
 				token = authToken.Value
 			}
-			user, _ := conn.TokenRepo.QueryToken(r.Context(), token, true)
+			user, _ := conn.Tokens.QueryToken(r.Context(), token, true)
 
-			fmt.Println("User ID:", user.ID)
+			if user != nil {
+				fmt.Println("User ID:", user.ID)
+			}
 
-			if token != "" && user.ID == owner {
+			if token != "" && user != nil && user.ID == owner {
 				next.ServeHTTP(w, r)
 				return
 			}

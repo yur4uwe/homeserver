@@ -2,7 +2,7 @@ package formatters_test
 
 import (
 	"homeserver/constants/authconsts"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"net/http/httptest"
 	"testing"
 

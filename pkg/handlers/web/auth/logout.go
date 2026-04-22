@@ -2,7 +2,7 @@ package auth
 
 import (
 	"homeserver/constants"
-	"homeserver/db/repositories"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	middleware "homeserver/pkg/middleware/web"
 	"homeserver/pkg/parser"
@@ -14,7 +14,7 @@ var (
 	ParseTemplateToString = parser.ParseTemplateToString
 )
 
-func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
+func LogoutHandler(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -30,7 +30,7 @@ func LogoutHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		if err := repos.TokenRepo.DeleteToken(r.Context(), authToken); err != nil {
+		if err := repos.Tokens.DeleteToken(r.Context(), authToken); err != nil {
 			ErrorResponse(w, "Failed to delete token: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

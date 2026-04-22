@@ -5,9 +5,7 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/constants/fsconsts"
-	fschema "homeserver/db/repositories/file_repo/schema"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/respfail"
 	"homeserver/internal/zipper"
 	"net/http"
@@ -20,8 +18,8 @@ func PageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FileHandler(w http.ResponseWriter, r *http.Request) {
-	entry := r.Context().Value(constants.EntryKey).(*fschema.UserFile)
-	if entry == nil {
+	entry, ok := r.Context().Value(constants.EntryKey).(*db.UserFile)
+	if !ok || entry == nil {
 		respfail.ErrorResponse(w, r, "Not Found", http.StatusNotFound)
 		return
 	}
@@ -31,7 +29,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		entry.Filename, entry.Extension, entry.Path, entry.OwnerID,
 	)
 
-	r = r.WithContext(context.WithValue(r.Context(), fsconsts.StatusKey, http.StatusOK))
+	r = r.WithContext(context.WithValue(r.Context(), constants.StatusKey, http.StatusOK))
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Filename))
 	w.Header().Set("Content-Type", "application/zip")
@@ -47,13 +45,13 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FolderHandler(w http.ResponseWriter, r *http.Request) {
-	entry := r.Context().Value(constants.EntryKey).(*folschema.UserFolder)
-	if entry == nil {
+	entry, ok := r.Context().Value(constants.EntryKey).(*db.UserFolder)
+	if !ok || entry == nil {
 		respfail.ErrorResponse(w, r, "Not Found", http.StatusNotFound)
 		return
 	}
 
-	r = r.WithContext(context.WithValue(r.Context(), fsconsts.StatusKey, http.StatusOK))
+	r = r.WithContext(context.WithValue(r.Context(), constants.StatusKey, http.StatusOK))
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", entry.Name))
 	w.Header().Set("Content-Type", "application/zip")

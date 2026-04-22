@@ -1,16 +1,13 @@
 package upload
 
 import (
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/errresp"
 	"net/http"
+	"strings"
 )
 
-var ErrorResponse = errresp.ErrorResponse
-
-func DeleteFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func DeleteFile(repos *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")
 
@@ -21,12 +18,18 @@ func DeleteFile(repos *repositories.Repositories, reqCont *middleware.Additional
 			return
 		}
 
-		file := fschema.New().
-			WithPath(filePath).
-			WithOwnerID(reqCont.Requester.ID).
-			WithFullName(filePath)
+		parts := strings.Split(filePath, ".")
+		filename := strings.Join(parts[:len(parts)-1], ".")
+		extension := parts[len(parts)-1]
 
-		if _, err := repos.FileRepo.DeleteFile(r.Context(), file, reqCont.Requester); err != nil {
+		file := &db.UserFile{
+			Path:      filePath, // Keeping original behavior where Path = filePath
+			Filename:  filename,
+			Extension: extension,
+			OwnerID:   reqCont.Requester.ID,
+		}
+
+		if _, err := repos.Files.Delete(r.Context(), file, reqCont.Requester); err != nil {
 			reqCont.LogHistory.ErrLog("Error deleting file: "+err.Error(), "DeleteFile")
 			ErrorResponse(w, "Error deleting file", http.StatusInternalServerError)
 			return

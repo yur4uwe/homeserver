@@ -4,27 +4,27 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/constants/dbconsts"
-	"homeserver/db/repositories"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var RequiredDBTables = []*dbconsts.DBTable{
-	dbconsts.DBUsersTable,
-	dbconsts.DBFoldersTable,
-	dbconsts.DBFilesTable,
+var RequiredDBTables = []*db.DBTable{
+	db.DBUsersTable,
+	db.DBFoldersTable,
+	db.DBFilesTable,
 }
 
-func CheckDatabaseTables(repos *repositories.Repositories, enable_logs ...bool) error {
+func CheckDatabaseTables(database *db.Database, enable_logs ...bool) error {
 	ctx := context.Background()
 
 	to_log := len(enable_logs) > 0 && enable_logs[0]
 
 	for _, table := range RequiredDBTables {
-		exists, err := repos.TableRepo.TableExists(ctx, table.Name)
+		var exists bool
+		query := "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = $1)"
+		err := database.Raw.QueryRow(ctx, query, table.Name).Scan(&exists)
 		if err != nil {
 			return fmt.Errorf("error checking table %s: %v", table.Name, err)
 		}
@@ -34,7 +34,7 @@ func CheckDatabaseTables(repos *repositories.Repositories, enable_logs ...bool) 
 		}
 
 		if !exists {
-			if err := repos.TableRepo.CreateTable(ctx, table); err != nil {
+			if _, err := database.Raw.Exec(ctx, table.SQLCreation); err != nil {
 				return fmt.Errorf("error creating table %s: %v", table.Name, err)
 			}
 		}
@@ -46,14 +46,14 @@ func CheckDatabaseTables(repos *repositories.Repositories, enable_logs ...bool) 
 	return nil
 }
 
-func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) error {
+func CheckUserFolders(database *db.Database, enable_logs ...bool) error {
 	ctx := context.Background()
 
 	to_log := len(enable_logs) > 0 && enable_logs[0]
 
 	storage_path := os.Getenv(constants.StoragePath)
 
-	users, err := repos.UserRepo.QueryAll(ctx)
+	users, err := database.Users.QueryAll(ctx)
 	if err != nil {
 		return fmt.Errorf("error querying users: %v", err)
 	}
@@ -63,11 +63,12 @@ func CheckUserFolders(repos *repositories.Repositories, enable_logs ...bool) err
 			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
 		}
 
-		rootFolder := folschema.New().
-			WithName(user.Username).
-			WithOwnerID(user.ID)
+		rootFolder := &db.UserFolder{
+			Name:    user.Username,
+			OwnerID: user.ID,
+		}
 
-		if _, err := repos.FolderRepo.CreateFolder(ctx, rootFolder, &user); err != nil {
+		if _, err := database.Folders.Create(ctx, rootFolder, &user); err != nil {
 			return fmt.Errorf("error creating folder for user %s: %v", user.Username, err)
 		}
 	}

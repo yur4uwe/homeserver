@@ -2,10 +2,9 @@ package upload
 
 import (
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	middleware "homeserver/pkg/middleware/web"
+	"homeserver/pkg/utils"
 	"io"
 	"net/http"
 	"os"
@@ -13,13 +12,14 @@ import (
 )
 
 var (
-	Copy     = io.Copy
-	MkdirAll = os.MkdirAll
-	Create   = os.Create
-	Getenv   = os.Getenv
+	Copy          = io.Copy
+	MkdirAll      = os.MkdirAll
+	Create        = os.Create
+	Getenv        = os.Getenv
+	ErrorResponse = utils.ErrorResponse
 )
 
-func DownloadFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func DownloadFile(repos *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Download file request received")
 
@@ -72,16 +72,17 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 
 			curr_path := strings.Join(path_parts[:i], "/")
 
-			fol := folschema.New().
-				WithName(part).
-				WithOwnerID(reqCont.Requester.ID)
-
-			if curr_path != "" {
-				fol = fol.WithPath(curr_path)
-				fol = fol.WithParent(&directory_id)
+			fol := &db.UserFolder{
+				Name:    part,
+				OwnerID: reqCont.Requester.ID,
 			}
 
-			nfol, err := repos.FolderRepo.CreateFolder(r.Context(), fol, reqCont.Requester)
+			if curr_path != "" {
+				fol.Path = curr_path
+				fol.Parent = &directory_id
+			}
+
+			nfol, err := repos.Folders.Create(r.Context(), fol, reqCont.Requester)
 			if err != nil {
 				select {
 				case <-done:
@@ -100,16 +101,17 @@ func DownloadFile(repos *repositories.Repositories, reqCont *middleware.Addition
 			directory_id = nfol.ID
 		}
 
-		new_file := fschema.New().
-			WithFilename(file_sig[0]).
-			WithPath(path_str).
-			WithExtension(file_sig[1]).
-			WithSize(header.Size).
-			WithDirectory(directory_id).
-			WithContentType(header.Header.Get("Content-Type")).
-			WithOwnerID(reqCont.Requester.ID)
+		new_file := &db.UserFile{
+			Filename:    file_sig[0],
+			Path:        path_str,
+			Extension:   file_sig[1],
+			Size:        header.Size,
+			Directory:   directory_id,
+			ContentType: header.Header.Get("Content-Type"),
+			OwnerID:     reqCont.Requester.ID,
+		}
 
-		inserted_file, err := repos.FileRepo.CreateFile(r.Context(), new_file, reqCont.Requester)
+		inserted_file, err := repos.Files.Create(r.Context(), new_file, reqCont.Requester)
 		if err != nil {
 			select {
 			case <-done:

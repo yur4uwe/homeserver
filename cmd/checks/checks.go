@@ -3,7 +3,6 @@ package main
 import (
 	"homeserver/constants"
 	"homeserver/db"
-	"homeserver/db/repositories"
 	"homeserver/pkg/checks"
 	"homeserver/pkg/utils"
 	"log"
@@ -37,17 +36,17 @@ func main() {
 	connection := db.NewPool()
 	defer connection.Close()
 
-	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
+	database := db.NewDatabase(connection)
 
 	if err := checks.CheckDatabaseExtensions(connection); err != nil {
 		log.Fatalf("Database extension setup error: %v", err)
 	}
 
-	if err := checks.CheckDatabaseTables(repos); err != nil {
+	if err := checks.CheckDatabaseTables(database); err != nil {
 		log.Fatalf("Database table setup error: %v", err)
 	}
 
-	if err := checks.CheckUserFolders(repos); err != nil {
+	if err := checks.CheckUserFolders(database); err != nil {
 		log.Fatalf("User folder setup error: %v", err)
 	}
 }

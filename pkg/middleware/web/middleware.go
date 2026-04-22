@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"homeserver/db/repositories"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/utils"
 	"net/http"
@@ -52,6 +52,6 @@ func WithAdditionalRequestContext(next http.Handler) http.Handler {
 	})
 }
 
-func MiddlewareWrapper(handler http.Handler, repos *repositories.Repositories) http.Handler {
+func MiddlewareWrapper(handler http.Handler, repos *db.Database) http.Handler {
 	return WithAdditionalRequestContext(Logger(AuthMiddleware(repos)(ToRestorePage(Interceptor(handler)))))
 }

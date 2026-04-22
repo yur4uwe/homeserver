@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 
 type CustomClaims struct {
 	Seed string `json:"seed"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func NewToken(seed string, expires time.Time) (string, error) {
@@ -22,8 +22,8 @@ func NewToken(seed string, expires time.Time) (string, error) {
 
 	claims := &CustomClaims{
 		Seed: seed,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expires.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expires),
 		},
 	}
 

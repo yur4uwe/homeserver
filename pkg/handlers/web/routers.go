@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/handlers/web/account"
 	"homeserver/pkg/handlers/web/actions"
@@ -11,8 +11,7 @@ import (
 	"homeserver/pkg/handlers/web/upload"
 	middleware "homeserver/pkg/middleware/web"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/utils/errresp"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -21,7 +20,7 @@ import (
 )
 
 var (
-	ErrorResponse      = errresp.ErrorResponse
+	ErrorResponse      = utils.ErrorResponse
 	ParsePathWithUName = parser.ParsePathWithUName
 
 	DownloadFile = upload.DownloadFile
@@ -40,7 +39,7 @@ var (
 	ParseFiles = template.ParseFiles
 )
 
-func UploadRouter(repos *repositories.Repositories) http.HandlerFunc {
+func UploadRouter(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -62,7 +61,7 @@ func UploadRouter(repos *repositories.Repositories) http.HandlerFunc {
 	}
 }
 
-func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
+func FileActionsRouter(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -95,7 +94,7 @@ func FileActionsRouter(repos *repositories.Repositories) http.HandlerFunc {
 	}
 }
 
-func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
+func SearchRouter(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -159,7 +158,7 @@ func SearchRouter(repos *repositories.Repositories) http.HandlerFunc {
 	}
 }
 
-func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
+func AccountSettingsRouter(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -213,7 +212,7 @@ func AccountSettingsRouter(repos *repositories.Repositories) http.HandlerFunc {
 
 			data.Error = errs
 		} else if alertMsg != "" {
-			w.Header().Set("HX-Trigger", formatters.AlertEventBuilder("Success!", alertMsg, constants.Success))
+			w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", alertMsg, constants.Success))
 		}
 
 		if strings.Contains(alertMsg, "Email") {

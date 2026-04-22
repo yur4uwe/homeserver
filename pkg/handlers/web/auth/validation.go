@@ -1,8 +1,7 @@
 package auth
 
 import (
-	"homeserver/constants/authconsts"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 )
 
 func fieldset(fieldId, message, value, inputType, placeholder string, isError bool) string {
@@ -26,31 +25,31 @@ func fieldset(fieldId, message, value, inputType, placeholder string, isError bo
 	</div>`
 }
 
-func LoginValidation(form formatters.LoginForm) (bool, string, string) {
+func LoginValidation(form utils.LoginForm) (bool, string, string) {
 	if form.Identificator == "" {
-		return false, authconsts.IdentificatorField, fieldset(authconsts.IdentificatorField, authconsts.IdentificatorError, form.Identificator, "text", authconsts.IdentificatorPlaceholder, true)
+		return false, "identificator", fieldset("identificator", "Identificator is required", form.Identificator, "text", "Identificator", true)
 	}
 	if form.Password == "" {
-		return false, authconsts.PasswordField, fieldset(authconsts.PasswordField, authconsts.PasswordError, form.Password, "password", authconsts.PasswordPlaceholder, true)
+		return false, "password", fieldset("password", "Password is required", form.Password, "password", "Password", true)
 	}
 	return true, "", ""
 }
 
-func RegisterValidation(form formatters.RegisterForm) (bool, string, string) {
+func RegisterValidation(form utils.RegisterForm) (bool, string, string) {
 	if form.Username == "" {
-		return false, authconsts.UsernameField, fieldset(authconsts.UsernameField, authconsts.UsernameError, form.Username, "text", authconsts.UsernamePlaceholder, true)
+		return false, "username", fieldset("username", "Username is required", form.Username, "text", "Username", true)
 	}
 	if form.Email == "" {
-		return false, authconsts.EmailField, fieldset(authconsts.EmailField, authconsts.EmailError, form.Email, "email", authconsts.EmailPlaceholder, true)
+		return false, "email", fieldset("email", "Email is required", form.Email, "email", "Email", true)
 	}
 	if form.Password == "" {
-		return false, authconsts.PasswordField, fieldset(authconsts.PasswordField, authconsts.PasswordError, form.Password, "password", authconsts.PasswordPlaceholder, true)
+		return false, "password", fieldset("password", "Password is required", form.Password, "password", "Password", true)
 	}
 	if form.Confirm == "" {
-		return false, authconsts.ConfirmPasswordField, fieldset(authconsts.ConfirmPasswordField, authconsts.ConfirmPasswordError, form.Confirm, "password", authconsts.ConfirmPasswordPlaceholder, true)
+		return false, "confirm-password", fieldset("confirm-password", "Please confirm your password", form.Confirm, "password", "Confirm Password", true)
 	}
 	if form.Password != form.Confirm {
-		return false, authconsts.ConfirmPasswordField, fieldset(authconsts.ConfirmPasswordField, authconsts.PasswordMismatchError, form.Confirm, "password", authconsts.ConfirmPasswordPlaceholder, true)
+		return false, "confirm-password", fieldset("confirm-password", "Passwords do not match", form.Confirm, "password", "Confirm Password", true)
 	}
 	return true, "", ""
 }

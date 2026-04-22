@@ -3,19 +3,18 @@ package account
 import (
 	"context"
 	"fmt"
-	"homeserver/db/repositories"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	"homeserver/pkg/crypto"
 	"homeserver/pkg/handlers/web/auth"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"strings"
 	"time"
 )
 
 func HandleEmailChange(
 	ctx context.Context,
-	repos *repositories.Repositories,
+	repos *db.Database,
 	reqCont *middleware.AdditionalRequestContext,
 	email string,
 ) error {
@@ -31,9 +30,9 @@ func HandleEmailChange(
 		return fmt.Errorf("invalid email format")
 	}
 
-	fvp := uschema.New(true).WithEmail(email).WithEmailVerified(false)
+	updates := &db.User{Email: email, EmailVerified: false}
 
-	_, err := repos.UserRepo.Update(ctx, reqCont.Requester, fvp)
+	_, err := repos.Users.Update(ctx, reqCont.Requester, updates)
 	if err != nil {
 		return fmt.Errorf("failed to update email")
 	}
@@ -43,11 +42,11 @@ func HandleEmailChange(
 		panic(err)
 	}
 
-	if err := repos.TokenRepo.CreateToken(ctx, reqCont.Requester.ID, tkn); err != nil {
+	if err := repos.Tokens.CreateToken(ctx, reqCont.Requester.ID, tkn); err != nil {
 		panic(err)
 	}
 
-	go auth.SendVerificationEmail(formatters.RegisterForm{
+	go auth.SendVerificationEmail(utils.RegisterForm{
 		Username: reqCont.Requester.Username,
 		Email:    email,
 	}, tkn)

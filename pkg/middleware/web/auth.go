@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/crypto"
 	"html/template"
@@ -15,12 +15,25 @@ var (
 	ValidateToken = crypto.ValidateToken
 )
 
-func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Handler {
+var (
+	headerTemplate *template.Template
+)
+
+func AuthMiddleware(repos *db.Database) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, "/static/") {
 				next.ServeHTTP(w, r)
 				return
+			}
+
+			// Pre-parse template if not already done
+			if headerTemplate == nil {
+				var err error
+				headerTemplate, err = template.ParseFiles(constants.Rootd + "static/templates/header.html")
+				if err != nil {
+					fmt.Println("CRITICAL: Failed to parse header template:", err)
+				}
 			}
 
 			reqCont, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
@@ -41,7 +54,7 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				reqCont.AuthToken = ""
 			}
 
-			if user, err := repos.TokenRepo.QueryToken(r.Context(), reqCont.AuthToken, true); err == nil && user != nil && claims.Seed == user.Email {
+			if user, err := repos.Tokens.QueryToken(r.Context(), reqCont.AuthToken, true); err == nil && user != nil && claims.Seed == user.Email {
 				reqCont.Requester = user
 				reqCont.LogHistory.Log(fmt.Sprintf("[AuthMiddleware] Authenticated user: %s", user.Username))
 			} else {
@@ -53,13 +66,13 @@ func AuthMiddleware(repos *repositories.Repositories) func(http.Handler) http.Ha
 				return
 			}
 
-			if header, err := ParseTemplateToString(constants.Rootd+"static/templates/header.html", templates.WelcomePageData{IsLoggedIn: reqCont.AuthToken != ""}); err != nil {
-				fmt.Println("Failed to parse header template:", err)
-				reqCont.LogHistory.ErrLog("Failed to parse header template: "+err.Error(), "AuthMiddleware")
-				ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-				return
-			} else {
-				reqCont.PageContent.Header = template.HTML(header)
+			if headerTemplate != nil {
+				var buf strings.Builder
+				if err := headerTemplate.Execute(&buf, templates.WelcomePageData{IsLoggedIn: reqCont.AuthToken != ""}); err != nil {
+					reqCont.LogHistory.ErrLog("Failed to execute header template: "+err.Error(), "AuthMiddleware")
+				} else {
+					reqCont.PageContent.Header = template.HTML(buf.String())
+				}
 			}
 
 			next.ServeHTTP(w, r)

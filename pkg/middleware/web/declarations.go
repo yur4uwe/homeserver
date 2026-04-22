@@ -2,12 +2,10 @@ package middleware
 
 import (
 	"bytes"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/parser"
 	"homeserver/pkg/utils"
-	"homeserver/pkg/utils/errresp"
-	"homeserver/pkg/utils/formatters"
 	"html/template"
 	"log"
 	"net/http"
@@ -19,9 +17,9 @@ import (
 var (
 	ParseFiles            = template.ParseFiles
 	Must                  = template.Must
-	IconsInjector         = formatters.IconsInjector
+	IconsInjector         = utils.IconsInjector
 	ParseTemplateToString = parser.ParseTemplateToString
-	ErrorResponse         = errresp.ErrorResponse
+	ErrorResponse         = utils.ErrorResponse
 	Now                   = time.Now
 	Since                 = time.Since
 	IsProtectedPath       = utils.IsProtectedPath
@@ -63,7 +61,7 @@ type AdditionalRequestContext struct {
 	ToRestorePage bool
 	RerenderBody  bool
 	AuthToken     string
-	Requester     *uschema.User
+	Requester     *db.User
 	PageContent   *templates.LayoutPageData
 }
 

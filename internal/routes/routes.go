@@ -2,7 +2,7 @@ package routes
 
 import (
 	"homeserver/constants"
-	"homeserver/db/repositories"
+	"homeserver/db"
 	"homeserver/internal/logger"
 	filehandlers "homeserver/pkg/handlers/file"
 	webhandlers "homeserver/pkg/handlers/web"
@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func NewWebRouter(repos *repositories.Repositories) http.Handler {
+func NewWebRouter(repos *db.Database) http.Handler {
 	mux := http.NewServeMux()
 
 	fs := http.FileServer(http.Dir(constants.Rootd + "static"))
@@ -35,7 +35,7 @@ func NewWebRouter(repos *repositories.Repositories) http.Handler {
 	return handler
 }
 
-func NewFileRouter(repos *repositories.Repositories) http.Handler {
+func NewFileRouter(repos *db.Database) http.Handler {
 	mux := http.NewServeMux()
 
 	fs := http.FileServer(http.Dir(constants.Rootd + "static/"))

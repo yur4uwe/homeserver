@@ -3,7 +3,6 @@ package setup
 import (
 	"homeserver/constants"
 	"homeserver/db"
-	"homeserver/db/repositories"
 	"homeserver/pkg/checks"
 	"homeserver/pkg/utils"
 	"log"
@@ -12,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func Setup(loadIcons bool) (*repositories.Repositories, func(), error) {
+func Setup(loadIcons bool) (*db.Database, func(), error) {
 	constants.Rootd = utils.GetProjectRoot()
 
 	if loadIcons {
@@ -34,12 +33,12 @@ func Setup(loadIcons bool) (*repositories.Repositories, func(), error) {
 
 	connection := db.NewPool()
 
-	repos := repositories.NewRepositories(repositories.InitRepositories(connection))
+	database := db.NewDatabase(connection)
 
 	if err := checks.CheckDatabaseExtensions(connection); err != nil {
 		log.Fatalf("Database extension check error: %v", err)
 		return nil, nil, err
 	}
 
-	return repos, connection.Close, nil
+	return database, connection.Close, nil
 }

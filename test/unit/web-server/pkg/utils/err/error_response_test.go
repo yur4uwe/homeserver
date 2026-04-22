@@ -1,7 +1,7 @@
 package err_test
 
 import (
-	"homeserver/pkg/utils/errresp"
+	"homeserver/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"

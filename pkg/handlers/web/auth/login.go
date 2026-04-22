@@ -3,11 +3,10 @@ package auth
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	uschema "homeserver/db/repositories/user_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	middleware "homeserver/pkg/middleware/web"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
@@ -15,7 +14,7 @@ import (
 	"time"
 )
 
-func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
+func LoginHandler(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -26,7 +25,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Login endpoint accessed")
 
-		form := formatters.LoginFormFromRequest(r)
+		form := utils.LoginFormFromRequest(r)
 
 		valid, target, fieldsetHTML := LoginValidation(form)
 		if !valid {
@@ -36,18 +35,19 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		q_user := uschema.New().
-			WithPassword(form.Password)
-
-		if strings.Contains(form.Identificator, "@") {
-			q_user.WithEmail(form.Identificator)
-		} else {
-			q_user.WithUsername(form.Identificator)
+		q_user := &db.User{
+			Password: form.Password,
 		}
 
-		user, err := repos.UserRepo.Query(r.Context(), q_user)
+		if strings.Contains(form.Identificator, "@") {
+			q_user.Email = form.Identificator
+		} else {
+			q_user.Username = form.Identificator
+		}
+
+		user, err := repos.Users.Query(r.Context(), q_user)
 		if err != nil {
-			if strings.Contains(err.Error(), "0 rows") {
+			if strings.Contains(err.Error(), "no identifier") || strings.Contains(err.Error(), "no rows") {
 				fmt.Fprintf(os.Stderr, "Login failed for user %s: %v\n", form.Identificator, err.Error())
 
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -79,7 +79,7 @@ func LoginHandler(repos *repositories.Repositories) http.HandlerFunc {
 			return
 		}
 
-		if err = repos.TokenRepo.CreateToken(r.Context(), user.ID, newToken); err != nil {
+		if err = repos.Tokens.CreateToken(r.Context(), user.ID, newToken); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create token: %v\n", err.Error())
 			ErrorResponse(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 			return

@@ -3,14 +3,12 @@ package auth
 import (
 	"fmt"
 	"homeserver/constants"
-	"homeserver/db/repositories"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/crypto"
 	middleware "homeserver/pkg/middleware/web"
 	"homeserver/pkg/parser"
-	"homeserver/pkg/utils/errresp"
-	"homeserver/pkg/utils/formatters"
+	"homeserver/pkg/utils"
 	"html/template"
 	"net/http"
 	"os"
@@ -21,7 +19,7 @@ import (
 )
 
 var (
-	ErrorResponse = errresp.ErrorResponse
+	ErrorResponse = utils.ErrorResponse
 	NewAlert      = parser.NewAlert
 	LoadIcon      = parser.LoadIcon
 	VerFailed     = SendVerificationFailurePage
@@ -40,7 +38,7 @@ func SendVerificationFailurePage(w http.ResponseWriter, verification *templates.
 	tmpl.Execute(w, verification)
 }
 
-func SendVerificationEmail(form formatters.RegisterForm, verification_token string) {
+func SendVerificationEmail(form utils.RegisterForm, verification_token string) {
 	expires := time.Now().Add(24 * time.Hour)
 
 	m := gomail.NewMessage()
@@ -66,7 +64,7 @@ func SendVerificationEmail(form formatters.RegisterForm, verification_token stri
 	}
 }
 
-func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
+func VerificationHandler(repos *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
 		if !ok {
@@ -116,7 +114,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 
 		reqCont.LogHistory.Log("[Handler] Verification token received: '" + token + "'")
 
-		user, err := repos.TokenRepo.QueryToken(r.Context(), token, false)
+		user, err := repos.Tokens.QueryToken(r.Context(), token, false)
 		if err != nil {
 			verification.Error = "Failed to check verification token"
 			verification.Causes = append(verification.Causes, template.HTML("Invalid or expired token"))
@@ -131,18 +129,19 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 			VerFailed(w, verification, http.StatusBadRequest)
 		}
 
-		if err := repos.TokenRepo.VerifyToken(r.Context(), token); err != nil {
+		if err := repos.Tokens.VerifyToken(r.Context(), token); err != nil {
 			verification.Error = "Failed to verify email"
 			verification.Causes = append(verification.Causes, template.HTML("The email associated with this token is invalid."))
 			VerFailed(w, verification, http.StatusBadRequest)
 			return
 		}
 
-		rootf := folschema.New().
-			WithName(user.Username).
-			WithOwnerID(user.ID)
+		rootf := &db.UserFolder{
+			Name:    user.Username,
+			OwnerID: user.ID,
+		}
 
-		if _, err = repos.FolderRepo.CreateFolder(r.Context(), rootf, user); err != nil {
+		if _, err = repos.Folders.Create(r.Context(), rootf, user); err != nil {
 			verification.Error = "Failed to create user root folder"
 			verification.Causes = append(verification.Causes, template.HTML("Please contact the administrator."))
 			VerFailed(w, verification, http.StatusInternalServerError)
@@ -152,7 +151,7 @@ func VerificationHandler(repos *repositories.Repositories) http.HandlerFunc {
 		verification.Success = true
 		verification.Icon = template.HTML(LoadIcon("check"))
 
-		alert := formatters.AlertEventBuilder("Verification success", "Your email has been verified successfully!", constants.Success)
+		alert := utils.AlertEventBuilder("Verification success", "Your email has been verified successfully!", constants.Success)
 
 		reqCont.RerenderBody = true
 

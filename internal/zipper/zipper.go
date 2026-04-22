@@ -2,7 +2,7 @@ package zipper
 
 import (
 	"archive/zip"
-	folschema "homeserver/db/repositories/folder_repo/schema"
+	"homeserver/db"
 	"io"
 	"net/http"
 	"os"
@@ -25,7 +25,7 @@ func ZipFile(zw *zip.Writer, filePath, zipPath string) error {
 	return err
 }
 
-func ZipFolder(w http.ResponseWriter, folder *folschema.UserFolder) error {
+func ZipFolder(w http.ResponseWriter, folder *db.UserFolder) error {
 	zw := zip.NewWriter(w)
 	defer zw.Close()
 

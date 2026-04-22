@@ -1,15 +1,14 @@
 package upload
 
 import (
-	"homeserver/db/repositories"
-	fschema "homeserver/db/repositories/file_repo/schema"
+	"homeserver/db"
 	middleware "homeserver/pkg/middleware/web"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
+func PatchFile(repos *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Patch file request received")
 
@@ -32,16 +31,24 @@ func PatchFile(repos *repositories.Repositories, reqCont *middleware.AdditionalR
 			return
 		}
 
-		file := fschema.New().
-			WithFullName(oldFileName).
-			WithPath(reqCont.Requester.Username).
-			WithOwnerID(reqCont.Requester.ID)
+		parts := strings.Split(oldFileName, ".")
+		oldFilename := strings.Join(parts[:len(parts)-1], ".")
+		oldExtension := parts[len(parts)-1]
+
+		file := &db.UserFile{
+			Filename:  oldFilename,
+			Extension: oldExtension,
+			Path:      reqCont.Requester.Username,
+			OwnerID:   reqCont.Requester.ID,
+		}
 
 		sig := strings.Split(newFileName, ".")
 
-		fvp := fschema.New().WithFilename(sig[0])
+		updates := &db.UserFile{
+			Filename: sig[0],
+		}
 
-		f, err := repos.FileRepo.UpdateFileEntry(r.Context(), file, fvp, reqCont.Requester)
+		f, err := repos.Files.Update(r.Context(), file, updates, reqCont.Requester)
 		if err != nil {
 			reqCont.LogHistory.ErrLog("Error renaming file: "+err.Error(), "PatchFile")
 			ErrorResponse(w, "Error renaming file", http.StatusInternalServerError)
