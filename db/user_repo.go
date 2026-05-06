@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"homeserver/interfaces"
 	"strings"
 	"time"
 )
@@ -29,10 +28,10 @@ type UserRepo interface {
 }
 
 type pgUserRepo struct {
-	db interfaces.QueryExecutor
+	db QueryExecutor
 }
 
-func NewUserRepo(db interfaces.QueryExecutor) UserRepo {
+func NewUserRepo(db QueryExecutor) UserRepo {
 	return &pgUserRepo{db: db}
 }
 
@@ -171,7 +170,7 @@ func (r *pgUserRepo) Update(ctx context.Context, user *User, updates *User) (*Us
 
 	query := fmt.Sprintf(`
 		UPDATE users SET %s WHERE %s 
-		RETURNING id, username, password, email, auth_token, created_at, email_verified`, 
+		RETURNING id, username, password, email, auth_token, created_at, email_verified`,
 		strings.Join(setParts, ", "), where)
 
 	var result User

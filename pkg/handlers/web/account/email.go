@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+type AccoutHandler struct {
+}
+
 func HandleEmailChange(
 	ctx context.Context,
 	repos *db.Database,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/interfaces"
 	"os"
 )
 
@@ -21,10 +20,10 @@ type TokenRepo interface {
 }
 
 type pgTokenRepo struct {
-	db interfaces.QueryExecutor
+	db QueryExecutor
 }
 
-func NewTokenRepo(db interfaces.QueryExecutor) TokenRepo {
+func NewTokenRepo(db QueryExecutor) TokenRepo {
 	return &pgTokenRepo{db: db}
 }
 

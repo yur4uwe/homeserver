@@ -6,7 +6,6 @@ import (
 	"homeserver/db"
 	"homeserver/internal/templates"
 	"homeserver/pkg/handlers/web/account"
-	"homeserver/pkg/handlers/web/actions"
 	"homeserver/pkg/handlers/web/search"
 	"homeserver/pkg/handlers/web/upload"
 	middleware "homeserver/pkg/middleware/web"
@@ -15,7 +14,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
@@ -26,10 +24,6 @@ var (
 	DownloadFile = upload.DownloadFile
 	DeleteFile   = upload.DeleteFile
 	PatchFile    = upload.PatchFile
-
-	DeleteFileHandler = actions.DeleteFileHandler
-	RenameFileHandler = actions.RenameFileHandler
-	ShareFileHandler  = actions.ShareFileHandler
 
 	FileSearchHandler = search.FileSearchHandler
 	BrowseHandler     = search.BrowseHandler
@@ -57,39 +51,6 @@ func UploadRouter(repos *db.Database) http.HandlerFunc {
 		default:
 			reqCont.LogHistory.ErrLog("Unsupported method for upload handler: '"+r.Method+"'", "UploadHandler")
 			ErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}
-}
-
-func FileActionsRouter(repos *db.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		reqCont, ok := r.Context().Value(middleware.ReqContKey).(*middleware.AdditionalRequestContext)
-		if !ok {
-			ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
-			return
-		}
-
-		entryIdStr, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/api/v1/file-actions/"))
-		if err != nil {
-			ErrorResponse(w, "Invalid file path", http.StatusBadRequest)
-			return
-		}
-
-		entryId, err := strconv.Atoi(entryIdStr)
-		if err != nil {
-			ErrorResponse(w, "Invalid file ID", http.StatusBadRequest)
-			return
-		}
-
-		switch r.Method {
-		case http.MethodGet:
-			ShareFileHandler(w, r, repos, reqCont, entryId)
-		case http.MethodDelete:
-			DeleteFileHandler(w, r, repos, reqCont, entryId)
-		case http.MethodPatch:
-			RenameFileHandler(w, r, repos, reqCont, entryId)
-		default:
-			ErrorResponse(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 		}
 	}
 }
@@ -205,14 +166,14 @@ func AccountSettingsRouter(repos *db.Database) http.HandlerFunc {
 			data.Username = reqCont.Requester.Username
 			data.Email = reqCont.Requester.Email
 
-			errs := ""
+			var errs strings.Builder
 			for k, v := range err {
-				errs += fmt.Sprintf("%s: %s\n", k, v)
+				fmt.Fprintf(&errs, "%s: %s\n", k, v)
 			}
 
-			data.Error = errs
+			data.Error = errs.String()
 		} else if alertMsg != "" {
-			w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", alertMsg, constants.Success))
+			w.Header().Set("HX-Trigger", utils.AlertEvent("Success!", alertMsg, constants.Success))
 		}
 
 		if strings.Contains(alertMsg, "Email") {

@@ -151,7 +151,7 @@ func VerificationHandler(repos *db.Database) http.HandlerFunc {
 		verification.Success = true
 		verification.Icon = template.HTML(LoadIcon("check"))
 
-		alert := utils.AlertEventBuilder("Verification success", "Your email has been verified successfully!", constants.Success)
+		alert := utils.AlertEvent("Verification success", "Your email has been verified successfully!", constants.Success)
 
 		reqCont.RerenderBody = true
 

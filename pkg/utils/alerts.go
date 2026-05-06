@@ -5,7 +5,7 @@ import (
 	"homeserver/constants"
 )
 
-func AlertEventBuilder(title, message, status string) string {
+func AlertEvent(title, message, status string) string {
 	icon := "check"
 	switch status {
 	case constants.Success:

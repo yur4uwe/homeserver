@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/interfaces"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 type UserFolder struct {
 	ID            int       `db:"id" json:"id"`
 	Name          string    `db:"name" json:"name"`
-	Path          string    `db:"path" json:"path"` // Path starts from user root folder, e.g. "username/documents"
+	Directory     string    `db:"path" json:"path"` // Path starts from user root folder, e.g. "username/documents"
 	Parent        *int      `db:"parent" json:"parent,omitempty"`
 	OwnerID       int       `db:"owner_id" json:"owner_id"`
 	TrustedSource []byte    `db:"trusted_source" json:"trusted_source"`
@@ -32,10 +32,10 @@ type FolderRepo interface {
 }
 
 type pgFolderRepo struct {
-	db interfaces.QueryExecutor
+	db QueryExecutor
 }
 
-func NewFolderRepo(db interfaces.QueryExecutor) FolderRepo {
+func NewFolderRepo(db QueryExecutor) FolderRepo {
 	return &pgFolderRepo{db: db}
 }
 
@@ -51,18 +51,25 @@ func (f *UserFolder) Validate(ownerName string) error {
 	if f.Parent == nil && f.Name != ownerName {
 		return fmt.Errorf("root folder must have the same name as the owner")
 	}
-	if (f.Path == "" && f.Parent != nil) || (f.Path != "" && f.Parent == nil) {
+	if (f.Directory == "" && f.Parent != nil) || (f.Directory != "" && f.Parent == nil) {
 		// Exception for root folder where Path is empty and Parent is nil
-		if !(f.Path == "" && f.Parent == nil && f.Name == ownerName) {
+		if !(f.Directory == "" && f.Parent == nil && f.Name == ownerName) {
 			return fmt.Errorf("folder path and parent folder must be set together for non-root folders")
 		}
 	}
 	return nil
 }
 
+func (f *UserFolder) RelativePath() string {
+	if f.Directory != "" {
+		return fmt.Sprintf("%s/%s", f.Directory, f.Name)
+	}
+	return f.Name
+}
+
 func (f *UserFolder) AbsolutePath() string {
 	storagePath := os.Getenv(constants.StoragePath)
-	return fmt.Sprintf("%s%s/%s", storagePath, f.Path, f.Name)
+	return filepath.Join(storagePath, f.RelativePath())
 }
 
 func (f *UserFolder) Identifier(ownerName string, startParam int) (string, []any) {
@@ -72,10 +79,10 @@ func (f *UserFolder) Identifier(ownerName string, startParam int) (string, []any
 	if f.Parent == nil && f.Name == ownerName && f.OwnerID != 0 {
 		return fmt.Sprintf("name = $%d AND owner_id = $%d", startParam, startParam+1), []any{f.Name, f.OwnerID}
 	}
-	if f.Path != "" && f.Name != "" && f.OwnerID != 0 {
+	if f.Directory != "" && f.Name != "" && f.OwnerID != 0 {
 		return fmt.Sprintf("path = $%d AND name = $%d AND owner_id = $%d",
-			startParam, startParam+1, startParam+2),
-			[]any{f.Path, f.Name, f.OwnerID}
+				startParam, startParam+1, startParam+2),
+			[]any{f.Directory, f.Name, f.OwnerID}
 	}
 	return "", nil
 }
@@ -94,8 +101,8 @@ func (r *pgFolderRepo) Create(ctx context.Context, folder *UserFolder, owner *Us
 		RETURNING id, name, path, parent, owner_id, trusted_source, created_at`
 
 	var result UserFolder
-	err := r.db.QueryRow(ctx, query, folder.Name, folder.Path, folder.Parent, folder.OwnerID).
-		Scan(&result.ID, &result.Name, &result.Path, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
+	err := r.db.QueryRow(ctx, query, folder.Name, folder.Directory, folder.Parent, folder.OwnerID).
+		Scan(&result.ID, &result.Name, &result.Directory, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create folder: %w", err)
@@ -121,7 +128,7 @@ func (r *pgFolderRepo) Get(ctx context.Context, folder *UserFolder, owner *User)
 
 	var result UserFolder
 	err := r.db.QueryRow(ctx, query, args...).
-		Scan(&result.ID, &result.Name, &result.Path, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
+		Scan(&result.ID, &result.Name, &result.Directory, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder: %w", err)
@@ -142,7 +149,7 @@ func (r *pgFolderRepo) GetByOwner(ctx context.Context, ownerID int) ([]UserFolde
 	var folders []UserFolder
 	for rows.Next() {
 		var f UserFolder
-		if err := rows.Scan(&f.ID, &f.Name, &f.Path, &f.Parent, &f.OwnerID, &f.TrustedSource, &f.CreatedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.Name, &f.Directory, &f.Parent, &f.OwnerID, &f.TrustedSource, &f.CreatedAt); err != nil {
 			return nil, err
 		}
 		folders = append(folders, f)
@@ -167,7 +174,7 @@ func (r *pgFolderRepo) GetChildren(ctx context.Context, path, name string, owner
 	var folders []UserFolder
 	for rows.Next() {
 		var f UserFolder
-		if err := rows.Scan(&f.ID, &f.Name, &f.Path, &f.Parent, &f.OwnerID, &f.TrustedSource, &f.CreatedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.Name, &f.Directory, &f.Parent, &f.OwnerID, &f.TrustedSource, &f.CreatedAt); err != nil {
 			return nil, err
 		}
 		folders = append(folders, f)
@@ -190,9 +197,9 @@ func (r *pgFolderRepo) Update(ctx context.Context, folder *UserFolder, updates *
 		args = append(args, updates.Name)
 		argID++
 	}
-	if updates.Path != "" {
+	if updates.Directory != "" {
 		setParts = append(setParts, fmt.Sprintf("path = $%d", argID))
-		args = append(args, updates.Path)
+		args = append(args, updates.Directory)
 		argID++
 	}
 	if updates.Parent != nil {
@@ -216,12 +223,12 @@ func (r *pgFolderRepo) Update(ctx context.Context, folder *UserFolder, updates *
 
 	query := fmt.Sprintf(`
 		UPDATE user_folders SET %s WHERE %s 
-		RETURNING id, name, path, parent, owner_id, trusted_source, created_at`, 
+		RETURNING id, name, path, parent, owner_id, trusted_source, created_at`,
 		strings.Join(setParts, ", "), where)
 
 	var result UserFolder
 	err := r.db.QueryRow(ctx, query, args...).
-		Scan(&result.ID, &result.Name, &result.Path, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
+		Scan(&result.ID, &result.Name, &result.Directory, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update folder: %w", err)
@@ -242,7 +249,7 @@ func (r *pgFolderRepo) Delete(ctx context.Context, folder *UserFolder, owner *Us
 
 	var result UserFolder
 	err := r.db.QueryRow(ctx, query, args...).
-		Scan(&result.ID, &result.Name, &result.Path, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
+		Scan(&result.ID, &result.Name, &result.Directory, &result.Parent, &result.OwnerID, &result.TrustedSource, &result.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete folder: %w", err)

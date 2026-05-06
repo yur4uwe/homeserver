@@ -55,6 +55,15 @@ func (lh *LogHistory) UnloadLogs(header string) {
 	log.Println("\n\n" + header + logs)
 }
 
+func GetContext(w http.ResponseWriter, r *http.Request) (*AdditionalRequestContext, bool) {
+	rc, ok := r.Context().Value(ReqContKey).(*AdditionalRequestContext)
+	if !ok {
+		ErrorResponse(w, "Invalid request context", http.StatusInternalServerError)
+		return nil, false
+	}
+	return rc, true
+}
+
 // AdditionalRequestContext holds request-specific data
 type AdditionalRequestContext struct {
 	LogHistory    LogHistoryInterface

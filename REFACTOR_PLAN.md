@@ -20,7 +20,7 @@
     - [x] Rename the `Repositories` struct to `Database` and move it to the `db` package.
     - [x] Add a `Raw` field to the `Database` struct that exposes the `QueryExecutor` (the pool) directly.
 - [x] **Ditch `db.Database[T]`**: Remove the generic struct and the reflection-based `ScanRows`.
-- [x] **QueryExecutor Standard:** Repository implementations now depend directly on `interfaces.QueryExecutor`.
+- [x] **QueryExecutor Standard:** Repository implementations now depend directly on `QueryExecutor`.
 - [x] **Explicit Scanning:** Raw SQL with direct `.Scan()` calls.
 - [x] **Consolidated Repositories:** User, File, Folder, Token are each a single file in `db/`.
 

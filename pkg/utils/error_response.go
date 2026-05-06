@@ -6,6 +6,6 @@ import (
 )
 
 func ErrorResponse(w http.ResponseWriter, message string, status int) {
-	w.Header().Set("HX-Trigger", AlertEventBuilder("Error", message, constants.Error))
+	w.Header().Set("HX-Trigger", AlertEvent("Error", message, constants.Error))
 	w.WriteHeader(status)
 }

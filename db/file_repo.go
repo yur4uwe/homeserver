@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"homeserver/constants"
-	"homeserver/interfaces"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -38,10 +38,10 @@ type FileRepo interface {
 }
 
 type pgFileRepo struct {
-	db interfaces.QueryExecutor
+	db QueryExecutor
 }
 
-func NewFileRepo(db interfaces.QueryExecutor) FileRepo {
+func NewFileRepo(db QueryExecutor) FileRepo {
 	return &pgFileRepo{db: db}
 }
 
@@ -69,13 +69,20 @@ func (f *UserFile) Validate(ownerName string) error {
 	return nil
 }
 
+func (f *UserFile) RelativePath() string {
+	ext := f.Extension
+	if !strings.HasPrefix(ext, ".") && ext != "" {
+		ext = "." + ext
+	}
+	if f.Path != "" {
+		return fmt.Sprintf("%s/%s%s", f.Path, f.Filename, ext)
+	}
+	return fmt.Sprintf("%s%s", f.Filename, ext)
+}
+
 func (f *UserFile) AbsolutePath() string {
 	storagePath := os.Getenv(constants.StoragePath)
-	filePath := f.Filename
-	if f.Path != "" {
-		filePath = fmt.Sprintf("%s/%s", f.Path, f.Filename)
-	}
-	return fmt.Sprintf("%s%s.%s", storagePath, filePath, f.Extension)
+	return filepath.Join(storagePath, f.RelativePath())
 }
 
 func (f *UserFile) Identifier(startParam int) (string, []any) {
@@ -84,7 +91,7 @@ func (f *UserFile) Identifier(startParam int) (string, []any) {
 	}
 	if f.Path != "" && f.Filename != "" && f.Extension != "" && f.OwnerID != 0 {
 		return fmt.Sprintf("path = $%d AND filename = $%d AND extension = $%d AND owner_id = $%d",
-			startParam, startParam+1, startParam+2, startParam+3),
+				startParam, startParam+1, startParam+2, startParam+3),
 			[]any{f.Path, f.Filename, f.Extension, f.OwnerID}
 	}
 	return "", nil

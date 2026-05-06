@@ -13,6 +13,7 @@ import (
 )
 
 func NewWebRouter(repos *db.Database) http.Handler {
+
 	mux := http.NewServeMux()
 
 	fs := http.FileServer(http.Dir(constants.Rootd + "static"))
@@ -23,10 +24,17 @@ func NewWebRouter(repos *db.Database) http.Handler {
 	mux.HandleFunc("/settings", webhandlers.SettingsPageHandler)
 	mux.HandleFunc("/search/", webhandlers.SearchRouter(repos))
 	mux.HandleFunc("/api/v1/upload", webhandlers.UploadRouter(repos))
+
 	mux.HandleFunc("/api/v1/login", auth.LoginHandler(repos))
 	mux.HandleFunc("/api/v1/register", auth.RegisterHandler(repos))
 	mux.HandleFunc("/api/v1/logout", auth.LogoutHandler(repos))
-	mux.HandleFunc("/api/v1/file-actions/", webhandlers.FileActionsRouter(repos))
+
+	fileActionHandler := webhandlers.FileActionHandler{Repos: repos}
+
+	mux.HandleFunc("GET /api/v1/file-actions/{id}", fileActionHandler.Share)
+	mux.HandleFunc("DELETE /api/v1/file-actions/{id}", fileActionHandler.Delete)
+	mux.HandleFunc("PATCH /api/v1/file-actions/{id}", fileActionHandler.Rename)
+
 	mux.HandleFunc("/api/v1/account/settings", webhandlers.AccountSettingsRouter(repos))
 	mux.HandleFunc("/", webhandlers.StaticPageHandler)
 

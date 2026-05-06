@@ -3,11 +3,18 @@ package db
 import (
 	"context"
 	"fmt"
-	"homeserver/interfaces"
 	"os"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type QueryExecutor interface {
+	Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+}
 
 // Database is the "God object" for data access
 type Database struct {
@@ -16,7 +23,7 @@ type Database struct {
 	Files   FileRepo
 	Folders FolderRepo
 
-	Raw interfaces.QueryExecutor
+	Raw QueryExecutor
 }
 
 func NewDatabase(pool *pgxpool.Pool) *Database {

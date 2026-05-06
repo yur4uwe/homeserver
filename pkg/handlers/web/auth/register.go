@@ -68,7 +68,7 @@ func RegisterHandler(repos *db.Database) http.HandlerFunc {
 
 		go VerSuccess(form, verification_hash)
 
-		w.Header().Set("HX-Trigger", utils.AlertEventBuilder("Success!", "Registration successful! Please check your email for verification.", constants.Success))
+		w.Header().Set("HX-Trigger", utils.AlertEvent("Success!", "Registration successful! Please check your email for verification.", constants.Success))
 		w.Header().Set("HX-Push-Url", "/")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

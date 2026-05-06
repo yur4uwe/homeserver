@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type UploadFileHandler struct{}
+
 func DeleteFile(repos *db.Database, reqCont *middleware.AdditionalRequestContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqCont.LogHistory.Log("Delete file request received")

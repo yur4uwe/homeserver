@@ -78,7 +78,7 @@ func DownloadFile(repos *db.Database, reqCont *middleware.AdditionalRequestConte
 			}
 
 			if curr_path != "" {
-				fol.Path = curr_path
+				fol.Directory = curr_path
 				fol.Parent = &directory_id
 			}
 
