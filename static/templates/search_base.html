@@ -1,5 +1,6 @@
 <div class="search-container" hx-target="#search-results" hx-swap="outerHTML">
-    <form id="search-form" hx-get="" hx-trigger="keyup changed delay:500ms">
+    <form id="search-form" action="/search/{{.URIDirectory}}" hx-get="/search/{{.URIDirectory}}"
+        hx-trigger="submit, keyup changed delay:500ms" hx-push-url="true">
         <h2>Find the file you want</h2>
         <fieldset>
             <legend>Search</legend>
@@ -9,7 +10,7 @@
                     </div>
                 </div>
                 <input type="text" name="query" id="search-input" placeholder="Search files..." value="{{.Query}}">
-                <button type="reset" hx-get="">
+                <button type="reset" hx-get="/search/{{.URIDirectory}}" hx-push-url="true">
                     <div hx-trigger="load" hx-target="this" hx-get="/static/assets/x.svg" hx-swap="innerHTML">
                     </div>
                 </button>

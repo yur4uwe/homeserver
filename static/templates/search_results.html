@@ -80,6 +80,16 @@
         </tbody>
         {{end}}
     </table>
+    {{if or .PreviousPageURL .NextPageURL}}
+    <nav aria-label="Search results pages">
+        {{if .PreviousPageURL}}
+        <a href="{{.PreviousPageURL}}" hx-get="{{.PreviousPageURL}}" hx-push-url="true">Previous results</a>
+        {{end}}
+        {{if .NextPageURL}}
+        <a href="{{.NextPageURL}}" hx-get="{{.NextPageURL}}" hx-push-url="true">Next results</a>
+        {{end}}
+    </nav>
+    {{end}}
     {{if not .Entries}}
     {{if .Query}}
     <div class="no-results">

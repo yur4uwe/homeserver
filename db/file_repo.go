@@ -32,7 +32,7 @@ type FileRepo interface {
 	Get(ctx context.Context, file *UserFile, owner *User) (*UserFile, error)
 	GetByUser(ctx context.Context, owner *User) ([]UserFile, error)
 	GetByDirectory(ctx context.Context, directoryPath string, owner *User) ([]UserFile, error)
-	FuzzySearch(ctx context.Context, search_query string, owner *User) ([]UserFile, error)
+	FuzzySearch(ctx context.Context, searchQuery, directory string, owner *User, limit int, offset int64) ([]UserFile, error)
 	Update(ctx context.Context, file *UserFile, updates *UserFile, owner *User) (*UserFile, error)
 	Delete(ctx context.Context, file *UserFile, owner *User) (*UserFile, error)
 }
@@ -229,15 +229,16 @@ func (r *pgFileRepo) GetByDirectory(ctx context.Context, directoryPath string, o
 	return files, nil
 }
 
-func (r *pgFileRepo) FuzzySearch(ctx context.Context, search_query string, owner *User) ([]UserFile, error) {
+func (r *pgFileRepo) FuzzySearch(ctx context.Context, searchQuery, directory string, owner *User, limit int, offset int64) ([]UserFile, error) {
 	query := `
 		SELECT f.id, f.filename, f.extension, f.path, f.directory_id, f.owner_id, f.size, f.content_type, f.metadata, f.trusted_source, f.created_at, f.updated_at
 		FROM user_files f
 		WHERE f.owner_id = $2 AND f.filename % $1
-		ORDER BY similarity(f.filename, $1) DESC
-		LIMIT 20`
+		  AND (f.path = $3 OR starts_with(f.path, $3 || '/'))
+		ORDER BY similarity(f.filename, $1) DESC, f.id
+		LIMIT $4 OFFSET $5`
 
-	rows, err := r.db.Query(ctx, query, search_query, owner.ID)
+	rows, err := r.db.Query(ctx, query, searchQuery, owner.ID, directory, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +257,7 @@ func (r *pgFileRepo) FuzzySearch(ctx context.Context, search_query string, owner
 		}
 		files = append(files, f)
 	}
-	return files, nil
+	return files, rows.Err()
 }
 
 func (r *pgFileRepo) Update(ctx context.Context, file *UserFile, updates *UserFile, owner *User) (*UserFile, error) {
