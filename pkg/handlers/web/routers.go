@@ -14,6 +14,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -64,7 +65,7 @@ func SearchRouter(repos *db.Database) http.HandlerFunc {
 		}
 
 		query := r.URL.Query().Get("query")
-		directory_string, err := url.QueryUnescape(strings.TrimPrefix(r.URL.Path, "/search/"))
+		directory_string, err := url.QueryUnescape(strings.TrimPrefix(r.URL.EscapedPath(), "/search/"))
 		if err != nil {
 			reqCont.LogHistory.ErrLog("[Handler] Search API url.QueryUnescape error: "+err.Error(), "SearchHandler:30")
 			ErrorResponse(w, "Internal Server Error: Failed to unescape directory", http.StatusBadRequest)
@@ -83,7 +84,15 @@ func SearchRouter(repos *db.Database) http.HandlerFunc {
 		var data *templates.SearchPageData = nil
 
 		if len(query) > 0 {
-			data, err = FileSearchHandler(r.Context(), repos, query, directory, reqCont.Requester)
+			var page int64 = 1
+			if raw := r.URL.Query().Get("page"); raw != "" {
+				page, err = strconv.ParseInt(raw, 10, 32)
+				if err != nil || page < 1 {
+					ErrorResponse(w, "Invalid search page", http.StatusBadRequest)
+					return
+				}
+			}
+			data, err = FileSearchHandler(r.Context(), repos, query, directory, reqCont.Requester, int32(page))
 		} else {
 			data, err = BrowseHandler(r.Context(), repos, directory, reqCont.Requester)
 		}
@@ -109,7 +118,15 @@ func SearchRouter(repos *db.Database) http.HandlerFunc {
 		if reqCont.ToRestorePage || reqCont.RerenderBody || r.URL.Query().Get("redirect") != "" {
 			tmpl = Must(ParseFiles(constants.Rootd+"static/templates/search_base.html", constants.Rootd+"static/templates/search_results.html"))
 
-			w.Header().Set("HX-Push-Url", "/search/"+url.QueryEscape(strings.Join(directory[1:], "/")))
+			searchURL := "/search/" + data.URIDirectory
+			if query != "" {
+				values := url.Values{"query": {query}}
+				if page := r.URL.Query().Get("page"); page != "" {
+					values.Set("page", page)
+				}
+				searchURL += "?" + values.Encode()
+			}
+			w.Header().Set("HX-Push-Url", searchURL)
 			tmpl.ExecuteTemplate(w, "search_base.html", &data)
 		} else {
 			tmpl = Must(ParseFiles(constants.Rootd + "static/templates/search_results.html"))

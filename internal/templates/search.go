@@ -14,15 +14,17 @@ type SearchEntry struct {
 }
 
 type SearchPageData struct {
-	Query        string
-	URIQuery     string
-	Directory    string
-	URIDirectory string
-	Parent       string
-	URIParent    string
-	DownloadPath string
-	ActiveTab    int
-	PageNumbers  []int
-	QueryResults bool
-	Entries      []SearchEntry
+	Query           string
+	URIQuery        string
+	Directory       string
+	URIDirectory    string
+	Parent          string
+	URIParent       string
+	DownloadPath    string
+	ActiveTab       int
+	PageNumbers     []int
+	PreviousPageURL string
+	NextPageURL     string
+	QueryResults    bool
+	Entries         []SearchEntry
 }

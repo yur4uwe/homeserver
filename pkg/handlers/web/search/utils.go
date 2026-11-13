@@ -69,7 +69,7 @@ func FolderToSearchEntry(folder *db.UserFolder) templates.SearchEntry {
 	entry := templates.SearchEntry{
 		ID:       folder.ID,
 		Name:     folder.Name,
-		Path:     strings.Join(strings.Split(folder.Path, "/")[1:], "/"),
+		Path:     strings.Join(strings.Split(folder.Directory, "/")[1:], "/"),
 		Size:     "",
 		Type:     "folder",
 		IsFolder: true,
